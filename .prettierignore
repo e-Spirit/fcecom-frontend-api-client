@@ -1,0 +1,27 @@
+﻿# compiled output
+**/dist
+**/tmp
+**/build
+
+# dependencies
+**/node_modules
+
+# cache
+**/.npm
+**/.gradle
+
+# IDEs and editors
+**/.idea
+
+# IDE - VSCode
+*.code-workspace
+**/.history
+
+# misc
+**/coverage
+**/typings
+**/test-reports
+
+# lockfiles
+**/package-lock.json
+**/yarn.lock
