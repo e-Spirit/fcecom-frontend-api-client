@@ -1,5 +1,10 @@
+/**
+ * @internal
+ * @module TPPWrapper
+ */
+
 import { TPPLoader } from './TPPLoader';
-import { SNAP, TPPWrapperProperties, TPPWrapperInterface } from './TPPWrapper.meta';
+import { SNAP, TPPWrapperInterface, TPPWrapperProperties } from './TPPWrapper.meta';
 
 /**
  * Wraps tpp functions and adds error handling
@@ -11,9 +16,7 @@ export class TPPWrapper implements TPPWrapperInterface {
   readonly debug: boolean;
 
   /**
-   * @param args {@type TPPWrapperProperties}
-   *        tppLoader: SNAP API instance. Aside from default, it is configurable to meet test requirements
-   *        debug: Flag for develop functionality. Current use can be extended.
+   * @param args TPP Loader Properties
    */
   constructor(args?: TPPWrapperProperties) {
     this.TPP_SNAP = (args?.tppLoader ?? TPPWrapper.createTPPLoader())?.getSnap();
@@ -30,7 +33,7 @@ export class TPPWrapper implements TPPWrapperInterface {
      * this is needed to disable the Rerender Fallback which would be a page reload (not logical for SPAs)
      * TODO: maybe to add possibility to user to optionally disable this
      **/
-    snap?.onRerenderView(() => {})
+    snap?.onRerenderView(() => {});
   }
 
   /**

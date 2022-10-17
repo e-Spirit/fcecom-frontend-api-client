@@ -1,12 +1,16 @@
+/**
+ * @module EcomFSXAProxyApi
+ */
+
 import { ComparisonQueryOperatorEnum, FSXAProxyApi, LogicalQueryOperatorEnum } from 'fsxa-api';
-import { FindPageParams } from './ecomFSXAProxyApi.meta';
-import { LogLevel } from "fsxa-api/dist/types/modules/Logger";
-import { ProxyApiFilterOptions } from "fsxa-api/dist/types/types";
-import { CreatePagePayload, TPPWrapperInterface } from "../integrations/tpp/TPPWrapper.meta";
-import { PreviewDecider } from "../utils/PreviewDecider";
+import { CreatePagePayload, FindPageParams } from './ecomFSXAProxyApi.meta';
+import { LogLevel } from 'fsxa-api/dist/types/modules/Logger';
+import { ProxyApiFilterOptions } from 'fsxa-api/dist/types/types';
+import { TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
+import { PreviewDecider } from '../utils/PreviewDecider';
 
 /**
- * Extends {@link FSXAProxyApi} with custom ecommerce methods
+ * Extends FSXAProxyApi with custom ecommerce methods
  */
 export class EcomFSXAProxyApi extends FSXAProxyApi {
   defaultLocale: string = 'en_GB';
@@ -19,11 +23,13 @@ export class EcomFSXAProxyApi extends FSXAProxyApi {
     if (PreviewDecider.isPreviewNeeded()) {
       /* import TPP Wrapper Dynamically */
       this.tppPromise = import('../integrations/tpp/TPPWrapper');
-      this.tppPromise.then(({ TPPWrapper }) => {
-        this.setTPPWrapper(new TPPWrapper());
-      }).catch((err) => {
-        // Failed to load TPP
-      })
+      this.tppPromise
+        .then(({ TPPWrapper }) => {
+          this.setTPPWrapper(new TPPWrapper());
+        })
+        .catch((err) => {
+          // Failed to load TPP
+        });
     }
   }
 
@@ -31,8 +37,6 @@ export class EcomFSXAProxyApi extends FSXAProxyApi {
    * Find a page with FSXA Query by ecommerce store ID
    *
    * @param id       ID of the page in original store format
-   *                 - can have special characters
-   *                 - is converted to base36 format to fit FS uid requirements
    * @param locale   filters FS entries by language and country identifications
    * @param type     type of page
    */
@@ -59,6 +63,9 @@ export class EcomFSXAProxyApi extends FSXAProxyApi {
     });
   }
 
+  /**
+   * @internal
+   */
   async logIAmAlive() {
     const tpp = await this.getTppInstance();
     tpp?.logIAmAlive();
@@ -70,13 +77,12 @@ export class EcomFSXAProxyApi extends FSXAProxyApi {
    * @param payload Payload to use when creating the page.
    * @return {boolean} Whether the page was created.
    */
-   async createPage(payload: CreatePagePayload): Promise<boolean | void> {
+  async createPage(payload: CreatePagePayload): Promise<boolean | void> {
     const tpp = await this.getTppInstance();
     const snap = await tpp?.TPP_SNAP;
 
     try {
       return await snap?.execute('class:FirstSpirit Connect for Commerce - Create Reference Page', payload);
-
     } catch (error: unknown) {
       console.log(error);
 
@@ -93,9 +99,10 @@ export class EcomFSXAProxyApi extends FSXAProxyApi {
    * Will wait for TPP to be loaded before returning the value.
    * Will return null if TPP was not provided.
    *
-   * @return {*} 
+   * @internal
+   * @return {*}
    */
-   async getTppInstance(): Promise<TPPWrapperInterface | null> {
+  async getTppInstance(): Promise<TPPWrapperInterface | null> {
     if (this.tpp) {
       return this.tpp;
     }
@@ -127,11 +134,11 @@ export class EcomFSXAProxyApi extends FSXAProxyApi {
   /**
    * Sets the TPPWrapper instance.
    *
+   * @internal
    * @protected
    * @param tpp The instance to set.
    */
   protected setTPPWrapper(tpp: TPPWrapperInterface): void {
     this.tpp = tpp;
   }
-  
 }

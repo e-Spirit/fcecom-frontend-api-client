@@ -1,5 +1,8 @@
+/**
+ * @module EventHandler
+ */
+
 import { ProductClickHandler } from './product/ProductClickHandler';
-import { EventHandlerMeta } from './EventHandler.meta';
 import { EcomFSXAProxyApi } from '../../api/ecomFSXAProxyApi';
 
 /**
@@ -9,7 +12,7 @@ import { EcomFSXAProxyApi } from '../../api/ecomFSXAProxyApi';
  * @param api instance of {@link EcomFSXAProxyApi} to be worked on
  * @param productUrlPattern the Regex of Product Page Urls
  */
-export const initProductHandlers = (api: EcomFSXAProxyApi, productUrlPattern?: RegExp): Array<EventHandlerMeta> => {
+export const initProductHandlers = (api: EcomFSXAProxyApi, productUrlPattern?: RegExp): Array<EventHandler> => {
   // arrange
   const productClick = new ProductClickHandler(api, productUrlPattern);
 
@@ -18,3 +21,9 @@ export const initProductHandlers = (api: EcomFSXAProxyApi, productUrlPattern?: R
 
   return [productClick];
 };
+
+export interface EventHandler {
+  enable(): void;
+
+  disable(): void;
+}

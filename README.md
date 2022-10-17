@@ -1,8 +1,11 @@
 # FirstSpirit Connect for Commerce Frontend API
 
-The [Connect for Commerce Frontend API](https://www.npmjs.com/package/fcecom-frontend-api) is a superset of the [FSXA API](https://www.npmjs.com/package/fsxa-api) that extends its functionality with e-commerce specific use cases.
+The [Connect for Commerce Frontend API](https://www.npmjs.com/package/fcecom-frontend-api-client) is a superset of
+the [FSXA API](https://www.npmjs.com/package/fsxa-api) that extends its functionality with e-commerce specific use
+cases.
 
-Examples and use cases can be found in the [documentation](https://docs.e-spirit.com/ecom/fsconnect-com-frontend-api/latest).
+Examples and use cases can be found in
+the [documentation](https://docs.e-spirit.com/ecom/fsconnect-com-frontend-api/latest).
 
 For more information about FirstSpirit or Connect for Commerce please
 use [this contact form](https://www.crownpeak.com/contact-us) to get in touch.

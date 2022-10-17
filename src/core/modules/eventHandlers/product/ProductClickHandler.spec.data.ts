@@ -3,10 +3,10 @@ export const correctPayload = {
     fcecom: {
       topic: 'openStoreFrontUrl',
       payload: {
-        name: "taken-daughter",
+        name: 'taken-daughter',
         url: 'https://mycommerce.com/catalog/p/taken-daughter?lang=en',
-        identifier: "123",
-        type: "product"
+        identifier: '123',
+        type: 'product',
       },
     },
   },

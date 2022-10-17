@@ -1,7 +1,15 @@
+/**
+ * @internal
+ * @module Logger
+ */
+
 import chalk from 'chalk';
 import { inspect } from 'util';
 import { LogLevel } from 'fsxa-api';
 
+/**
+ * @internal
+ */
 const formatOutput = (...args: any[]) => {
   args = args.map((entry) => {
     if (typeof entry === 'object') return JSON.stringify(entry);
@@ -15,6 +23,10 @@ const formatOutput = (...args: any[]) => {
     breakLength: Infinity,
   }).replace(/'/g, '');
 };
+
+/**
+ * @internal
+ */
 export class Logger {
   private readonly _logLevel: LogLevel;
   private readonly _name: string;

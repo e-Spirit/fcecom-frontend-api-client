@@ -1,3 +1,8 @@
+/**
+ * @internal
+ * @module TPPLoader
+ */
+
 import { SNAP } from './TPPWrapper.meta';
 
 export class TPPLoader {
@@ -7,7 +12,6 @@ export class TPPLoader {
    */
   getSnap = async (): Promise<SNAP | null> =>
     new Promise((resolve, reject) => {
-
       const messageListener = ({ origin, data }: any) => {
         if (typeof data === 'object' && data?.tpp?._response?.version) {
           window.removeEventListener('message', messageListener);

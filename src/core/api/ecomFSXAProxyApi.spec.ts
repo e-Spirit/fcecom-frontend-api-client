@@ -13,7 +13,7 @@ jest.spyOn(TPPWrapper, 'createTPPLoader').mockReturnValue(tppLoader);
 
 const tppWrapper = new TPPWrapper();
 class TestableEcomFSXAProxyApi extends EcomFSXAProxyApi {
-  public test_setTPPWrapper(tppWrapper:TPPWrapperInterface): void {
+  public test_setTPPWrapper(tppWrapper: TPPWrapperInterface): void {
     this.setTPPWrapper(tppWrapper);
   }
 }
@@ -63,7 +63,6 @@ describe('test ecom FSXA API should work as expected', () => {
   //   });
   // });
 
-
   it('it should create a page', async () => {
     // arrange
     const snap = mock<SNAP>();
@@ -79,8 +78,8 @@ describe('test ecom FSXA API should work as expected', () => {
       type: 'product',
       displayNames: {
         en: 'Display Name EN',
-        de: 'Display Name DE'
-      }
+        de: 'Display Name DE',
+      },
     });
 
     // assert
@@ -90,8 +89,8 @@ describe('test ecom FSXA API should work as expected', () => {
       type: 'product',
       displayNames: {
         en: 'Display Name EN',
-        de: 'Display Name DE'
-      }
+        de: 'Display Name DE',
+      },
     });
   });
 
@@ -110,8 +109,8 @@ describe('test ecom FSXA API should work as expected', () => {
       type: 'product',
       displayNames: {
         en: 'Display Name EN',
-        de: 'Display Name DE'
-      }
+        de: 'Display Name DE',
+      },
     });
 
     // assert
@@ -121,8 +120,8 @@ describe('test ecom FSXA API should work as expected', () => {
       type: 'product',
       displayNames: {
         en: 'Display Name EN',
-        de: 'Display Name DE'
-      }
+        de: 'Display Name DE',
+      },
     });
 
     expect(snap.execute).toHaveBeenNthCalledWith(2, 'script:show_error_message_dialog', {

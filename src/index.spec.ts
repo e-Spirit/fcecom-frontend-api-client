@@ -9,7 +9,7 @@ jest.mock('./core/modules/eventHandlers/EventHandler', () => {
   return {
     ...originalModule,
     initProductHandlers: jest.fn().mockResolvedValue([]),
-  }
+  };
 });
 jest.mock('./core/utils/HookService', () => {
   const originalModule = jest.requireActual('./core/utils/HookService');
@@ -24,7 +24,6 @@ enableFetchMocks();
 const baseUrl = 'http://localhost:3001/ecom';
 const proxyApi = new EcomFSXAProxyApi(baseUrl);
 
-
 describe('index', () => {
   describe('initEventHandlers', () => {
     it('should call the specific event Handlers', () => {
@@ -37,11 +36,11 @@ describe('index', () => {
   });
   describe('addHook', () => {
     it('should return correct base url', () => {
-      const testName = "testName";
-      const testScope = "testScope";
+      const testName = 'testName';
+      const testScope = 'testScope';
       const testFunction = () => {};
 
-      addHook(testName, testScope, testFunction)
+      addHook(testName, testScope, testFunction);
 
       expect(hookService.addHook).toBeCalledWith(testName, testScope, testFunction);
     });

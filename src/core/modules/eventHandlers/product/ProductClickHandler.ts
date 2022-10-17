@@ -1,9 +1,11 @@
-import { EcomFSXAProxyApi } from '../../../api/ecomFSXAProxyApi';
-import { EventHandlerMeta } from '../EventHandler.meta';
-import { rejectionCause } from './ProductClickHandler.meta';
-import hookService, { AvailableHooks } from '../../../utils/HookService'
+/**
+ * @module ProductClickHandler
+ */
 
-export class ProductClickHandler implements EventHandlerMeta {
+import { EcomFSXAProxyApi } from '../../../api/ecomFSXAProxyApi';
+import { EventHandler } from '../EventHandler';
+
+export class ProductClickHandler implements EventHandler {
   /**
    * This class handles messages and filters them to extract data from a product click event.
    * It does object validation and runs according methods inside {@link EcomFSXAProxyApi}.
@@ -104,7 +106,7 @@ export class ProductClickHandler implements EventHandlerMeta {
   };
 
   /**
-   * This method checks if the provided {@param payload} has a suitable object structure
+   * This method checks if the provided `payload` has a suitable object structure
    * and does contain all necessary elements to proceed with the next steps
    *
    * @param payload raw payload of {@link MessageEvent}
@@ -176,12 +178,25 @@ export class ProductClickHandler implements EventHandlerMeta {
   };
 
   /**
-   * Adds eventListener for {@link MessageEvent} to {@link window} events object
+   * Adds eventListener for {@link @window/MessageEvent} to window events object
    */
   public enable = (): void => window.addEventListener('message', this.processMessageEvent);
 
   /**
-   * Removes eventListener for {@link MessageEvent} from {@link window} events object
+   * Removes eventListener for {@link @window/MessageEvent} from window events object
    */
   public disable = (): void => window.removeEventListener('message', this.processMessageEvent);
+}
+
+/**
+ * Error code used to describe the reason for rejecting payload validation.
+ *
+ * @enum rejectionCause
+ */
+export enum rejectionCause {
+  NAMESPACE_NOT_FOUND = 'NAMESPACE_NOT_FOUND',
+  TOPIC_NOT_MATCHING = 'TOPIC_NOT_MATCHING',
+  URL_NOT_FOUND = 'URL_NOT_FOUND',
+  URL_FORMAT_ERROR = 'URL_FORMAT_ERROR',
+  URL_MISSING_TEMPLATE_REPLACEMENT = 'URL_MISSING_TEMPLATE_REPLACEMENT',
 }

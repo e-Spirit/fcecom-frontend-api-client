@@ -1,5 +1,5 @@
 import { EcomFSXAProxyApi } from '../../../api/ecomFSXAProxyApi';
-import { ProductClickHandler } from './ProductClickHandler';
+import { ProductClickHandler, rejectionCause } from './ProductClickHandler';
 import {
   correctPayload,
   withDifferentTopic,
@@ -9,7 +9,6 @@ import {
   withoutTopic,
   withoutUrl,
 } from './ProductClickHandler.spec.data';
-import { rejectionCause } from './ProductClickHandler.meta';
 
 const proxyApi = new EcomFSXAProxyApi('http://localhost:3001/api').setDefaultLocale('de_DE');
 
