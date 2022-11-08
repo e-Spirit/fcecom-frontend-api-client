@@ -17,7 +17,6 @@ export class PreviewDecider {
    * if the application is not executed in an iframe the referrer is an empty string)
    */
   static isPreviewNeeded() {
-    //return PreviewDecider.isBrowserEnvironment() && window.document.referrer === 'https://partnerdev.e-spirit.hosting/'; // TODO: make referrer configurable.
     return true;
   }
 }

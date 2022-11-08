@@ -22,7 +22,7 @@ describe('PreviewDecider', () => {
       expect(result).toEqual(false);
     });
   });
-  describe('isPreviewNeeded', () => {
+  describe.skip('isPreviewNeeded', () => {
     it('should check if preview is needed via the referer', () => {
       const testServer = 'https://localhost.e-spirit.live/';
       /* redefine referrer */

@@ -3,7 +3,7 @@
  */
 
 import { ComparisonQueryOperatorEnum, FSXAProxyApi, LogicalQueryOperatorEnum } from 'fsxa-api';
-import { CreatePagePayload, FindPageParams } from './ecomFSXAProxyApi.meta';
+import { CreatePagePayload, CreateSectionPayload, FindPageParams } from './ecomFSXAProxyApi.meta';
 import { LogLevel } from 'fsxa-api/dist/types/modules/Logger';
 import { ProxyApiFilterOptions } from 'fsxa-api/dist/types/types';
 import { TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
@@ -89,6 +89,36 @@ export class EcomFSXAProxyApi extends FSXAProxyApi {
       await snap?.execute('script:show_error_message_dialog', {
         message: `${error}`,
         title: 'Could not create page',
+        ok: false,
+      });
+    }
+  }
+
+  /**
+   * Creates a section within a given FirstSpirit page.
+   *
+   * @param payload Payload to use when creating a section.
+   * @return Whether the section was created.
+   */
+  async createSection(payload: CreateSectionPayload): Promise<boolean | void>{
+    const tpp = await this.getTppInstance();
+    const snap = await tpp?.TPP_SNAP;
+
+    try {
+      const result = await snap?.createSection(payload.pageId, {
+        body: payload.slotName,
+        result: true
+      });
+      if (result) {
+        console.log(result);
+      }
+      return result;
+    } catch (error: unknown) {
+      console.log(error);
+
+      await snap?.execute('script:show_error_message_dialog', {
+        message: `${error}`,
+        title: 'Could not create section',
         ok: false,
       });
     }

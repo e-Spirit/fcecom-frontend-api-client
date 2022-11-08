@@ -18,3 +18,9 @@ export interface CreatePagePayload {
     [lang: string]: string;
   };
 }
+
+export interface CreateSectionPayload {
+  pageId: string;
+  slotName: string;
+}
+
