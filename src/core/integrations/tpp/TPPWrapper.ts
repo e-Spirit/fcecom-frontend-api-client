@@ -30,8 +30,8 @@ export class TPPWrapper implements TPPWrapperInterface {
   private async addRerender() {
     const snap = await this.TPP_SNAP;
     /**
-     * this is needed to disable the Rerender Fallback which would be a page reload (not logical for SPAs)
-     * TODO: maybe to add possibility to user to optionally disable this
+     * This is needed to disable the render fallback which would be a page reload (not logical for SPAs).
+     * See https://docs.e-spirit.com/tpp/snap/index.html#tpp_snaponrerenderview for more info.
      **/
     snap?.onRerenderView(() => {});
   }

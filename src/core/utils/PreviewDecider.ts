@@ -1,22 +1,72 @@
 /**
- * @internal
+ * Helper to decide whether the application runs in preview mode.
+ *
  * @module PreviewDecider
+ * @internal
+ * @export
+ * @class PreviewDecider
  */
-
 export class PreviewDecider {
+  private static url: string;
+
   /**
-   * Checks if the code is executed in the Browser or on the Server Side (needed to differentiate between SSR and CSR execution)
+   * Sets the server URL of the backend service.
+   *
+   * @static
+   * @param url URL to set.
    */
-  static isBrowserEnvironment() {
-    return typeof self !== 'undefined';
+  public static setUrl(url: string) {
+    this.url = url;
   }
 
   /**
    * Checks if the Preview Scripts should be loaded based on the Document referrer
    * (Document referrer Points to the server that is implementing the application as iframe,
    * if the application is not executed in an iframe the referrer is an empty string)
+   *
+   * @static
+   * @return {*} Whether the application runs in preview mode.
    */
-  static isPreviewNeeded() {
-    return true;
+  static async isPreview(): Promise<boolean> {
+    if (!this.isBrowserEnvironment()) return false;
+
+    try {
+      const { isPreview } = await fetch(`${this.url}/ispreview`, {
+        headers: {
+          'X-Referrer': this.getReferrer(),
+        },
+      }).then((response) => response.json());
+      return isPreview || false;
+    } catch (err: unknown) {
+      console.info('preview disabled | init request failed');
+      return false;
+    }
+  }
+
+  /**
+   * Returns the referrer or an empty string.
+   *
+   * @static
+   * @return {*} The referrer.
+   */
+  static getReferrer(): string {
+    if (this.isBrowserEnvironment())
+      try {
+        return new URL(window.document.referrer).origin;
+      } catch (err: unknown) {
+        return document.referrer;
+      }
+    return '';
+  }
+
+  /**
+   * Checks if the code is executed in the browser or on the server side (needed to differentiate between SSR and CSR execution).
+   *
+   * @private
+   * @static
+   * @return {*} Whether the code runs within the browser or not.
+   */
+  private static isBrowserEnvironment(): boolean {
+    return typeof self !== 'undefined';
   }
 }
