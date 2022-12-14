@@ -1,41 +1,27 @@
-import { mock } from 'jest-mock-extended';
-import { SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
 import { EcomApi } from './EcomApi';
-import { TPPLoader } from '../integrations/tpp/TPPLoader';
-import { TPPWrapper } from '../integrations/tpp/TPPWrapper';
 import { PreviewDecider } from '../utils/PreviewDecider';
+import { CreatePagePayload, CreateSectionPayload, SetElementParams } from './TPPService.meta';
+import { FindPageParams } from './Remoteservice.meta';
+import { mock } from 'jest-mock-extended';
+import { RemoteService } from './RemoteService';
+import { TPPService } from './TPPService';
+import { SlotParser } from '../integrations/tpp/SlotParser';
+import { EcomHooks } from '../integrations/tpp/HookService.meta';
+import { HookService } from '../integrations/tpp/HookService';
+import { TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
 
-const tppLoader = new TPPLoader();
-const snap = mock<SNAP>();
-
-jest.spyOn(tppLoader, 'getSnap').mockResolvedValue(snap);
-jest.spyOn(TPPWrapper, 'createTPPLoader').mockReturnValue(tppLoader);
 jest.spyOn(PreviewDecider, 'isPreview').mockResolvedValue(true);
 
-class TestableEcomApi extends EcomApi {
-  public test_setTPPWrapper(tppWrapper: TPPWrapperInterface): void {
-    this.setTPPWrapper(tppWrapper);
-  }
-}
+const mockTppService = mock<TPPService>();
+const mockRemoteService = mock<RemoteService>();
 
 const API_URL = 'https://api_url:3000';
-let tppWrapper: TPPWrapper;
-let fetchResponse: any;
-// @ts-ignore
-global.fetch = jest.fn(() =>
-  Promise.resolve({
-    json: () => Promise.resolve(fetchResponse),
-  })
-);
 
-let api: TestableEcomApi;
+let api: EcomApi;
 describe('EcomApi', () => {
   beforeEach(() => {
-    tppWrapper = new TPPWrapper();
-    api = new TestableEcomApi(API_URL);
-    api.test_setTPPWrapper(tppWrapper);
-
-    fetchResponse = undefined;
+    api = new EcomApi(API_URL);
+    api['remoteService'] = mockRemoteService;
   });
 
   describe('constructor', () => {
@@ -65,231 +51,308 @@ describe('EcomApi', () => {
   });
 
   describe('createPage()', () => {
-    it('it should create a page', async () => {
+    it('it calls TPPService.createPage', async () => {
       // Arrange
-      const snap = mock<SNAP>();
-
-      // @ts-ignore - TODO: Make properly test possible
-      tppWrapper.TPP_SNAP = Promise.resolve(snap);
-      const spy = jest.spyOn(snap, 'execute').mockResolvedValue(snap);
-
+      api['tppService'] = mockTppService;
+      const payload = {
+        fsPageTemplate: 'product',
+        id: 'testUid',
+        type: 'product',
+        displayNames: {
+          en: 'Display Name EN',
+          de: 'Display Name DE',
+        },
+      } as CreatePagePayload;
       // Act
-      await api.createPage({
-        fsPageTemplate: 'product',
-        id: 'testUid',
-        type: 'product',
-        displayNames: {
-          en: 'Display Name EN',
-          de: 'Display Name DE',
-        },
-      });
-
+      await api.createPage(payload);
       // Assert
-      expect(spy).toHaveBeenNthCalledWith(1, 'class:FirstSpirit Connect for Commerce - Create Reference Page', {
-        fsPageTemplate: 'product',
-        id: 'testUid',
-        type: 'product',
-        displayNames: {
-          en: 'Display Name EN',
-          de: 'Display Name DE',
-        },
-      });
+      expect(mockTppService.createPage.mock.calls[0][0]).toEqual(payload);
     });
-
-    it('it should execute a script on error', async () => {
+    it('does not throw if no TPPService is set', async () => {
       // Arrange
-      const snap = mock<SNAP>();
-
-      // @ts-ignore - TODO: Make properly test possible
-      tppWrapper.TPP_SNAP = Promise.resolve(snap);
-      const spy = jest.spyOn(snap, 'execute').mockRejectedValueOnce(new Error());
-
+      api['tppService'] = undefined;
+      const payload = {
+        fsPageTemplate: 'product',
+        id: 'testUid',
+        type: 'product',
+        displayNames: {
+          en: 'Display Name EN',
+          de: 'Display Name DE',
+        },
+      } as CreatePagePayload;
       // Act
-      await api.createPage({
-        fsPageTemplate: 'product',
-        id: 'testUid',
-        type: 'product',
-        displayNames: {
-          en: 'Display Name EN',
-          de: 'Display Name DE',
-        },
-      });
-      // Assert
-      expect(spy).toHaveBeenNthCalledWith(1, 'class:FirstSpirit Connect for Commerce - Create Reference Page', {
-        fsPageTemplate: 'product',
-        id: 'testUid',
-        type: 'product',
-        displayNames: {
-          en: 'Display Name EN',
-          de: 'Display Name DE',
-        },
-      });
-      expect(spy).toHaveBeenNthCalledWith(2, 'script:show_error_message_dialog', {
-        message: `Error`,
-        title: 'Could not create page',
-        ok: false,
-      });
+      expect(async () => {
+        await api.createPage(payload);
+        // Assert
+      }).not.toThrow();
     });
   });
 
   describe('createSection()', () => {
-    it('it should create a section', async () => {
+    it('it calls TPPService.createSection', async () => {
       // Arrange
-      const snap = mock<SNAP>();
-      // @ts-ignore - TODO: Make properly test possible
-      tppWrapper.TPP_SNAP = Promise.resolve(snap);
-      const spy = jest.spyOn(snap, 'createSection').mockResolvedValue(true);
-
-      // Act
-      await api.createSection({
+      api['tppService'] = mockTppService;
+      const payload = {
         pageId: 'testId',
         slotName: 'SlotName',
-      });
-
-      // Assert
-      expect(spy).toHaveBeenNthCalledWith(1, 'testId', {
-        body: 'SlotName',
-        result: true,
-      });
-    });
-
-    it('it should execute a script on error', async () => {
-      // Arrange
-      const snap = mock<SNAP>();
-
-      // @ts-ignore - TODO: Make properly test possible
-      tppWrapper.TPP_SNAP = Promise.resolve(snap);
-      const spy = jest.spyOn(snap, 'createSection').mockRejectedValueOnce(new Error());
-
+      } as CreateSectionPayload;
       // Act
-      await api.createSection({
+      await api.createSection(payload);
+      // Assert
+      expect(mockTppService.createSection.mock.calls[0][0]).toEqual(payload);
+    });
+    it('does not throw if no TPPService is set', async () => {
+      // Arrange
+      api['tppService'] = undefined;
+      const payload = {
         pageId: 'testId',
         slotName: 'SlotName',
-      });
-
-      // Assert
-      expect(spy).toHaveBeenNthCalledWith(1, 'testId', {
-        body: 'SlotName',
-        result: true,
-      });
-      expect(snap.execute).toHaveBeenNthCalledWith(1, 'script:show_error_message_dialog', {
-        message: `Error`,
-        title: 'Could not create section',
-        ok: false,
-      });
-    });
-  });
-
-  describe('findPage()', () => {
-    it('it finds a page', async () => {
-      // Arrange
-      fetchResponse = {};
-
+      } as CreateSectionPayload;
       // Act
-      const result = await api.findPage({
-        id: 'plumber0PIERRE*porch',
-        locale: 'de',
-        type: 'product',
-      });
-
-      // Assert
-      expect(result).toEqual(fetchResponse);
-      expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/findPage?id=plumber0PIERRE*porch&locale=de&type=product`, expect.anything());
-    });
-    it('it uses default values for parameters when finding a page', async () => {
-      // Arrange
-      fetchResponse = {};
-
-      // Act
-      const result = await api.findPage({
-        id: 'plumber0PIERRE*porch',
-        type: 'product',
-      });
-
-      // Assert
-      expect(result).toEqual(fetchResponse);
-      expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/findPage?id=plumber0PIERRE*porch&locale=${api.defaultLocale}&type=product`, expect.anything());
-    });
-  });
-
-  describe('fetchNavigation()', () => {
-    it('it fetches the navigation', async () => {
-      // Arrange
-      fetchResponse = {};
-
-      // Act
-      const result = await api.fetchNavigation({
-        locale: 'de_DE',
-        initialPath: 'path',
-      });
-
-      // Assert
-      expect(result).toEqual(fetchResponse);
-      expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/fetchNavigation?locale=de_DE&initialPath=path`, expect.anything());
-    });
-    it('it uses default values for parameters when fetching the navigation', async () => {
-      // Arrange
-      fetchResponse = {};
-
-      // Act
-      const result = await api.fetchNavigation({});
-
-      // Assert
-      expect(result).toEqual(fetchResponse);
-      expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/fetchNavigation?locale=${api.defaultLocale}`, expect.anything());
-    });
-  });
-
-  describe('setDefaultLocale()', () => {
-    it('it should apply default locale correctly', async () => {
-      // Arrange
-      const locale = 'de_DE';
-
-      // Act
-      api.setDefaultLocale(locale);
-
-      // Assert
-      expect(api.defaultLocale).toBe(locale);
+      expect(async () => {
+        await api.createSection(payload);
+        // Assert
+      }).not.toThrow();
     });
   });
 
   describe('init()', () => {
-    // TODO: Find out how to work with dynamic import
-    it.todo('returns true if TPP is loaded');
-    it.todo('returns false if TPP is not loaded');
-    it('returns false if not in preview mode', async () => {
+    afterEach(() => {
+      jest.dontMock('../integrations/tpp/SlotParser');
+      jest.dontMock('./TPPService');
+      jest.resetAllMocks();
+    });
+    it('loads services if in preview and returns true on success', async () => {
       // Arrange
-      api.test_setTPPWrapper(undefined as any); // Reset
-      jest.spyOn(PreviewDecider, 'isPreview').mockResolvedValue(false);
-
+      const tppServiceInstanceMock = mock<TPPService>();
+      jest.spyOn(tppServiceInstanceMock, 'init').mockResolvedValue(true);
+      const tppServiceClassMock = jest.fn().mockReturnValue(tppServiceInstanceMock);
+      jest.spyOn(PreviewDecider, 'isPreview').mockResolvedValue(true);
+      jest.doMock('./TPPService', () => ({
+        TPPService: tppServiceClassMock
+      }));
+      const slotParserInstanceMock = mock<SlotParser>();
+      const slotParserClassMock = jest.fn().mockReturnValue(slotParserInstanceMock);
+      jest.doMock('../integrations/tpp/SlotParser', () => ({
+        SlotParser: slotParserClassMock
+      }));
       // Act
       const result = await api.init();
-
       // Assert
-      expect(result).toBe(false);
-      expect(await api.getTppInstance()).toBeNull();
+      expect(api['tppService']).toEqual(tppServiceInstanceMock);
+      expect(tppServiceInstanceMock.init).toBeCalled();
+      expect(api['slotParser']).toEqual(slotParserInstanceMock);
+      expect(result).toEqual(true);
+    });
+    it('loads services if in preview and returns false on failure', async () => {
+      // Arrange
+      const tppServiceInstanceMock = mock<TPPService>();
+      jest.spyOn(tppServiceInstanceMock, 'init').mockResolvedValue(false);
+      const tppServiceClassMock = jest.fn().mockReturnValue(tppServiceInstanceMock);
+      jest.spyOn(PreviewDecider, 'isPreview').mockResolvedValue(true);
+      jest.doMock('./TPPService', () => ({
+        TPPService: tppServiceClassMock
+      }));
+      const slotParserInstanceMock = mock<SlotParser>();
+      const slotParserClassMock = jest.fn().mockReturnValue(slotParserInstanceMock);
+      jest.doMock('../integrations/tpp/SlotParser', () => ({
+        SlotParser: slotParserClassMock
+      }));
+      // Act
+      const result = await api.init();
+      // Assert
+      expect(result).toEqual(false);
+    });
+    it('does not load TPP Service and SlotParser if not in preview', async () => {
+      // Arrange
+      jest.spyOn(PreviewDecider, 'isPreview').mockResolvedValue(false);
+      // Act
+      await api.init();
+      // Assert
+      expect(api['tppService']).toEqual(undefined);
+      expect(api['slotParser']).toEqual(undefined);
     });
   });
 
   describe('getTppInstance()', () => {
-    // TODO: Find out how to work with dynamic import
-    it.todo('waits for TPP to finish loading if currently loading');
-    it('returns TPP instance if set', async () => {
-      // Act
-      const result = await api.getTppInstance();
-
-      // Assert
-      expect(result).toBe(tppWrapper);
-    });
-    it('returns null if no TPP was loaded at all', async () => {
+    it('calls TPPService.getTppInstance', async () => {
       // Arrange
-      api.test_setTPPWrapper(undefined as any); // Reset
-
+      api['tppService'] = mockTppService;
+      const mockTppWrapper = mock<TPPWrapperInterface>();
+      jest.spyOn(mockTppService, 'getTppInstance').mockResolvedValueOnce(mockTppWrapper);
       // Act
       const result = await api.getTppInstance();
-
+      // Assert
+      expect(mockTppService.getTppInstance.mock.calls.length).toEqual(1);
+      expect(result).toBe(mockTppWrapper);
+    });
+    it('returns null if no TPPService is set', async () => {
+      // Arrange
+      api['tppService'] = undefined;
+      // Act
+      const result = await api.getTppInstance();
       // Assert
       expect(result).toBeNull();
+    });
+  });
+
+  describe('findPage()', () => {
+    it('it calls RemoteService.findPage', async () => {
+      // Arrange
+      const payload = {
+        id: 'plumber0PIERRE*porch',
+        locale: 'de',
+        type: 'product',
+      } as FindPageParams;
+      // Act
+      await api.findPage(payload);
+      // Assert
+      expect(mockRemoteService.findPage.mock.calls[0][0]).toEqual(payload);
+    });
+  });
+
+  describe('fetchNavigation()', () => {
+    it('it calls RemoteService.fetchNavigation()', async () => {
+      // Arrange
+      const payload = {
+        locale: 'de_DE',
+        initialPath: 'path',
+      };
+      // Act
+      await api.fetchNavigation(payload);
+      // Assert
+      expect(mockRemoteService.fetchNavigation.mock.calls[0][0]).toEqual(payload);
+    });
+  });
+
+  describe('setDefaultLocale()', () => {
+    it('it should apply default locale correctly', () => {
+      // Arrange
+      const locale = 'de_DE';
+      // Act
+      api.setDefaultLocale(locale);
+      // Assert
+      expect(api.defaultLocale).toBe(locale);
+      expect(mockRemoteService.setDefaultLocale).toBeCalledWith(locale);
+    });
+  });
+
+  describe('setElement()', () => {
+    it('it passes calls to TPPService and SlotParser', async () => {
+      // Arrange
+      api['tppService'] = mockTppService;
+      const mockSlotParser = mock<SlotParser>();
+      api['slotParser'] = mockSlotParser;
+      const params = {
+        fsPageTemplate: 'TEMPLATE',
+        id: 'ID',
+        type: 'content',
+        locale: 'LOCALE'
+      } as SetElementParams;
+      // Act
+      await api.setElement(params);
+      // Assert
+      expect(mockTppService.setElement.mock.calls[0][0]).toEqual({
+        id: params.id,
+        type: params.type,
+        locale: params.locale
+      });
+      expect(mockSlotParser.parseSlots.mock.calls[0][0]).toEqual(params);
+    });
+    it('it uses fallback locale', async () => {
+      // Arrange
+      const locale = 'de_DE';
+      api.setDefaultLocale(locale);
+      api['tppService'] = mockTppService;
+      const params = {
+        fsPageTemplate: 'TEMPLATE',
+        id: 'ID',
+        type: 'content'
+      } as SetElementParams;
+      // Act
+      await api.setElement(params);
+      // Assert
+      expect(mockTppService.setElement.mock.calls[0][0]).toEqual({
+        id: params.id,
+        type: params.type,
+        locale: locale
+      });
+    });
+    it('does not throw if no params are passed', async () => {
+      // Arrange
+      api['tppService'] = mockTppService;
+      const mockSlotParser = mock<SlotParser>();
+      api['slotParser'] = mockSlotParser;
+      // Act
+      expect(async () => {
+        await api.setElement(null);
+        // Assert
+        expect(mockTppService.setElement).not.toBeCalled();
+        expect(mockSlotParser.parseSlots).not.toBeCalled();
+      }).not.toThrow();
+    });
+    it('does not throw if no TPPService is set', async () => {
+      // Arrange
+      api['tppService'] = undefined;
+      const mockSlotParser = mock<SlotParser>();
+      api['slotParser'] = mockSlotParser;
+      const params = {
+        fsPageTemplate: 'TEMPLATE',
+        id: 'ID',
+        type: 'content'
+      } as SetElementParams;
+      // Act
+      expect(async () => {
+        await api.setElement(params);
+        // Assert
+        expect(mockSlotParser.parseSlots).toBeCalledWith(params);
+      }).not.toThrow();
+    });
+  });
+
+  describe('clear()', () => {
+    it('it passes calls to SlotParser', async () => {
+      // Arrange
+      const mockSlotParser = mock<SlotParser>();
+      api['slotParser'] = mockSlotParser;
+      // Act
+      api.clear();
+      // Assert
+      expect(mockSlotParser.clear).toHaveBeenCalled();
+    });
+    it('does not throw if no SlotParser is set', async () => {
+      // Arrange
+      api['slotParser'] = undefined;
+      // Act
+      expect(() => {
+        api.clear();
+        // Assert
+      }).not.toThrow();
+    });
+  });
+
+  describe('addHook()', () => {
+    it('it passes calls to HookService', async () => {
+      // Arrange
+      api['tppService'] = mockTppService;
+      const mockHookService = mock<HookService>();
+      jest.spyOn(mockTppService, 'getHookService').mockReturnValueOnce(mockHookService);
+      const mockHook = jest.fn();
+      // Act
+      api.addHook(EcomHooks.CONTENT_CHANGE, mockHook);
+      // Assert
+      expect(mockHookService.addHook.mock.calls[0][0]).toEqual(EcomHooks.CONTENT_CHANGE);
+      expect(mockHookService.addHook.mock.calls[0][1]).toEqual(mockHook);
+    });
+    it('does not throw if no TPPService is set', async () => {
+      // Arrange
+      api['tppService'] = undefined;
+      const mockHook = jest.fn();
+      // Act
+      expect(() => {
+        api.addHook(EcomHooks.CONTENT_CHANGE, mockHook);
+        // Assert
+      }).not.toThrow();
     });
   });
 });

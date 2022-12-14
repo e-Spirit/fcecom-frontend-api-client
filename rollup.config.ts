@@ -3,6 +3,8 @@ import json from '@rollup/plugin-json';
 import babel from '@rollup/plugin-babel';
 import { terser } from 'rollup-plugin-terser';
 import ts from 'rollup-plugin-ts';
+import svg from 'rollup-plugin-svg-import';
+import css from 'rollup-plugin-import-css';
 // @ts-ignore JSON is not correctly validated via TSLint
 import { dependencies, main, module, peerDependencies } from './package.json';
 
@@ -32,6 +34,8 @@ export default [
         babelHelpers: 'bundled',
       }),
       terser(),
+      svg(),
+      css(),
     ],
   },
 ];

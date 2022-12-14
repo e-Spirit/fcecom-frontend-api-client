@@ -1,12 +1,18 @@
-/**
- * @module EcomApi
- */
-
-import { CreatePagePayload, CreateSectionPayload, FetchNavigationParams, FetchNavigationResponse, FindPageParams, FindPageResponse } from './EcomApi.meta';
+import {
+  CreatePagePayload,
+  CreateSectionPayload,
+  FetchNavigationParams,
+  FetchNavigationResponse,
+  FindPageParams,
+  FindPageResponse,
+  SetElementParams,
+} from './EcomApi.meta';
 import { TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
 import { PreviewDecider } from '../utils/PreviewDecider';
-import { removeNullishObjectProperties } from '../utils/helper';
-import { ParamObject } from '../utils/meta';
+import { SlotParser } from '../integrations/tpp/SlotParser';
+import { RemoteService } from './RemoteService';
+import { TPPService } from './TPPService';
+import { EcomHooks, HookPayloadTypes } from '../integrations/tpp/HookService.meta';
 
 /**
  * Frontend API for Connect for Commerce.
@@ -16,10 +22,10 @@ import { ParamObject } from '../utils/meta';
  */
 export class EcomApi {
   defaultLocale: string = 'en_GB';
-
-  private tppPromise?: Promise<any>;
-  private tpp?: TPPWrapperInterface;
   private readonly baseUrl: string;
+  private remoteService: RemoteService;
+  private tppService?: TPPService;
+  private slotParser?: SlotParser;
 
   /**
    * Creates an instance of EcomApi.
@@ -39,6 +45,33 @@ export class EcomApi {
     } else {
       throw new Error(MISSING_BASE_URL);
     }
+    this.remoteService = new RemoteService(this.baseUrl);
+  }
+
+  /**
+   * Initialize the API.
+   *
+   * @return {*} Whether the initialization was successful.
+   */
+  async init(): Promise<boolean> {
+    const isPreviewNeeded = await PreviewDecider.isPreview();
+    if (isPreviewNeeded) {
+      // Import dependencies dynamically
+      const tppServicePromise = import('./TPPService');
+      const slotParserPromise = import('../integrations/tpp/SlotParser');
+      return Promise.all([tppServicePromise, slotParserPromise])
+        .then(([{ TPPService }, { SlotParser }]) => {
+          this.tppService = new TPPService(this.remoteService);
+          this.slotParser = new SlotParser(this.remoteService, this.tppService);
+          return this.tppService.init();
+        })
+        .catch((err: unknown) => {
+          // Failed to load TPPService
+          console.error(err);
+          return false;
+        });
+    }
+    return false;
   }
 
   /**
@@ -48,8 +81,7 @@ export class EcomApi {
    * @return {*} Details about the page.
    */
   async findPage(params: FindPageParams): Promise<FindPageResponse> {
-    const { id, locale = this.defaultLocale, type } = params;
-    return this.performGetRequest<FindPageParams, FindPageResponse>('findPage', { id, locale, type });
+    return this.remoteService.findPage(params);
   }
 
   /**
@@ -59,11 +91,34 @@ export class EcomApi {
    * @return {*} Details about the navigation.
    */
   async fetchNavigation(params: FetchNavigationParams): Promise<FetchNavigationResponse> {
-    const { locale = this.defaultLocale, initialPath } = params;
-    return this.performGetRequest<FetchNavigationParams, FetchNavigationResponse>('fetchNavigation', {
-      locale,
-      initialPath,
+    return this.remoteService.fetchNavigation(params);
+  }
+
+  /**
+   * Setting the default locale.
+   *
+   * @param locale FirstSpirit compatible language code of the locale to set.
+   */
+  public setDefaultLocale(locale: string): void {
+    this.defaultLocale = locale;
+    this.remoteService.setDefaultLocale(locale);
+  }
+
+  /**
+   * Sets the element currently displayed in the storefront.
+   *
+   * @param params Parameter
+   */
+  async setElement(params: SetElementParams | null) {
+    if (!params) {
+      return;
+    }
+    await this.tppService?.setElement({
+      id: params.id,
+      type: params.type,
+      locale: params.locale || this.defaultLocale,
     });
+    await this.slotParser?.parseSlots(params);
   }
 
   /**
@@ -73,20 +128,7 @@ export class EcomApi {
    * @return {*} Whether the page was created.
    */
   async createPage(payload: CreatePagePayload): Promise<any> {
-    const tpp = await this.getTppInstance();
-    const snap = await tpp?.TPP_SNAP;
-
-    try {
-      return await snap?.execute('class:FirstSpirit Connect for Commerce - Create Reference Page', payload);
-    } catch (error: unknown) {
-      console.log(error);
-
-      await snap?.execute('script:show_error_message_dialog', {
-        message: `${error}`,
-        title: 'Could not create page',
-        ok: false,
-      });
-    }
+    return this.tppService?.createPage(payload);
   }
 
   /**
@@ -96,51 +138,7 @@ export class EcomApi {
    * @return {*} Whether the section was created.
    */
   async createSection(payload: CreateSectionPayload): Promise<any> {
-    const tpp = await this.getTppInstance();
-    const snap = await tpp?.TPP_SNAP;
-
-    try {
-      const result = await snap?.createSection(payload.pageId, {
-        body: payload.slotName,
-        result: true,
-      });
-      if (result) {
-        console.log(result);
-      }
-      return result;
-    } catch (error: unknown) {
-      console.log(error);
-
-      await snap?.execute('script:show_error_message_dialog', {
-        message: `${error}`,
-        title: 'Could not create section',
-        ok: false,
-      });
-    }
-  }
-
-  /**
-   * Initialize the API by loading TPP.
-   *
-   * @return {*} Whether the initialization was successful.
-   */
-  async init(): Promise<boolean> {
-    const isPreviewNeeded = await PreviewDecider.isPreview();
-    if (isPreviewNeeded) {
-      // Import TPP Wrapper dynamically
-      this.tppPromise = import('../integrations/tpp/TPPWrapper');
-      return this.tppPromise
-        .then(({ TPPWrapper }) => {
-          this.setTPPWrapper(new TPPWrapper());
-          return Promise.resolve(true);
-        })
-        .catch((err: unknown) => {
-          // Failed to load TPP
-          console.error(err);
-          return false;
-        });
-    }
-    return false;
+    return this.tppService?.createSection(payload);
   }
 
   /**
@@ -152,59 +150,31 @@ export class EcomApi {
    * @return {*} The TPP instance if available, null otherwise.
    */
   async getTppInstance(): Promise<TPPWrapperInterface | null> {
-    if (this.tpp) return this.tpp;
-    // No attempt to load TPP
-    if (!this.tppPromise) return null;
-    return this.tppPromise.then(({ TPPWrapper }) => {
-      // Wait for TPP to be loaded
-      if (this.tpp) return this.tpp;
-      const wrapper = new TPPWrapper();
-      this.setTPPWrapper(wrapper);
-      return wrapper;
-    });
+    return this.tppService?.getTppInstance() || null;
   }
 
   /**
-   * Setting the default locale.
+   * Clears the DOM.
    *
-   * @param locale FirstSpirit compatible Language code of the locale to set.
    */
-  public setDefaultLocale(locale: string): void {
-    this.defaultLocale = locale;
+  clear() {
+    this.slotParser?.clear();
   }
 
   /**
-   * Sets the TPPWrapper instance.
+   * Register a new hook.
    *
-   * @internal
-   * @protected
-   * @param tpp The instance to set.
+   * @template T
+   * @template V
+   * @param name Name of the hook.
+   * @param func The hook's callback.
+   * @return {*} 
    */
-  protected setTPPWrapper(tpp: TPPWrapperInterface): void {
-    this.tpp = tpp;
-  }
-
-  /**
-   * Performs a HTTP GET request against the backend service.
-   *
-   * @private
-   * @template T Type of the parameter to send to the server.
-   * @template U Type of the response to receive.
-   * @param endpoint URL segment for the endpoint to query.
-   * @param params Params to send with the request.
-   * @return {*} The response received by the server.
-   */
-  private async performGetRequest<T extends ParamObject, U>(endpoint: string, params: T): Promise<U> {
-    const url = new URL(`${this.baseUrl}/${endpoint}`);
-    url.search = new URLSearchParams(removeNullishObjectProperties(params)).toString();
-
-    return fetch(url.toString(), {
-      method: 'GET',
-      headers: {
-        'x-referrer': PreviewDecider.getReferrer(),
-        'Content-Type': 'application/json',
-      },
-    }).then((response) => response.json());
+  addHook<
+    Name extends EcomHooks,
+    Func extends HookPayloadTypes[Name]
+  >(name: Name, func: (payload: Func) => void) {
+    return this.tppService?.getHookService().addHook(name, func);
   }
 }
 

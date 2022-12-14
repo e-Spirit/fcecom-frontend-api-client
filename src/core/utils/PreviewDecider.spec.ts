@@ -4,16 +4,16 @@ const API_URL = 'https://api_url:3000';
 const TEST_REFERRER = 'https://referrer_url';
 
 let fetchResponse: any;
-// @ts-ignore
-global.fetch = jest.fn(() =>
-  Promise.resolve({
-    json: () => Promise.resolve(fetchResponse),
-  })
-);
 
 describe('PreviewDecider', () => {
   beforeEach(() => {
     fetchResponse = undefined;
+    // @ts-ignore
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        json: () => Promise.resolve(fetchResponse),
+      })
+    );
   });
 
   describe('isPreview()', () => {
@@ -44,7 +44,7 @@ describe('PreviewDecider', () => {
         );
         expect(result).toEqual(true);
       });
-      it('should return true if the server returns true', async () => {
+      it('should return false if the server returns true', async () => {
         // Arrange
         fetchResponse = {
           isPreview: false,

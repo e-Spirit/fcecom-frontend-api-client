@@ -1,6 +1,6 @@
 {
   "name": "fcecom-frontend-api-client",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "FirstSpirit Connect for Commerce - Frontend API Client",
   "main": "dist/cjs",
   "module": "dist/esm",
@@ -44,6 +44,8 @@
     "prettier": "^2.6.2",
     "rimraf": "^3.0.2",
     "rollup": "^2.70.2",
+    "rollup-plugin-import-css": "^3.1.0",
+    "rollup-plugin-svg-import": "^1.6.0",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-ts": "^2.0.7",
     "ts-jest": "^27.1.4",
@@ -58,6 +60,10 @@
     "collectCoverage": true,
     "collectCoverageFrom": [
       "src/**/*"
+    ],
+    "coveragePathIgnorePatterns": [
+      ".meta.ts",
+      ".d.ts"
     ],
     "resetMocks": false,
     "preset": "ts-jest",

@@ -11,6 +11,6 @@ import { ParamObject } from './meta';
  * @return {*} Same object instance without empty properties.
  */
 export const removeNullishObjectProperties = (obj: ParamObject) => {
-  Object.keys(obj).forEach((key) => (obj[key] === undefined || (obj[key] === null) ? delete obj[key] : undefined));
+  Object.keys(obj).forEach((key) => (obj[key] === undefined || obj[key] === null ? delete obj[key] : undefined));
   return obj;
 };

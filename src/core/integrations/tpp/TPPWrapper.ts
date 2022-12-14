@@ -27,6 +27,7 @@ export class TPPWrapper implements TPPWrapperInterface {
 
   static createTPPLoader = () => new TPPLoader();
 
+
   private async addRerender() {
     const snap = await this.TPP_SNAP;
     /**

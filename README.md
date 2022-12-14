@@ -11,13 +11,13 @@ use [this contact form](https://www.crownpeak.com/contact-us) to get in touch.
 
 Install the module using `npm i fcecom-frontend-api-client`.
 
-## Backend Server
+## Backend Service
 It is required to use a backend service for authentication.
-Clone the [Connect for Commerce Frontend API Backend Service](https://github.com/e-Spirit/fcecom-frontend-api-backend) repository and follow the setup instructions.
+Clone [this repository](https://github.com/e-Spirit/fcecom-frontend-api-backend) and follow the setup instructions.
 
 ## Legal Notices
 
-The Connect for Commerce Frontend API is a product of [Crownpeak Technology GmbH](https://www.crownpeak.com), Dortmund, Germany. The Connect for Commerce Frontend API is subject to the Apache-2.0 license.
+The Connect for Commerce Frontend API module is a product of [Crownpeak Technology GmbH](https://www.crownpeak.com), Dortmund, Germany. The Connect for Commerce Frontend API module is subject to the Apache-2.0 license.
 
 ## Disclaimer
 
