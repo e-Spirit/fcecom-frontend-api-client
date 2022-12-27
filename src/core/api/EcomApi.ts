@@ -110,6 +110,10 @@ export class EcomApi {
    * @param params Parameter
    */
   async setElement(params: SetElementParams | null) {
+    if (!this.tppService) {
+      console.warn('Tried to access TPP while not in preview');
+      return;
+    }
     if (!params) {
       return;
     }
@@ -128,6 +132,10 @@ export class EcomApi {
    * @return {*} Whether the page was created.
    */
   async createPage(payload: CreatePagePayload): Promise<any> {
+    if (!this.tppService) {
+      console.warn('Tried to access TPP while not in preview');
+      return;
+    }
     return this.tppService?.createPage(payload);
   }
 
@@ -138,6 +146,10 @@ export class EcomApi {
    * @return {*} Whether the section was created.
    */
   async createSection(payload: CreateSectionPayload): Promise<any> {
+    if (!this.tppService) {
+      console.warn('Tried to access TPP while not in preview');
+      return;
+    }
     return this.tppService?.createSection(payload);
   }
 
@@ -150,6 +162,10 @@ export class EcomApi {
    * @return {*} The TPP instance if available, null otherwise.
    */
   async getTppInstance(): Promise<TPPWrapperInterface | null> {
+    if (!this.tppService) {
+      console.warn('Tried to access TPP while not in preview');
+      return null;
+    }
     return this.tppService?.getTppInstance() || null;
   }
 
@@ -168,12 +184,16 @@ export class EcomApi {
    * @template V
    * @param name Name of the hook.
    * @param func The hook's callback.
-   * @return {*} 
+   * @return {*}
    */
   addHook<
     Name extends EcomHooks,
     Func extends HookPayloadTypes[Name]
   >(name: Name, func: (payload: Func) => void) {
+    if (!this.tppService) {
+      console.warn('Tried to access TPP while not in preview');
+      return;
+    }
     return this.tppService?.getHookService().addHook(name, func);
   }
 }

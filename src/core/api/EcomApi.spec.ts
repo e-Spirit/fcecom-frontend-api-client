@@ -80,10 +80,12 @@ describe('EcomApi', () => {
           de: 'Display Name DE',
         },
       } as CreatePagePayload;
+      const consoleSpy = jest.spyOn(console, 'warn');
       // Act
       expect(async () => {
         await api.createPage(payload);
         // Assert
+        expect(consoleSpy).toBeCalledWith('Tried to access TPP while not in preview');
       }).not.toThrow();
     });
   });
@@ -108,9 +110,11 @@ describe('EcomApi', () => {
         pageId: 'testId',
         slotName: 'SlotName',
       } as CreateSectionPayload;
+      const consoleSpy = jest.spyOn(console, 'warn');
       // Act
       expect(async () => {
         await api.createSection(payload);
+        expect(consoleSpy).toBeCalledWith('Tried to access TPP while not in preview');
         // Assert
       }).not.toThrow();
     });
@@ -189,9 +193,11 @@ describe('EcomApi', () => {
     it('returns null if no TPPService is set', async () => {
       // Arrange
       api['tppService'] = undefined;
+      const consoleSpy = jest.spyOn(console, 'warn');
       // Act
       const result = await api.getTppInstance();
       // Assert
+      expect(consoleSpy).toBeCalledWith('Tried to access TPP while not in preview');
       expect(result).toBeNull();
     });
   });
@@ -301,11 +307,13 @@ describe('EcomApi', () => {
         id: 'ID',
         type: 'content'
       } as SetElementParams;
+      const consoleSpy = jest.spyOn(console, 'warn');
       // Act
       expect(async () => {
         await api.setElement(params);
         // Assert
-        expect(mockSlotParser.parseSlots).toBeCalledWith(params);
+        expect(mockSlotParser.parseSlots).not.toHaveBeenCalled();
+        expect(consoleSpy).toBeCalledWith('Tried to access TPP while not in preview');
       }).not.toThrow();
     });
   });
@@ -348,10 +356,12 @@ describe('EcomApi', () => {
       // Arrange
       api['tppService'] = undefined;
       const mockHook = jest.fn();
+      const consoleSpy = jest.spyOn(console, 'warn');
       // Act
       expect(() => {
         api.addHook(EcomHooks.CONTENT_CHANGE, mockHook);
         // Assert
+        expect(consoleSpy).toBeCalledWith('Tried to access TPP while not in preview');
       }).not.toThrow();
     });
   });
