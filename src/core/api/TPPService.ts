@@ -5,7 +5,7 @@
 
 import { HookService } from '../integrations/tpp/HookService';
 import { EcomHooks } from '../integrations/tpp/HookService.meta';
-import { TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
+import { SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
 import { CreatePagePayload, CreateSectionPayload, FindPageParams } from './EcomApi.meta';
 import { RemoteService } from './RemoteService';
 
@@ -16,6 +16,14 @@ import { RemoteService } from './RemoteService';
  * @class TPPService
  */
 export class TPPService {
+  /**
+   * the class of the Executable to be used on First Spirit side.
+   * @private
+   */
+  private readonly EXECUTABLE_CLASS = 'class:FirstSpirit Connect for Commerce - Preview Message Receiver';
+
+  private lastRequestedPreviewId?: string;
+
   private tppPromise?: Promise<any>;
   private tpp?: TPPWrapperInterface;
   private remoteService: RemoteService;
@@ -104,6 +112,7 @@ export class TPPService {
       .then(({ TPPWrapper }) => {
         this.setTPPWrapper(new TPPWrapper());
         this.initPreviewHooks();
+        this.initMessagesToServer();
         return Promise.resolve(true);
       })
       .catch((err: unknown) => {
@@ -134,32 +143,27 @@ export class TPPService {
     });
   }
 
-
   /**
    * Initialize the preview hooks.
    *
    * @private
-   * @return {*} 
+   * @return {*}
    */
   private async initPreviewHooks() {
-    const tpp = await this.getTppInstance();
-    const snap = await tpp?.TPP_SNAP;
-    if (!snap) {
-      console.warn('[FCECOM] No SNAP set');
-      return;
-    }
+    const snap = await this.checkForTPP();
+    if (!snap) return;
 
     snap.onContentChange((node, previewId, content) => {
       HookService.getInstance().callHook(EcomHooks.CONTENT_CHANGE, {
         node,
         previewId,
-        content
+        content,
       });
     });
 
     snap.onRequestPreviewElement((previewId) => {
       HookService.getInstance().callHook(EcomHooks.REQUEST_PREVIEW_ELEMENT, {
-        previewId
+        previewId,
       });
     });
 
@@ -172,6 +176,52 @@ export class TPPService {
       const { topic, payload } = message.data['fcecom'] || {};
       if (topic === 'openStoreFrontUrl') {
         HookService.getInstance().callHook(EcomHooks.OPEN_STOREFRONT_URL, payload);
+      }
+    });
+  }
+
+  /**
+   * Checks if tppSnap was loaded and if so, returns the loaded instance
+   * @private
+   * @return {SNAP | undefined} SNAP if it was loaded else undefined
+   */
+  private async checkForTPP(): Promise<SNAP | undefined> {
+    const tpp = await this.getTppInstance();
+    const snap = await tpp?.TPP_SNAP;
+    if (!snap) {
+      console.warn('[FCECOM] No SNAP set');
+      return;
+    }
+    return snap;
+  }
+
+  /**
+   * initializes all messages To the server (Executable calls)
+   *
+   * @private
+   */
+  private async initMessagesToServer() {
+    const snap = await this.checkForTPP();
+    if (!snap) return;
+
+    snap.onRequestPreviewElement(async (previewId) => {
+      if (this.lastRequestedPreviewId === previewId) return; /* do nothing if previewId did not change */
+      this.lastRequestedPreviewId = previewId;
+      const status = await snap.getElementStatus(previewId);
+      if (status.storeType === 'SITESTORE' && status.id) {
+        const topic = 'requestedPreviewElement';
+        const pageRefId = status.id;
+        const language = status.language;
+        const payload = { pageRefId, language };
+        snap.execute(
+          this.EXECUTABLE_CLASS,
+          {
+            topic,
+            ...payload,
+          },
+          false
+        );
+        snap.setPreviewElement(previewId);
       }
     });
   }
