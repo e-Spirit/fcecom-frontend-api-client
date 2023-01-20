@@ -9,11 +9,13 @@ import { SlotParser } from '../integrations/tpp/SlotParser';
 import { EcomHooks } from '../integrations/tpp/HookService.meta';
 import { HookService } from '../integrations/tpp/HookService';
 import { TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
+import { Logging, LogLevel, Logger } from "../utils/logging/Logger";
 
 jest.spyOn(PreviewDecider, 'isPreview').mockResolvedValue(true);
 
 const mockTppService = mock<TPPService>();
 const mockRemoteService = mock<RemoteService>();
+const mockLogger = mock<Logger>();
 
 const API_URL = 'https://api_url:3000';
 
@@ -22,6 +24,7 @@ describe('EcomApi', () => {
   beforeEach(() => {
     api = new EcomApi(API_URL);
     api['remoteService'] = mockRemoteService;
+    api['logger'] = mockLogger;
   });
 
   describe('constructor', () => {
@@ -33,6 +36,12 @@ describe('EcomApi', () => {
       // Assert
       expect(api).toBeInstanceOf(EcomApi);
       expect(spy).toHaveBeenCalledWith(API_URL);
+    });
+    it('sets custom logLevel', () => {
+      // Arrange & Act
+      new EcomApi(API_URL, LogLevel.WARNING);
+      // Assert
+      expect(Logging.logLevel).toBe(LogLevel.WARNING)
     });
     it('throws an error if given URL is invalid', () => {
       expect(() => {
@@ -80,12 +89,11 @@ describe('EcomApi', () => {
           de: 'Display Name DE',
         },
       } as CreatePagePayload;
-      const consoleSpy = jest.spyOn(console, 'warn');
       // Act
       expect(async () => {
         await api.createPage(payload);
         // Assert
-        expect(consoleSpy).toBeCalledWith('Tried to access TPP while not in preview');
+        expect(mockLogger.warn.mock.calls[0][0]).toEqual('Tried to access TPP while not in preview');
       }).not.toThrow();
     });
   });
@@ -110,11 +118,10 @@ describe('EcomApi', () => {
         pageId: 'testId',
         slotName: 'SlotName',
       } as CreateSectionPayload;
-      const consoleSpy = jest.spyOn(console, 'warn');
       // Act
       expect(async () => {
         await api.createSection(payload);
-        expect(consoleSpy).toBeCalledWith('Tried to access TPP while not in preview');
+        expect(mockLogger.warn.mock.calls[0][0]).toEqual('Tried to access TPP while not in preview');
         // Assert
       }).not.toThrow();
     });
@@ -193,11 +200,10 @@ describe('EcomApi', () => {
     it('returns null if no TPPService is set', async () => {
       // Arrange
       api['tppService'] = undefined;
-      const consoleSpy = jest.spyOn(console, 'warn');
       // Act
       const result = await api.getTppInstance();
       // Assert
-      expect(consoleSpy).toBeCalledWith('Tried to access TPP while not in preview');
+      expect(mockLogger.warn.mock.calls[0][0]).toEqual('Tried to access TPP while not in preview');
       expect(result).toBeNull();
     });
   });
@@ -307,13 +313,12 @@ describe('EcomApi', () => {
         id: 'ID',
         type: 'content'
       } as SetElementParams;
-      const consoleSpy = jest.spyOn(console, 'warn');
       // Act
       expect(async () => {
         await api.setElement(params);
         // Assert
         expect(mockSlotParser.parseSlots).not.toHaveBeenCalled();
-        expect(consoleSpy).toBeCalledWith('Tried to access TPP while not in preview');
+        expect(mockLogger.warn.mock.calls[0][0]).toEqual('Tried to access TPP while not in preview');
       }).not.toThrow();
     });
   });
@@ -356,12 +361,11 @@ describe('EcomApi', () => {
       // Arrange
       api['tppService'] = undefined;
       const mockHook = jest.fn();
-      const consoleSpy = jest.spyOn(console, 'warn');
       // Act
       expect(() => {
         api.addHook(EcomHooks.CONTENT_CHANGE, mockHook);
         // Assert
-        expect(consoleSpy).toBeCalledWith('Tried to access TPP while not in preview');
+        expect(mockLogger.warn.mock.calls[0][0]).toEqual('Tried to access TPP while not in preview');
       }).not.toThrow();
     });
   });

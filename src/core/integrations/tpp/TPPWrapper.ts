@@ -5,6 +5,7 @@
 
 import { TPPLoader } from './TPPLoader';
 import { SNAP, TPPWrapperInterface, TPPWrapperProperties } from './TPPWrapper.meta';
+import { getLogger } from "../../utils/logging/Logger";
 
 /**
  * Wraps tpp functions and adds error handling
@@ -14,6 +15,8 @@ import { SNAP, TPPWrapperInterface, TPPWrapperProperties } from './TPPWrapper.me
 export class TPPWrapper implements TPPWrapperInterface {
   readonly TPP_SNAP: Promise<SNAP | null>;
   readonly debug: boolean;
+
+  private readonly logger = getLogger('TPPWrapper')
 
   /**
    * @param args TPP Loader Properties
@@ -42,6 +45,6 @@ export class TPPWrapper implements TPPWrapperInterface {
    */
   async logIAmAlive() {
     const snap = await this.TPP_SNAP;
-    snap?.onInit(async (success: boolean) => console.log(`FirstSpirit Preview is ${success ? 'now' : 'NOT'} available! ${success ? '🥳' : '😱'}`));
+    snap?.onInit(async (success: boolean) => this.logger.info(`FirstSpirit Preview is ${success ? 'now' : 'NOT'} available! ${success ? '🥳' : '😱'}`));
   }
 }

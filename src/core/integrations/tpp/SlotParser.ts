@@ -9,6 +9,7 @@ import { TPPService } from '../../api/TPPService';
 import { addContentButton } from '../dom/addContentElement/addContentElement';
 import { HookService } from "./HookService";
 import { EcomHooks } from "./HookService.meta";
+import { getLogger } from "../../utils/logging/Logger";
 
 /**
  * Parses the current document's DOM and handles slots.
@@ -22,6 +23,7 @@ export class SlotParser {
   private remoteService: RemoteService;
   private tppService: TPPService;
   private hookService: HookService = HookService.getInstance()
+  private logger = getLogger('SlotParser');
 
   /**
    * Creates an instance of SlotParser.
@@ -131,7 +133,7 @@ export class SlotParser {
     return addContentButton({
       handleClick: async () => {
         return this.addContent(slotName).catch((err) => {
-          console.error('[FECOM FE API] Failed to add content to slot', slotName, err);
+          this.logger.error('Failed to add content to slot', slotName, err)
           alert('Failed to add content');
         });
       },
@@ -151,7 +153,7 @@ export class SlotParser {
    */
   private async addContent(slotName: string) {
     if (!this.currentCreatePagePayload) {
-      console.error('[FECOM FE API] No current element set');
+      this.logger.error('No current element set');
       return;
     }
 
@@ -170,10 +172,10 @@ export class SlotParser {
       this.hookService.callHook(EcomHooks.CREATE_SECTION, createSectionPayload);
 
       this.deleteAddContentButton(slotName);
-      console.log('[FECOM FE API] Created section:', createSectionResult);
+      this.logger.info('Created section', createSectionResult)
     } else {
       // This is the case if the user canceled the creation as well
-      console.warn('[FECOM FE API] Failed to create section :', createSectionResult);
+      this.logger.warn('Failed to create section', createSectionResult)
     }
   }
 
@@ -198,7 +200,7 @@ export class SlotParser {
     const createPageResult = await this.tppService.createPage(params);
 
     if (!createPageResult) {
-      console.error('[FECOM FE API] Failed to create page:', createPageResult);
+      this.logger.error('Failed to create page:', createPageResult);
       throw new Error('Failed to create page');
     }
 
@@ -210,7 +212,7 @@ export class SlotParser {
 
     const newPage = newPageResult && newPageResult.items[0];
     if (!newPage) {
-      console.error('[FECOM FE API] Failed to find new page:', newPageResult);
+      this.logger.error('Failed to find new page:', newPageResult);
       throw new Error('Failed to find new page');
     }
     return newPage;
@@ -233,7 +235,7 @@ export class SlotParser {
             .findPage(payload)
             .then((response) => {
               if (response.items?.length >= 1) {
-                console.log('[FECOM FE API] Page %s found after %d tries', payload, tries);
+                this.logger.info(`Page ${payload} found after ${tries} tries`)
                 rootResolve(response);
               } else {
                 // Not found, trigger catch
@@ -242,7 +244,7 @@ export class SlotParser {
             })
             .catch((err) => {
               if (tries >= MAX_TRIES) {
-                console.error('[FECOM FE API] Page %s does not exist after %d tries', payload, tries);
+                this.logger.error('Page %s does not exist after %d tries', payload, tries);
                 rootReject(err);
               } else {
                 setTimeout(() => {

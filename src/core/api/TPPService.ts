@@ -8,6 +8,7 @@ import { EcomHooks } from '../integrations/tpp/HookService.meta';
 import { SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
 import { CreatePagePayload, CreateSectionPayload, FindPageParams } from './EcomApi.meta';
 import { RemoteService } from './RemoteService';
+import { getLogger } from '../utils/logging/Logger';
 
 /**
  * Service to handle TPP actions.
@@ -21,6 +22,8 @@ export class TPPService {
    * @private
    */
   private readonly EXECUTABLE_CLASS = 'class:FirstSpirit Connect for Commerce - Preview Message Receiver';
+
+  private readonly logger = getLogger('TPPService');
 
   private lastRequestedPreviewId?: string;
 
@@ -60,7 +63,7 @@ export class TPPService {
     try {
       return await snap?.execute('class:FirstSpirit Connect for Commerce - Create Reference Page', payload);
     } catch (error: unknown) {
-      console.log(error);
+      this.logger.error('Create Page', error);
 
       await snap?.execute('script:show_error_message_dialog', {
         message: `${error}`,
@@ -85,12 +88,10 @@ export class TPPService {
         body: payload.slotName,
         result: true,
       });
-      if (result) {
-        console.log(result);
-      }
+      if (result) this.logger.info('Create Section', result);
       return result;
     } catch (error: unknown) {
-      console.log(error);
+      this.logger.error('Create Section', error);
 
       await snap?.execute('script:show_error_message_dialog', {
         message: `${error}`,
@@ -117,7 +118,7 @@ export class TPPService {
       })
       .catch((err: unknown) => {
         // Failed to load TPP
-        console.error(err);
+        this.logger.error('Failed to initialize TPP Service', err);
         return false;
       });
   }
@@ -189,7 +190,7 @@ export class TPPService {
     const tpp = await this.getTppInstance();
     const snap = await tpp?.TPP_SNAP;
     if (!snap) {
-      console.warn('[FCECOM] No SNAP set');
+      this.logger.warn('No SNAP set');
       return;
     }
     return snap;

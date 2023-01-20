@@ -1,3 +1,5 @@
+import { getLogger } from './logging/Logger';
+
 /**
  * Helper to decide whether the application runs in preview mode.
  *
@@ -8,6 +10,7 @@
  */
 export class PreviewDecider {
   private static url: string;
+  private static readonly logger = getLogger('PreviewDecider');
 
   /**
    * Sets the server URL of the backend service.
@@ -38,7 +41,7 @@ export class PreviewDecider {
       }).then((response) => response.json());
       return isPreview || false;
     } catch (err: unknown) {
-      console.info('preview disabled | init request failed');
+      this.logger.info('preview disabled | init request failed', err);
       return false;
     }
   }

@@ -48,6 +48,7 @@ describe('RemoteService', () => {
     it('it uses default values for parameters when finding a page', async () => {
       // Arrange
       fetchResponse = {};
+      service.setDefaultLocale('en_GB')
 
       // Act
       const result = await service.findPage({
@@ -79,6 +80,7 @@ describe('RemoteService', () => {
     it('it uses default values for parameters when fetching the navigation', async () => {
       // Arrange
       fetchResponse = {};
+      service.setDefaultLocale('en_GB')
 
       // Act
       const result = await service.fetchNavigation({});

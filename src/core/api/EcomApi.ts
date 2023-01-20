@@ -13,6 +13,7 @@ import { SlotParser } from '../integrations/tpp/SlotParser';
 import { RemoteService } from './RemoteService';
 import { TPPService } from './TPPService';
 import { EcomHooks, HookPayloadTypes } from '../integrations/tpp/HookService.meta';
+import { getLogger, Logging, LogLevel } from "../utils/logging/Logger";
 
 /**
  * Frontend API for Connect for Commerce.
@@ -21,18 +22,22 @@ import { EcomHooks, HookPayloadTypes } from '../integrations/tpp/HookService.met
  * @class EcomApi
  */
 export class EcomApi {
-  defaultLocale: string = 'en_GB';
+  defaultLocale?: string;
   private readonly baseUrl: string;
   private remoteService: RemoteService;
   private tppService?: TPPService;
   private slotParser?: SlotParser;
+  private logger = getLogger('EcomAPI');
 
   /**
    * Creates an instance of EcomApi.
    *
    * @param baseUrl URL of the backend service.
+   * @param logLevel <b>0</b>: DEBUG<br><b>1</b>: INFO<br><b>2</b>: WARNING<br><b>3</b>: ERROR<br><b>4</b>: NONE<br>
    */
-  constructor(baseUrl: string) {
+  constructor(baseUrl: string, logLevel = LogLevel.INFO) {
+    Logging.init(logLevel);
+
     baseUrl = baseUrl.trim();
     if (baseUrl !== '') {
       try {
@@ -67,7 +72,7 @@ export class EcomApi {
         })
         .catch((err: unknown) => {
           // Failed to load TPPService
-          console.error(err);
+          this.logger.error('Failed to initialize', err)
           return false;
         });
     }
@@ -110,13 +115,8 @@ export class EcomApi {
    * @param params Parameter
    */
   async setElement(params: SetElementParams | null) {
-    if (!this.tppService) {
-      console.warn('Tried to access TPP while not in preview');
-      return;
-    }
-    if (!params) {
-      return;
-    }
+    if (!this.tppService) return this.logger.warn('Tried to access TPP while not in preview');
+    if (!params) return;
     await this.tppService?.setElement({
       id: params.id,
       type: params.type,
@@ -132,10 +132,7 @@ export class EcomApi {
    * @return {*} Whether the page was created.
    */
   async createPage(payload: CreatePagePayload): Promise<any> {
-    if (!this.tppService) {
-      console.warn('Tried to access TPP while not in preview');
-      return;
-    }
+    if (!this.tppService) return this.logger.warn('Tried to access TPP while not in preview');
     return this.tppService?.createPage(payload);
   }
 
@@ -146,10 +143,7 @@ export class EcomApi {
    * @return {*} Whether the section was created.
    */
   async createSection(payload: CreateSectionPayload): Promise<any> {
-    if (!this.tppService) {
-      console.warn('Tried to access TPP while not in preview');
-      return;
-    }
+    if (!this.tppService) return this.logger.warn('Tried to access TPP while not in preview');
     return this.tppService?.createSection(payload);
   }
 
@@ -163,7 +157,7 @@ export class EcomApi {
    */
   async getTppInstance(): Promise<TPPWrapperInterface | null> {
     if (!this.tppService) {
-      console.warn('Tried to access TPP while not in preview');
+      this.logger.warn('Tried to access TPP while not in preview');
       return null;
     }
     return this.tppService?.getTppInstance() || null;
@@ -190,10 +184,7 @@ export class EcomApi {
     Name extends EcomHooks,
     Func extends HookPayloadTypes[Name]
   >(name: Name, func: (payload: Func) => void) {
-    if (!this.tppService) {
-      console.warn('Tried to access TPP while not in preview');
-      return;
-    }
+    if (!this.tppService) return this.logger.warn('Tried to access TPP while not in preview');
     return this.tppService?.getHookService().addHook(name, func);
   }
 }

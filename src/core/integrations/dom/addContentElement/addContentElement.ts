@@ -5,9 +5,9 @@ import plusSVG from './plusButton.module.svg';
 
 /**
  * Creates the HTML for the "Add content" button.
- * 
- * @param param Parameters to create the button with. 
- * @returns 
+ *
+ * @param param Parameters to create the button with.
+ * @returns
  */
 export const addContentButton = ({ handleClick, extraCSS }: AddContentButtonParams): HTMLElement => {
   const addStyle = (style: string) => {
@@ -34,7 +34,10 @@ export const addContentButton = ({ handleClick, extraCSS }: AddContentButtonPara
   buttonContainer.appendChild(buttonIcon);
   buttonIcon.classList.add('square-icon');
   buttonIcon.ariaHidden = 'true';
-  buttonIcon.appendChild(plusSVG());
+
+  const svgTemplate = document.createElement('template');
+  svgTemplate.innerHTML = plusSVG;
+  buttonIcon.appendChild(svgTemplate.content);
   // <div class="square-icon"><svg>...</svg></div>
 
   const buttonTitle = document.createElement('span');

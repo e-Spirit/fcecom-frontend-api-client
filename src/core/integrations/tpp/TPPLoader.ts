@@ -4,8 +4,11 @@
  */
 
 import { SNAP } from './TPPWrapper.meta';
+import { getLogger } from "../../utils/logging/Logger";
 
 export class TPPLoader {
+  private readonly logger = getLogger('TPPLoader')
+
   /**
    * Loads tpp functionality and intercepts / processes
    * messages received from Content Creator
@@ -17,7 +20,7 @@ export class TPPLoader {
           window.removeEventListener('message', messageListener);
 
           const version = data.tpp._response.version;
-          console.debug('load TPP_SNAP version %o', version);
+          this.logger.debug('load TPP_SNAP version %o', version);
 
           const url = `${window.document.referrer}fs5webedit/snap.js`;
           const scriptTag = document.body.appendChild(document.createElement('script'));
@@ -31,7 +34,7 @@ export class TPPLoader {
               reject(new Error(`Unable to set up TPP_SNAP via '${url}'.`));
             }
 
-            console.debug('loaded TPP_SNAP via %o', url);
+            this.logger.debug('loaded TPP_SNAP via %o', url);
             resolve((window as any).TPP_SNAP);
           };
           scriptTag.src = url;

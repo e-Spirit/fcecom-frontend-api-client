@@ -15,8 +15,8 @@ import { FetchNavigationParams, FetchNavigationResponse, FindPageParams, FindPag
  * @class RemoteService
  */
 export class RemoteService {
-  defaultLocale: string = 'en_GB';
-  private baseUrl: string;
+  defaultLocale?: string;
+  private readonly baseUrl: string;
 
   /**
    * Creates an instance of RemoteService.

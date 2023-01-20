@@ -1,10 +1,6 @@
 export { EcomApi } from './core/api/EcomApi';
-export { 
-  EcomHooks, 
-  OpenStoreFrontUrlPayload, 
-  ContentChangePayload, 
-  RequestPreviewElementPayload 
-} from './core/integrations/tpp/HookService.meta';
+export { LogLevel } from './core/utils/logging/Logger';
+export { EcomHooks, OpenStoreFrontUrlPayload, ContentChangePayload, RequestPreviewElementPayload } from './core/integrations/tpp/HookService.meta';
 export {
   CreatePagePayload,
   CreateSectionPayload,
