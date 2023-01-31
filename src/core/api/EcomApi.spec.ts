@@ -1,7 +1,7 @@
 import { EcomApi } from './EcomApi';
 import { PreviewDecider } from '../utils/PreviewDecider';
 import { CreatePagePayload, CreateSectionPayload, SetElementParams } from './TPPService.meta';
-import { FindPageParams } from './Remoteservice.meta';
+import { FindElementParams, FindPageParams } from './Remoteservice.meta';
 import { mock } from 'jest-mock-extended';
 import { RemoteService } from './RemoteService';
 import { TPPService } from './TPPService';
@@ -237,6 +237,20 @@ describe('EcomApi', () => {
     });
   });
 
+  describe('findElement()', () => {
+    it('it calls RemoteService.findElement', async () => {
+      // Arrange
+      const payload = {
+        id: 'plumber0PIERRE*porch',
+        locale: 'de',
+      } as FindElementParams;
+      // Act
+      await api.findElement(payload);
+      // Assert
+      expect(mockRemoteService.findElement.mock.calls[0][0]).toEqual(payload);
+    });
+  });
+
   describe('setDefaultLocale()', () => {
     it('it should apply default locale correctly', () => {
       // Arrange
@@ -352,9 +366,9 @@ describe('EcomApi', () => {
       jest.spyOn(mockTppService, 'getHookService').mockReturnValueOnce(mockHookService);
       const mockHook = jest.fn();
       // Act
-      api.addHook(EcomHooks.CONTENT_CHANGE, mockHook);
+      api.addHook(EcomHooks.CONTENT_CHANGED, mockHook);
       // Assert
-      expect(mockHookService.addHook.mock.calls[0][0]).toEqual(EcomHooks.CONTENT_CHANGE);
+      expect(mockHookService.addHook.mock.calls[0][0]).toEqual(EcomHooks.CONTENT_CHANGED);
       expect(mockHookService.addHook.mock.calls[0][1]).toEqual(mockHook);
     });
     it('does not throw if no TPPService is set', async () => {
@@ -363,7 +377,7 @@ describe('EcomApi', () => {
       const mockHook = jest.fn();
       // Act
       expect(() => {
-        api.addHook(EcomHooks.CONTENT_CHANGE, mockHook);
+        api.addHook(EcomHooks.CONTENT_CHANGED, mockHook);
         // Assert
         expect(mockLogger.warn.mock.calls[0][0]).toEqual('Tried to access TPP while not in preview');
       }).not.toThrow();

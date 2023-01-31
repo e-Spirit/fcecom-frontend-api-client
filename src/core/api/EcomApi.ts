@@ -3,6 +3,8 @@ import {
   CreateSectionPayload,
   FetchNavigationParams,
   FetchNavigationResponse,
+  FindElementParams,
+  FindElementResponse,
   FindPageParams,
   FindPageResponse,
   SetElementParams,
@@ -97,6 +99,16 @@ export class EcomApi {
    */
   async fetchNavigation(params: FetchNavigationParams): Promise<FetchNavigationResponse> {
     return this.remoteService.fetchNavigation(params);
+  }
+
+  /**
+   * Finds a CaaS element.
+   *
+   * @param params Parameters to use to find the element.
+   * @return {*} Details about the element.
+   */
+  async findElement(params: FindElementParams): Promise<FindElementResponse> {
+    return this.remoteService.findElement(params);
   }
 
   /**

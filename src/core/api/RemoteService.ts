@@ -3,10 +3,12 @@
  * @module RemoteService
  */
 
+import { EcomClientError, EcomError, ERROR_CODES, HttpError } from './errors';
 import { removeNullishObjectProperties } from '../utils/helper';
 import { ParamObject } from '../utils/meta';
 import { PreviewDecider } from '../utils/PreviewDecider';
-import { FetchNavigationParams, FetchNavigationResponse, FindPageParams, FindPageResponse } from './EcomApi.meta';
+import { FetchNavigationParams, FetchNavigationResponse, FindElementParams, FindElementResponse, FindPageParams, FindPageResponse } from './EcomApi.meta';
+import { getLogger } from '../utils/logging/Logger';
 
 /**
  * Service to handle calls against the Frontend API server.
@@ -17,6 +19,7 @@ import { FetchNavigationParams, FetchNavigationResponse, FindPageParams, FindPag
 export class RemoteService {
   defaultLocale?: string;
   private readonly baseUrl: string;
+  private readonly logger = getLogger('RemoteService');
 
   /**
    * Creates an instance of RemoteService.
@@ -44,7 +47,20 @@ export class RemoteService {
    */
   async findPage(params: FindPageParams): Promise<FindPageResponse> {
     const { id, locale = this.defaultLocale, type } = params;
-    return this.performGetRequest<FindPageParams, FindPageResponse>('findPage', { id, locale, type });
+    try {
+      return await this.performGetRequest<FindPageParams, FindPageResponse>('findPage', { id, locale, type });
+    } catch (err: unknown) {
+      let ecomError: EcomError;
+      if (err instanceof HttpError && err.status === 401) {
+        ecomError = new EcomClientError(ERROR_CODES.FIND_PAGE_UNAUTHORIZED, 'Failed to fetch page');
+      } else if (err instanceof HttpError && err.status === 400) {
+        ecomError = new EcomClientError(ERROR_CODES.FIND_PAGE_INVALID_REQUEST, 'Failed to fetch page');
+      } else {
+        ecomError = new EcomClientError(ERROR_CODES.NO_CAAS_CONNECTION, 'Failed to fetch page');
+      }
+      this.logger.error('Failed to fetch page', ecomError);
+      throw ecomError;
+    }
   }
 
   /**
@@ -55,9 +71,36 @@ export class RemoteService {
    */
   async fetchNavigation(params: FetchNavigationParams): Promise<FetchNavigationResponse> {
     const { locale = this.defaultLocale, initialPath } = params;
-    return this.performGetRequest<FetchNavigationParams, FetchNavigationResponse>('fetchNavigation', {
+    try {
+      return await this.performGetRequest<FetchNavigationParams, FetchNavigationResponse>('fetchNavigation', {
       locale,
       initialPath,
+      });
+    } catch (err: unknown) {
+      let ecomError: EcomError;
+      if (err instanceof HttpError && err.status === 401) {
+        ecomError = new EcomClientError(ERROR_CODES.FETCH_NAVIGATION_UNAUTHORIZED, 'Failed to fetch navigation');
+      } else if (err instanceof HttpError && err.status === 400) {
+        ecomError = new EcomClientError(ERROR_CODES.FETCH_NAVIGATION_INVALID_REQUEST, 'Failed to fetch navigation');
+      } else {
+        ecomError = new EcomClientError(ERROR_CODES.NO_NAVIGATION_SERVICE_CONNECTION, 'Failed to fetch navigation');
+      }
+      this.logger.error('Failed to fetch navigation', ecomError);
+      throw ecomError;
+    }
+  }
+
+  /**
+   * Fetches the navigation service.
+   *
+   * @param params Parameters to use to find the element.
+   * @return {*} Details about the navigation.
+   */
+  async findElement(params: FindElementParams): Promise<FindElementResponse> {
+    const { id, locale = this.defaultLocale } = params;
+    return this.performGetRequest<FindElementParams, FindElementResponse>('findElement', {
+      id,
+      locale,
     });
   }
 
@@ -81,6 +124,14 @@ export class RemoteService {
         'x-referrer': PreviewDecider.getReferrer(),
         'Content-Type': 'application/json',
       },
-    }).then((response) => response.json());
+    }).then((response) => {
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new HttpError(response.status, 'Unauthorized');
+        }
+        throw new HttpError(response.status, 'Failed to fetch');
+      }
+      return response.json();
+    });
   }
 }

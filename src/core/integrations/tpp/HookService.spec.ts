@@ -12,9 +12,9 @@ describe('HookService.getInstance()', () => {
         node: mock<HTMLElement>(),
         previewId: 'PREVIEWID'
       };
-      HookService.getInstance().addHook(EcomHooks.CONTENT_CHANGE, testMethod);
+      HookService.getInstance().addHook(EcomHooks.CONTENT_CHANGED, testMethod);
       // Act
-      HookService.getInstance().callHook(EcomHooks.CONTENT_CHANGE, payload);
+      HookService.getInstance().callHook(EcomHooks.CONTENT_CHANGED, payload);
       // Assert
       expect(testMethod).toBeCalledWith(payload);
     });
@@ -27,7 +27,7 @@ describe('HookService.getInstance()', () => {
       };
       expect(() => {
         // Act
-        HookService.getInstance().callHook(EcomHooks.CONTENT_CHANGE, payload);
+        HookService.getInstance().callHook(EcomHooks.CONTENT_CHANGED, payload);
         // Assert
       }).not.toThrow();
     });

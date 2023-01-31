@@ -103,9 +103,11 @@ export interface SNAP {
 
   onRequestPreviewElement(handler: (previewId: string) => void): void;
 
+  onNavigationChange(handler: (previewId: string) => void): void;
+
   renderElement(previewId: string): Promise<string | object>;
 
-  setPreviewElement(previewId: string): void;
+  setPreviewElement(previewId: string | null): void;
 
   getElementStatus(previewId: string): Promise<Status>;
 

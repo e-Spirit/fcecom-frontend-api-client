@@ -67,3 +67,24 @@ export type FetchNavigationResponse = {
     };
   };
 };
+
+export type FindElementParams = {
+  /**
+   * CaaS ID of the element to find.
+   */
+  id: string;
+  /**
+   * Locale to look up. Will use default locale if omitted.
+   */
+  locale?: string;
+};
+
+/**
+ * Response when finding an element.
+ */
+export type FindElementResponse = {
+  type: string;
+  id: string;
+  // Allow any other keys
+  [key: string]: any;
+};

@@ -4,6 +4,7 @@
  */
 
 import { CreatePagePayload, FindPageItem, FindPageParams, FindPageResponse, SetElementParams } from '../../api/EcomApi.meta';
+import { EcomError } from '../../api/errors';
 import { RemoteService } from '../../api/RemoteService';
 import { TPPService } from '../../api/TPPService';
 import { addContentButton } from '../dom/addContentElement/addContentElement';
@@ -34,6 +35,16 @@ export class SlotParser {
   constructor(remoteService: RemoteService, tppService: TPPService) {
     this.remoteService = remoteService;
     this.tppService = tppService;
+
+    this.tppService.getHookService().addHook(EcomHooks.CONTENT_CHANGED, async (payload) => {
+      if (!payload.content) {
+        // Section was removed
+        if (this.currentCreatePagePayload) {
+          // Trigger new adding of buttons
+          await this.parseSlots(this.currentCreatePagePayload);
+        }
+      }
+    });
   }
 
   /**
@@ -42,6 +53,7 @@ export class SlotParser {
    * @param currentCreatePagePayload
    */
   async parseSlots(params: SetElementParams) {
+    this.clear();
     this.currentCreatePagePayload = params;
     const findPageResult = await this.remoteService.findPage({
       id: params.id,
@@ -76,10 +88,10 @@ export class SlotParser {
     elements.forEach((element) => {
       const slotName = element.getAttribute('data-fcecom-slot-name');
       if (slotName) {
-        const contentSlot = page.children.find((child: any) => child.name === slotName);
+        const contentSlot = this.getSlot(page, slotName);
         if (contentSlot) {
-          element.setAttribute('data-preview-id', contentSlot.previewId);
           if (contentSlot.children?.length === 0) {
+
             // If the slot has no content, render button
             const button = this.createAddContentButton(slotName);
             element.appendChild(button);
@@ -114,11 +126,9 @@ export class SlotParser {
   private setupAddContentButton(slotName: string) {
     const element = document.querySelector(`[data-fcecom-slot-name="${slotName}"]`);
     if (element) {
-      if (slotName) {
-        const button = this.createAddContentButton(slotName);
-        element.appendChild(button);
-        this.addContentButtons.push(button);
-      }
+      const button = this.createAddContentButton(slotName);
+      element.appendChild(button);
+      this.addContentButtons.push(button);
     }
   }
 
@@ -132,17 +142,24 @@ export class SlotParser {
   private createAddContentButton(slotName: string): HTMLElement {
     return addContentButton({
       handleClick: async () => {
-        return this.addContent(slotName).catch((err) => {
-          this.logger.error('Failed to add content to slot', slotName, err)
-          alert('Failed to add content');
+        return this.addContent(slotName).catch(async (err) => {
+          this.logger.error('Failed to add content to slot', slotName, err);
+          await this.tppService.handleError(err);
         });
       },
     });
   }
 
+  /**
+   * Removes the add content button within the given slot.
+   *
+   * @private
+   * @param slotName Name of the slot the button should be removed from.
+   */
   private deleteAddContentButton(slotName: string): void {
     const button = document.querySelector(`[data-fcecom-slot-name=${slotName}] div.fcecom-add-content-button-wrapper`);
     button?.remove();
+    this.addContentButtons = this.addContentButtons.filter((b) => b !== button);
   }
 
   /**
@@ -169,9 +186,14 @@ export class SlotParser {
     const createSectionResult = await this.tppService.createSection(createSectionPayload);
 
     if (createSectionResult) {
-      this.hookService.callHook(EcomHooks.CREATE_SECTION, createSectionPayload);
+      this.hookService.callHook(EcomHooks.SECTION_CREATED, createSectionPayload);
 
-      this.deleteAddContentButton(slotName);
+      if (this.getSlot(newPage, slotName)?.children.length === 0) {
+        // The new section is the first one of the page
+        this.deleteAddContentButton(slotName);
+        // Remove attribute of now non-empty slot
+        document.querySelector(`[data-fcecom-slot-name=${slotName}]`)?.removeAttribute('data-preview-id');
+      }
       this.logger.info('Created section', createSectionResult)
     } else {
       // This is the case if the user canceled the creation as well
@@ -197,12 +219,20 @@ export class SlotParser {
       return page;
     }
 
-    const createPageResult = await this.tppService.createPage(params);
+    try {
+      const createPageResult = await this.tppService.createPage(params);
 
-    if (!createPageResult) {
-      this.logger.error('Failed to create page:', createPageResult);
-      throw new Error('Failed to create page');
+      if (!createPageResult) {
+        this.logger.error('Failed to create page:', createPageResult);
+        throw new EcomError('806', 'Failed to create page');
+      }
+    } catch (err: unknown) {
+      if (err instanceof EcomError) {
+        throw err;
+      }
+      throw new EcomError('806', 'Failed to create page');
     }
+
 
     // Find new page to get preview ID
     const newPageResult = await this.pollForCaasPage({
@@ -213,7 +243,7 @@ export class SlotParser {
     const newPage = newPageResult && newPageResult.items[0];
     if (!newPage) {
       this.logger.error('Failed to find new page:', newPageResult);
-      throw new Error('Failed to find new page');
+      throw new EcomError('806' ,'Failed to find new page');
     }
     return newPage;
   }
@@ -256,5 +286,21 @@ export class SlotParser {
       };
       findPage(payload);
     });
+  }
+
+  /**
+   * Returns the given slot within the given page.
+   *
+   * @private
+   * @param page Page item to find the slot in.
+   * @param slotName Name of the slot to get.
+   * @return {*} 
+   */
+  private getSlot(page: FindPageItem, slotName: string): FindPageResponse['items'][0] | null {
+    const contentSlot = page.children.find((child: any) => child.name === slotName);
+    if (contentSlot) {
+      return contentSlot;
+    }
+    return null;
   }
 }

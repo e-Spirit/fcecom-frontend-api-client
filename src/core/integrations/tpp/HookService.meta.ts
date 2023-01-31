@@ -1,4 +1,4 @@
-import { CreateSectionPayload } from "../../api/TPPService.meta";
+import { CreateSectionPayload } from '../../api/TPPService.meta';
 
 /**
  * This enumeration contains the possible hooks to use.
@@ -7,10 +7,10 @@ import { CreateSectionPayload } from "../../api/TPPService.meta";
 export enum EcomHooks {
   /**
    * A hook that is fired when the content of a section has been changed via the Content Creator.
-   * Not fired when a new section is created via 'Add content' button. Use CREATE_SECTION instead.
+   * Not fired when a new section is created via 'Add content' button. Use SECTION_CREATED instead.
    * This is a proxy for [TPP.onContentChange](https://docs.e-spirit.com/tpp/snap/index.html#oncontentchangehandler).
    */
-  CONTENT_CHANGE = 'contentChange',
+  CONTENT_CHANGED = 'contentChanged',
   /**
    * A hook that is fired when a new storefront page should be navigated to. For example on a report click in the Content Creator or a click on the Content Creator navigation.
    */
@@ -24,14 +24,19 @@ export enum EcomHooks {
   /**
    * A hook that is fired when a new section is created via the 'Add Content' button in the Content Creator.
    */
-  CREATE_SECTION = 'createSection',
+  SECTION_CREATED = 'sectionCreated',
+
+  /**
+   * A hook that is fired when a new page is created via the  'Create page' button in the Content Creator.
+   */
+  PAGE_CREATED = 'pageCreated',
 }
 
-export type ContentChangePayload = {
+export type ContentChangedHookPayload = {
   /**
-   * HTML element of the element that changed.
+   * HTML element of the element that changed or null.
    */
-  node: HTMLElement;
+  node: HTMLElement | null;
   /**
    * Preview ID of the element that changed.
    */
@@ -42,7 +47,7 @@ export type ContentChangePayload = {
   content: any;
 };
 
-export type OpenStoreFrontUrlPayload = {
+export type OpenStoreFrontUrlHookPayload = {
   /**
    * ID of the element to open.
    */
@@ -62,20 +67,29 @@ export type OpenStoreFrontUrlPayload = {
   url: string;
 };
 
-export type RequestPreviewElementPayload = {
+export type RequestPreviewElementHookPayload = {
   /**
    * Preview ID of the requested element.
    */
   previewId: string;
 };
 
+export type PageCreatedHookPayload = {
+  /**
+   * Preview ID of the created element.
+   */
+  previewId: string;
+};
+
+export { CreateSectionPayload as SectionCreatedHookPayload };
 
 /**
  * @internal
  */
 export interface HookPayloadTypes {
-  [EcomHooks.CONTENT_CHANGE]: ContentChangePayload;
-  [EcomHooks.OPEN_STOREFRONT_URL]: OpenStoreFrontUrlPayload;
-  [EcomHooks.REQUEST_PREVIEW_ELEMENT]: RequestPreviewElementPayload;
-  [EcomHooks.CREATE_SECTION]: CreateSectionPayload;
-};
+  [EcomHooks.CONTENT_CHANGED]: ContentChangedHookPayload;
+  [EcomHooks.OPEN_STOREFRONT_URL]: OpenStoreFrontUrlHookPayload;
+  [EcomHooks.REQUEST_PREVIEW_ELEMENT]: RequestPreviewElementHookPayload;
+  [EcomHooks.SECTION_CREATED]: CreateSectionPayload;
+  [EcomHooks.PAGE_CREATED]: PageCreatedHookPayload;
+}

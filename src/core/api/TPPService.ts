@@ -6,7 +6,8 @@
 import { HookService } from '../integrations/tpp/HookService';
 import { EcomHooks } from '../integrations/tpp/HookService.meta';
 import { SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
-import { CreatePagePayload, CreateSectionPayload, FindPageParams } from './EcomApi.meta';
+import { EcomClientError, EcomError, EcomModuleError, ERROR_CODES } from './errors';
+import { CreatePagePayload, CreatePageResponse, CreateSectionPayload, FindPageParams } from './EcomApi.meta';
 import { RemoteService } from './RemoteService';
 import { getLogger } from '../utils/logging/Logger';
 
@@ -23,7 +24,7 @@ export class TPPService {
    */
   private readonly EXECUTABLE_CLASS = 'class:FirstSpirit Connect for Commerce - Preview Message Receiver';
 
-  private readonly logger = getLogger('TPPService');
+  private logger = getLogger('TPPService');
 
   private lastRequestedPreviewId?: string;
 
@@ -43,10 +44,12 @@ export class TPPService {
   async setElement(params: FindPageParams) {
     const findPageResult = await this.remoteService.findPage(params);
     const page = findPageResult && findPageResult.items[0];
+    const tpp = await this.getTppInstance();
+    const snap = await tpp?.TPP_SNAP;
     if (page && page.previewId) {
-      const tpp = await this.getTppInstance();
-      const snap = await tpp?.TPP_SNAP;
       snap?.setPreviewElement(page.previewId);
+    } else {
+      snap?.setPreviewElement(null);
     }
   }
 
@@ -56,20 +59,31 @@ export class TPPService {
    * @param payload Payload to use when creating the page.
    * @return {*} Whether the page was created.
    */
-  async createPage(payload: CreatePagePayload): Promise<any> {
+  async createPage(payload: CreatePagePayload): Promise<boolean> {
     const tpp = await this.getTppInstance();
     const snap = await tpp?.TPP_SNAP;
 
     try {
-      return await snap?.execute('class:FirstSpirit Connect for Commerce - Create Reference Page', payload);
-    } catch (error: unknown) {
-      this.logger.error('Create Page', error);
-
-      await snap?.execute('script:show_error_message_dialog', {
-        message: `${error}`,
-        title: 'Could not create page',
-        ok: false,
-      });
+      const result = await snap?.execute('class:FirstSpirit Connect for Commerce - Create Reference Page', payload);
+      const parsedResponse = this.parseModuleResponse(result);
+      if (parsedResponse.success) {
+        return true;
+      } else {
+        let errorCode: string = ERROR_CODES.CREATE_PAGE_FAILED;
+        if (parsedResponse.error?.code) {
+          errorCode = parsedResponse.error?.code.toString();
+        }
+        this.logger.error('Error in module during page creation', parsedResponse);
+        throw new EcomModuleError(errorCode, 'Cannot create page');
+      }
+    } catch (err: unknown) {
+      if (err instanceof EcomError) {
+        // Own error, re-throw it
+        throw err;
+      }
+      // General error during TPP call
+      this.logger.error('Failed to execute executable', err);
+      throw new EcomClientError(ERROR_CODES.CREATE_PAGE_FAILED, 'Cannot create page');
     }
   }
 
@@ -91,13 +105,12 @@ export class TPPService {
       if (result) this.logger.info('Create Section', result);
       return result;
     } catch (error: unknown) {
-      this.logger.error('Create Section', error);
-
-      await snap?.execute('script:show_error_message_dialog', {
-        message: `${error}`,
-        title: 'Could not create section',
-        ok: false,
-      });
+      // General error during TPP call
+      this.logger.error('Failed to create section', error);
+      if (error instanceof Error) {
+        error = new EcomClientError(ERROR_CODES.CREATE_SECTION_FAILED, 'Cannot create section');
+      }
+      throw error;
     }
   }
 
@@ -145,25 +158,84 @@ export class TPPService {
   }
 
   /**
-   * Initialize the preview hooks.
+   * Displays the given error to the user.
    *
-   * @private
+   * @param error The error to display.
    * @return {*}
    */
-  private async initPreviewHooks() {
+  async handleError(error: unknown) {
+    const tpp = await this.getTppInstance();
+    const snap = await tpp?.TPP_SNAP;
+
+    let title = 'Something went wrong'; // i18n
+    let code = '000';
+    let message = 'Unknown error'; // i18n
+
+    if (error instanceof EcomError) {
+      title = 'Failed to add content'; // i18n
+      message = error.message; // i18n
+      code = error.code;
+    }
+
+    if (error instanceof EcomModuleError) {
+      this.logger.error('Error in FirstSpirit Module - see server logs for more details', error);
+    } else {
+      this.logger.error('An error occured', error);
+    }
+    // Do not show the dialog for module errors as they are handled by the FSM itself
+    return await snap?.execute('script:show_error_message_dialog', {
+      message: `${code} - ${message}`,
+      title,
+      ok: false,
+    });
+  }
+
+  /**
+   * Initialize the preview hooks.
+   *
+   * @protected
+   * @return {*}
+   */
+  protected async initPreviewHooks() {
     const snap = await this.checkForTPP();
     if (!snap) return;
 
     snap.onContentChange((node, previewId, content) => {
-      HookService.getInstance().callHook(EcomHooks.CONTENT_CHANGE, {
+      HookService.getInstance().callHook(EcomHooks.CONTENT_CHANGED, {
         node,
         previewId,
         content,
       });
     });
 
+    /**
+     * This is needed to disable the render fallback which would be a page reload (not logical for SPAs).
+     * See https://docs.e-spirit.com/tpp/snap/index.html#tpp_snaponrerenderview for more info.
+     * To make things easier, we trigger the same hook as in onContentChange
+     **/
+    snap.onRerenderView(async () => {
+      const previewElement = await snap.getPreviewElement();
+      // Use tpps' renderElement to get the updated section content and do not fetch it from the CaaS,
+      // because it might not have been deployed yet to produce same behavior as on onContentChange.
+      const renderResult = await snap.renderElement(previewElement);
+
+      const node = document.querySelector<HTMLElement>(`[data-preview-id="${previewElement}"]`);
+
+      HookService.getInstance().callHook(EcomHooks.CONTENT_CHANGED, {
+        node: node,
+        previewId: previewElement,
+        content: renderResult,
+      });
+    });
+
     snap.onRequestPreviewElement((previewId) => {
       HookService.getInstance().callHook(EcomHooks.REQUEST_PREVIEW_ELEMENT, {
+        previewId,
+      });
+    });
+
+    snap.onNavigationChange((previewId) => {
+      HookService.getInstance().callHook(EcomHooks.PAGE_CREATED, {
         previewId,
       });
     });
@@ -240,5 +312,30 @@ export class TPPService {
    */
   protected setTPPWrapper(tpp: TPPWrapperInterface): void {
     this.tpp = tpp;
+  }
+
+  /**
+   * Parses the given response string from an executable.
+   *
+   * @private
+   * @param response Response string.
+   * @return {*} The parsed response.
+   */
+  private parseModuleResponse(response: string): CreatePageResponse {
+    if (typeof response === 'string' && response.startsWith('Json')) {
+      const jsonString = response.replace(/^Json\s+/, '');
+      try {
+        const parsedResponse = JSON.parse(jsonString) as CreatePageResponse;
+        return parsedResponse;
+      } catch (err: unknown) {
+        // Failed to parse JSON
+        this.logger.error('Cannot parse module response', jsonString);
+        throw new EcomClientError(ERROR_CODES.CREATE_PAGE_FAILED, 'Cannot create page');
+      }
+    } else {
+      // Invalid response from module
+      this.logger.error('Invalid module response', response);
+      throw new EcomClientError(ERROR_CODES.CREATE_PAGE_FAILED, 'Cannot create page');
+    }
   }
 }

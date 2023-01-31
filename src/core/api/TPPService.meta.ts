@@ -37,3 +37,20 @@ export type CreateSectionPayload = {
    */
   slotName: string;
 };
+
+/**
+ * @internal
+ */
+export type CreatePageResponse = {
+  /**
+   * Whether the page was created successfully.
+   */
+  success: boolean;
+  /**
+   * Error description.
+   */
+  error: {
+    code: number;
+    cause: string;
+  } | null;
+};

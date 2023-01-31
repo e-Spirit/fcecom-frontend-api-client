@@ -51,8 +51,9 @@ export class HookService {
 }
 
 interface HookMap {
-  [EcomHooks.CONTENT_CHANGE]?: ((payload: HookPayloadTypes[EcomHooks.CONTENT_CHANGE]) => void)[];
+  [EcomHooks.CONTENT_CHANGED]?: ((payload: HookPayloadTypes[EcomHooks.CONTENT_CHANGED]) => void)[];
   [EcomHooks.OPEN_STOREFRONT_URL]?: ((payload: HookPayloadTypes[EcomHooks.OPEN_STOREFRONT_URL]) => void)[];
   [EcomHooks.REQUEST_PREVIEW_ELEMENT]?: ((payload: HookPayloadTypes[EcomHooks.REQUEST_PREVIEW_ELEMENT]) => void)[];
-  [EcomHooks.CREATE_SECTION]?: ((payload: HookPayloadTypes[EcomHooks.CREATE_SECTION]) => void)[];
+  [EcomHooks.SECTION_CREATED]?: ((payload: HookPayloadTypes[EcomHooks.SECTION_CREATED]) => void)[];
+  [EcomHooks.PAGE_CREATED]?: ((payload: HookPayloadTypes[EcomHooks.PAGE_CREATED]) => void)[];
 }

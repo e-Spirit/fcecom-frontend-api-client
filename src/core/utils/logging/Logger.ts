@@ -2,9 +2,8 @@
  * @module
  * @internal
  */
-
-
 import { inspect } from 'node-inspect-extracted';
+import { EcomError } from '../../api/errors';
 
 /**
  * Logger class.
@@ -23,11 +22,12 @@ export class Logger {
   logWithLevel({logLevel, log, text = 'black', label, bg}: Logging.Level, ...args: any[]) {
     if (Logging.logLevel <= logLevel) {
       log(
-        `%c FCECOM API %c ${label} %c ${this._name}%c ${formatOutput(...args)}`,
+        `%c FCECOM API %c ${label} %c ${this._name}`,
         'color: gray;',
         `color: ${text}; background-color: ${bg};`,
         'color: gray;',
-        'color: black',
+        formatOutput(...args),
+        '\n',
         ...additionalObjects(...args)
       );
     }
@@ -61,8 +61,9 @@ export class Logger {
 export const formatOutput = (...args: any[]) => {
   const entries = args
     .map((entry) => {
+      if (entry instanceof EcomError) return `(${entry.code}) ${entry.name} · ${entry.message}`;
       if (entry instanceof Error) return `${entry.name} · ${entry.message}`;
-      if (typeof entry === 'object') return ''
+      if (typeof entry === 'object') return '';
       return entry;
     })
     .filter((entry) => entry !== '');
@@ -81,8 +82,7 @@ export const formatOutput = (...args: any[]) => {
 };
 
 export const additionalObjects = (...args: any[]) => args
-  .filter((entry) => typeof entry === 'object')
-  .filter((entry) => !(entry instanceof Error));
+  .filter((entry) => typeof entry === 'object');
 
 /**
  * The log level to use.
