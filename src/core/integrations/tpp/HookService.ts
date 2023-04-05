@@ -25,11 +25,8 @@ export class HookService {
    * @param name The namespace for which the hook is to be added.
    * @param func The function to be executed when the hook is called.
    */
-   addHook<
-    Name extends EcomHooks,
-    Func extends HookPayloadTypes[Name]
-  >(name: Name, func: (payload: Func) => void) {
-   if (!this.hooks[name]) {
+  addHook<Name extends EcomHooks, Func extends HookPayloadTypes[Name]>(name: Name, func: (payload: Func) => void) {
+    if (!this.hooks[name]) {
       this.hooks[name] = [];
     }
     this.hooks[name]?.push(func as any);
@@ -40,12 +37,9 @@ export class HookService {
    * @param name The namespace for which the hook is to be added.
    * @param params The payload to be passed to the executed methods.
    */
-  public callHook<
-    T extends keyof HookPayloadTypes,
-    V extends HookPayloadTypes[T]
-  >(name: T, payload: V): void {
+  public callHook<T extends keyof HookPayloadTypes, V extends HookPayloadTypes[T]>(name: T, payload: V): void {
     if (this.hooks[name]) {
-      this.hooks[name]?.forEach(((func) => func(payload as any)));
+      this.hooks[name]?.forEach((func) => func(payload as any));
     }
   }
 }

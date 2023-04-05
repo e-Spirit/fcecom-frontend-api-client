@@ -15,7 +15,8 @@ import { SlotParser } from '../integrations/tpp/SlotParser';
 import { RemoteService } from './RemoteService';
 import { TPPService } from './TPPService';
 import { EcomHooks, HookPayloadTypes } from '../integrations/tpp/HookService.meta';
-import { getLogger, Logging, LogLevel } from "../utils/logging/Logger";
+import { getLogger, Logging, LogLevel } from '../utils/logging/Logger';
+import { isDefined, isNonNullable } from '../utils/helper';
 
 /**
  * Frontend API for Connect for Commerce.
@@ -38,6 +39,8 @@ export class EcomApi {
    * @param logLevel <b>0</b>: DEBUG<br><b>1</b>: INFO<br><b>2</b>: WARNING<br><b>3</b>: ERROR<br><b>4</b>: NONE<br>
    */
   constructor(baseUrl: string, logLevel = LogLevel.INFO) {
+    isNonNullable(baseUrl, 'Invalid baseUrl passed');
+
     Logging.init(logLevel);
 
     baseUrl = baseUrl.trim();
@@ -47,9 +50,11 @@ export class EcomApi {
         this.baseUrl = baseUrl;
         PreviewDecider.setUrl(this.baseUrl);
       } catch (err: unknown) {
+        this.logger.error('Invalid base URL', baseUrl);
         throw new Error(INVALID_BASE_URL);
       }
     } else {
+      this.logger.error('Missing base URL');
       throw new Error(MISSING_BASE_URL);
     }
     this.remoteService = new RemoteService(this.baseUrl);
@@ -74,7 +79,7 @@ export class EcomApi {
         })
         .catch((err: unknown) => {
           // Failed to load TPPService
-          this.logger.error('Failed to initialize', err)
+          this.logger.error('Failed to initialize', err);
           return false;
         });
     }
@@ -88,6 +93,8 @@ export class EcomApi {
    * @return {*} Details about the page.
    */
   async findPage(params: FindPageParams): Promise<FindPageResponse> {
+    isNonNullable(params, 'Invalid params passed');
+
     return this.remoteService.findPage(params);
   }
 
@@ -98,6 +105,8 @@ export class EcomApi {
    * @return {*} Details about the navigation.
    */
   async fetchNavigation(params: FetchNavigationParams): Promise<FetchNavigationResponse> {
+    isNonNullable(params, 'Invalid params passed');
+
     return this.remoteService.fetchNavigation(params);
   }
 
@@ -108,6 +117,8 @@ export class EcomApi {
    * @return {*} Details about the element.
    */
   async findElement(params: FindElementParams): Promise<FindElementResponse> {
+    isNonNullable(params, 'Invalid params passed');
+
     return this.remoteService.findElement(params);
   }
 
@@ -117,6 +128,8 @@ export class EcomApi {
    * @param locale FirstSpirit compatible language code of the locale to set.
    */
   public setDefaultLocale(locale: string): void {
+    isNonNullable(locale, 'Invalid locale passed');
+
     this.defaultLocale = locale;
     this.remoteService.setDefaultLocale(locale);
   }
@@ -128,13 +141,16 @@ export class EcomApi {
    */
   async setElement(params: SetElementParams | null) {
     if (!this.tppService) return this.logger.warn('Tried to access TPP while not in preview');
-    if (!params) return;
-    await this.tppService?.setElement({
-      id: params.id,
-      type: params.type,
-      locale: params.locale || this.defaultLocale,
-    });
-    await this.slotParser?.parseSlots(params);
+
+    isDefined(params, 'Invalid params passed');
+
+    if (!params) {
+      this.tppService?.setElement(null);
+    } else {
+      const { id, type, locale = this.defaultLocale } = params;
+      await this.tppService?.setElement({ id, type, locale });
+      await this.slotParser?.parseSlots(params);
+    }
   }
 
   /**
@@ -145,6 +161,9 @@ export class EcomApi {
    */
   async createPage(payload: CreatePagePayload): Promise<any> {
     if (!this.tppService) return this.logger.warn('Tried to access TPP while not in preview');
+
+    isNonNullable(payload, 'Invalid payload passed');
+
     return this.tppService?.createPage(payload);
   }
 
@@ -156,6 +175,9 @@ export class EcomApi {
    */
   async createSection(payload: CreateSectionPayload): Promise<any> {
     if (!this.tppService) return this.logger.warn('Tried to access TPP while not in preview');
+
+    isNonNullable(payload, 'Invalid payload passed');
+
     return this.tppService?.createSection(payload);
   }
 
@@ -192,11 +214,12 @@ export class EcomApi {
    * @param func The hook's callback.
    * @return {*}
    */
-  addHook<
-    Name extends EcomHooks,
-    Func extends HookPayloadTypes[Name]
-  >(name: Name, func: (payload: Func) => void) {
+  addHook<Name extends EcomHooks, Func extends HookPayloadTypes[Name]>(name: Name, func: (payload: Func) => void) {
     if (!this.tppService) return this.logger.warn('Tried to access TPP while not in preview');
+
+    isNonNullable(name, 'Invalid name passed');
+    isNonNullable(func, 'Invalid func passed');
+
     return this.tppService?.getHookService().addHook(name, func);
   }
 }

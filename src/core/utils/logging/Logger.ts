@@ -19,7 +19,7 @@ export class Logger {
     this._name = name;
   }
 
-  logWithLevel({logLevel, log, text = 'black', label, bg}: Logging.Level, ...args: any[]) {
+  logWithLevel({ logLevel, log, text = 'black', label, bg }: Logging.Level, ...args: any[]) {
     if (Logging.logLevel <= logLevel) {
       log(
         `%c FCECOM API %c ${label} %c ${this._name}`,
@@ -81,8 +81,7 @@ export const formatOutput = (...args: any[]) => {
   return '';
 };
 
-export const additionalObjects = (...args: any[]) => args
-  .filter((entry) => typeof entry === 'object');
+export const additionalObjects = (...args: any[]) => args.filter((entry) => typeof entry === 'object');
 
 /**
  * The log level to use.

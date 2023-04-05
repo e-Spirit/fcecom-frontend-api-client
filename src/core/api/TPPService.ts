@@ -6,7 +6,7 @@
 import { HookService } from '../integrations/tpp/HookService';
 import { EcomHooks } from '../integrations/tpp/HookService.meta';
 import { SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
-import { EcomClientError, EcomError, EcomModuleError, ERROR_CODES } from './errors';
+import { EcomClientError, EcomError, EcomInvalidParameterError, EcomModuleError, ERROR_CODES } from './errors';
 import { CreatePagePayload, CreatePageResponse, CreateSectionPayload, FindPageParams } from './EcomApi.meta';
 import { RemoteService } from './RemoteService';
 import { getLogger } from '../utils/logging/Logger';
@@ -41,11 +41,15 @@ export class TPPService {
    *
    * @param params Params to identify the element.
    */
-  async setElement(params: FindPageParams) {
-    const findPageResult = await this.remoteService.findPage(params);
-    const page = findPageResult && findPageResult.items[0];
+  async setElement(params: FindPageParams | null) {
     const tpp = await this.getTppInstance();
     const snap = await tpp?.TPP_SNAP;
+    if (params === null) {
+      snap?.setPreviewElement(null);
+      return;
+    }
+    const findPageResult = await this.remoteService.findPage(params);
+    const page = findPageResult && findPageResult.items[0];
     if (page && page.previewId) {
       snap?.setPreviewElement(page.previewId);
     } else {

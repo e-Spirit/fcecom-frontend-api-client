@@ -13,7 +13,7 @@ const mockHookService = mock<HookService>();
 
 jest.mock('../dom/addContentElement/addContentElement', () => {
   return {
-    addContentButton: () => document.createElement('button')
+    addContentButton: () => document.createElement('button'),
   };
 });
 let parser: SlotParser;
@@ -52,10 +52,11 @@ describe('SlotParser', () => {
       // @ts-ignore - Will be set during constructor callback
       addContentCb({ content: null });
       // Assert
-      expect(mockRemoteService.findPage.mock.calls[0][0].id).toEqual(params.id);
-      expect(mockRemoteService.findPage.mock.calls[0][0].type).toEqual(params.type);
-      expect(mockRemoteService.findPage.mock.calls[1][0].id).toEqual(params.id);
-      expect(mockRemoteService.findPage.mock.calls[1][0].type).toEqual(params.type);
+      const { id, type } = params;
+      expect(mockRemoteService.findPage.mock.calls[0][0].id).toEqual(id);
+      expect(mockRemoteService.findPage.mock.calls[0][0].type).toEqual(type);
+      expect(mockRemoteService.findPage.mock.calls[1][0].id).toEqual(id);
+      expect(mockRemoteService.findPage.mock.calls[1][0].type).toEqual(type);
       // TODO: Add assertion for buttons
     });
   });
@@ -73,8 +74,9 @@ describe('SlotParser', () => {
       // Act
       await parser.parseSlots(params);
       // Assert
-      expect(mockRemoteService.findPage.mock.calls[0][0].id).toEqual(params.id);
-      expect(mockRemoteService.findPage.mock.calls[0][0].type).toEqual(params.type);
+      const { id, type } = params;
+      expect(mockRemoteService.findPage.mock.calls[0][0].id).toEqual(id);
+      expect(mockRemoteService.findPage.mock.calls[0][0].type).toEqual(type);
       // TODO: Add assertion for buttons
     });
     it('sets preview ids for each section if page already exists', async () => {
@@ -104,8 +106,9 @@ describe('SlotParser', () => {
       // Act
       await parser.parseSlots(params);
       // Assert
-      expect(mockRemoteService.findPage.mock.calls[0][0].id).toEqual(params.id);
-      expect(mockRemoteService.findPage.mock.calls[0][0].type).toEqual(params.type);
+      const {type, id} = params;
+      expect(mockRemoteService.findPage.mock.calls[0][0].id).toEqual(id);
+      expect(mockRemoteService.findPage.mock.calls[0][0].type).toEqual(type);
       expect(document.querySelector(`[data-fcecom-slot-name="${page.children[0].name}"][data-preview-id="${page.children[0].previewId}"]`)).toBeDefined();
       expect(document.querySelector(`[data-fcecom-slot-name="${page.children[1].name}"][data-preview-id="${page.children[1].previewId}"]`)).toBeDefined();
       // TODO: Add assertion for buttons

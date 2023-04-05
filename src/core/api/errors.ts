@@ -5,7 +5,7 @@
  * @class EcomError
  */
 export class EcomError extends Error {
-  __proto__ = Error
+  __proto__ = Error;
 
   /**
    * Reference code for this error.
@@ -16,7 +16,7 @@ export class EcomError extends Error {
   constructor(code: string, message: string) {
     super(message);
     Object.setPrototypeOf(this, EcomError.prototype);
-    
+
     this.code = code;
   }
 }
@@ -33,6 +33,20 @@ export class EcomClientError extends EcomError {
     Object.setPrototypeOf(this, EcomClientError.prototype);
   }
 }
+
+/**
+ * An error indicating missing or invalid parameters..
+ *
+ * @export
+ * @class EcomInvalidParameterError
+ */
+export class EcomInvalidParameterError extends EcomClientError {
+  constructor(message: string) {
+    super(ERROR_CODES.INVALID_PARAMETERS, message);
+    Object.setPrototypeOf(this, EcomInvalidParameterError.prototype);
+  }
+}
+
 /**
  * An error related to the FirstSpirit module of Connect for Commerce.
  *
@@ -46,7 +60,6 @@ export class EcomModuleError extends EcomError {
   }
 }
 
-
 /**
  * An error caused by a HTTP request.
  *
@@ -54,7 +67,7 @@ export class EcomModuleError extends EcomError {
  * @class HttpError
  */
 export class HttpError extends Error {
-  __proto__ = Error
+  __proto__ = Error;
 
   /**
    * HTTP response status.
@@ -71,6 +84,7 @@ export class HttpError extends Error {
 
 export const enum ERROR_CODES {
   UNKNOWN = '0000',
+  // Errors caused by runtime / connection
   NO_CAAS_CONNECTION = '8010',
   FIND_PAGE_UNAUTHORIZED = '8020',
   NO_NAVIGATION_SERVICE_CONNECTION = '8030',
@@ -78,5 +92,7 @@ export const enum ERROR_CODES {
   CREATE_SECTION_FAILED = '8050',
   FIND_PAGE_INVALID_REQUEST = '8070',
   FETCH_NAVIGATION_INVALID_REQUEST = '8080',
-  CREATE_PAGE_FAILED = '8090'
+  CREATE_PAGE_FAILED = '8090',
+  // Errors caused by development
+  INVALID_PARAMETERS = '9010',
 }

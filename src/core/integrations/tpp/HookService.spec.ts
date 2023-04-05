@@ -7,10 +7,10 @@ describe('HookService.getInstance()', () => {
     it('calls registered Hooks', () => {
       // Arrange
       const testMethod = jest.fn();
-      const payload = { 
+      const payload = {
         content: 'CONTENT',
         node: mock<HTMLElement>(),
-        previewId: 'PREVIEWID'
+        previewId: 'PREVIEWID',
       };
       HookService.getInstance().addHook(EcomHooks.CONTENT_CHANGED, testMethod);
       // Act
@@ -20,10 +20,10 @@ describe('HookService.getInstance()', () => {
     });
     it('does not fail if no hook is set for the given type', () => {
       // Arrange
-      const payload = { 
+      const payload = {
         content: 'CONTENT',
         node: mock<HTMLElement>(),
-        previewId: 'PREVIEWID'
+        previewId: 'PREVIEWID',
       };
       expect(() => {
         // Act

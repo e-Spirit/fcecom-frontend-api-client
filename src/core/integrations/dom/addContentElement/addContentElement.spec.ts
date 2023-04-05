@@ -21,7 +21,7 @@ describe('addContentElement', () => {
       expect(shadow?.querySelectorAll<HTMLStyleElement>('style').item(0)?.textContent).toEqual('BASICCSS'); // Regular style
       expect(shadow?.querySelector<HTMLButtonElement>('.fcecom-add-content-button')).toBeInstanceOf(HTMLButtonElement);
       expect(shadow?.querySelector<HTMLButtonElement>('.fcecom-add-content-button')?.getAttribute('type')).toEqual('button');
-      const squareIcon = shadow?.querySelector<HTMLDivElement>('.fcecom-add-content-button > .square-icon')
+      const squareIcon = shadow?.querySelector<HTMLDivElement>('.fcecom-add-content-button > .square-icon');
       expect(squareIcon).toBeInstanceOf(HTMLDivElement);
       expect(squareIcon?.innerHTML).toMatch(svgElementMock.innerHTML);
       expect(shadow?.querySelector<HTMLDivElement>('.fcecom-add-content-button > .square-icon')?.ariaHidden).toBe('true');

@@ -18,7 +18,7 @@ describe('RemoteService', () => {
       Promise.resolve({
         json: () => Promise.resolve(fetchResponse),
         ok: fetchOk,
-        status: fetchStatus
+        status: fetchStatus,
       })
     );
     fetchResponse = undefined;
@@ -54,7 +54,7 @@ describe('RemoteService', () => {
     it('it uses default values for parameters when finding a page', async () => {
       // Arrange
       fetchResponse = {};
-      service.setDefaultLocale('en_GB')
+      service.setDefaultLocale('en_GB');
 
       // Act
       const result = await service.findPage({
@@ -140,7 +140,7 @@ describe('RemoteService', () => {
     it('it uses default values for parameters when fetching the navigation', async () => {
       // Arrange
       fetchResponse = {};
-      service.setDefaultLocale('en_GB')
+      service.setDefaultLocale('en_GB');
 
       // Act
       const result = await service.fetchNavigation({});
@@ -196,7 +196,6 @@ describe('RemoteService', () => {
     });
   });
 
-
   describe('findElement()', () => {
     it('it finds an element', async () => {
       // Arrange
@@ -215,11 +214,11 @@ describe('RemoteService', () => {
     it('it uses default values for parameters when finding a page', async () => {
       // Arrange
       fetchResponse = {};
-      service.setDefaultLocale('en_GB')
+      service.setDefaultLocale('en_GB');
 
       // Act
       const result = await service.findElement({
-        id: 'plumber0PIERRE*porch'
+        id: 'plumber0PIERRE*porch',
       });
 
       // Assert

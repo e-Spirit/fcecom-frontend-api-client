@@ -5,4 +5,4 @@ declare module '*.module.css';
 /**
  * @hidden
  */
-declare module "*.module.svg";
+declare module '*.module.svg';

@@ -4,10 +4,10 @@
  */
 
 import { SNAP } from './TPPWrapper.meta';
-import { getLogger } from "../../utils/logging/Logger";
+import { getLogger } from '../../utils/logging/Logger';
 
 export class TPPLoader {
-  private readonly logger = getLogger('TPPLoader')
+  private readonly logger = getLogger('TPPLoader');
 
   /**
    * Loads tpp functionality and intercepts / processes

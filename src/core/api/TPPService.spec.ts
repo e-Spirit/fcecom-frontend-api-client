@@ -54,7 +54,7 @@ describe('TPPService', () => {
   });
 
   describe('setElement()', () => {
-    it('calls SNAP setPreviewElement', async () => {
+    it('calls SNAP setPreviewElement with params', async () => {
       // Arrange
       const snap = mock<SNAP>();
 
@@ -76,6 +76,21 @@ describe('TPPService', () => {
       // Assert
       expect(findPageSpy).toBeCalledWith(params);
       expect(setPreviewElementSpy).toBeCalledWith(previewId);
+    });
+
+    it('calls SNAP setPreviewElement with null', async () => {
+      // Arrange
+      const snap = mock<SNAP>();
+
+      // @ts-ignore - TODO: Make properly test possible
+      tppWrapper.TPP_SNAP = Promise.resolve(snap);
+      const findPageSpy = jest.spyOn(mockRemoteService, 'findPage');
+      const setPreviewElementSpy = jest.spyOn(snap, 'setPreviewElement');
+      // Act
+      await service.setElement(null);
+      // Assert
+      expect(findPageSpy).not.toHaveBeenCalled();
+      expect(setPreviewElementSpy).toBeCalledWith(null);
     });
 
     it('calls SNAP setPreviewElement with null when no fs page is present', async () => {

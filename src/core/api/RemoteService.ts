@@ -3,7 +3,7 @@
  * @module RemoteService
  */
 
-import { EcomClientError, EcomError, ERROR_CODES, HttpError } from './errors';
+import { EcomClientError, EcomError, EcomInvalidParameterError, ERROR_CODES, HttpError } from './errors';
 import { removeNullishObjectProperties } from '../utils/helper';
 import { ParamObject } from '../utils/meta';
 import { PreviewDecider } from '../utils/PreviewDecider';
@@ -73,8 +73,8 @@ export class RemoteService {
     const { locale = this.defaultLocale, initialPath } = params;
     try {
       return await this.performGetRequest<FetchNavigationParams, FetchNavigationResponse>('fetchNavigation', {
-      locale,
-      initialPath,
+        locale,
+        initialPath,
       });
     } catch (err: unknown) {
       let ecomError: EcomError;
@@ -97,6 +97,10 @@ export class RemoteService {
    * @return {*} Details about the navigation.
    */
   async findElement(params: FindElementParams): Promise<FindElementResponse> {
+    if (!params) {
+      this.logger.warn('Invalid params passed');
+      throw new EcomInvalidParameterError('Invalid params passed');
+    }
     const { id, locale = this.defaultLocale } = params;
     return this.performGetRequest<FindElementParams, FindElementResponse>('findElement', {
       id,

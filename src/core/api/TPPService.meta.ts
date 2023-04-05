@@ -1,4 +1,4 @@
-export type SetElementParams = CreatePagePayload & { 
+export type SetElementParams = CreatePagePayload & {
   /**
    * Locale of the element to display.
    */

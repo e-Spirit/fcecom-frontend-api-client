@@ -1,4 +1,4 @@
-import { Logger, Logging, LogLevel, formatOutput } from "./Logger";
+import { Logger, Logging, LogLevel, formatOutput } from './Logger';
 
 describe('Logger', () => {
   describe('constructor()', () => {
@@ -60,7 +60,7 @@ describe('Logger', () => {
         const consoleSpy = jest.fn();
         global.console = { [test.consoleMethod]: consoleSpy } as any;
         // @ts-ignore
-        test.loggerConfig.log = console[test.consoleMethod]
+        test.loggerConfig.log = console[test.consoleMethod];
         // Act
         // @ts-ignore - Makes it easier for testing
         logger[test.method]('MY TEST LOG');

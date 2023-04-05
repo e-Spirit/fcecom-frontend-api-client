@@ -8,9 +8,10 @@ import { EcomError } from '../../api/errors';
 import { RemoteService } from '../../api/RemoteService';
 import { TPPService } from '../../api/TPPService';
 import { addContentButton } from '../dom/addContentElement/addContentElement';
-import { HookService } from "./HookService";
-import { EcomHooks } from "./HookService.meta";
-import { getLogger } from "../../utils/logging/Logger";
+import { HookService } from './HookService';
+import { EcomHooks } from './HookService.meta';
+import { getLogger } from '../../utils/logging/Logger';
+import { isNonNullable } from '../../utils/helper';
 
 /**
  * Parses the current document's DOM and handles slots.
@@ -23,7 +24,7 @@ export class SlotParser {
   private currentCreatePagePayload?: CreatePagePayload;
   private remoteService: RemoteService;
   private tppService: TPPService;
-  private hookService: HookService = HookService.getInstance()
+  private hookService: HookService = HookService.getInstance();
   private logger = getLogger('SlotParser');
 
   /**
@@ -55,10 +56,8 @@ export class SlotParser {
   async parseSlots(params: SetElementParams) {
     this.clear();
     this.currentCreatePagePayload = params;
-    const findPageResult = await this.remoteService.findPage({
-      id: params.id,
-      type: params.type,
-    });
+    const { id, type } = params;
+    const findPageResult = await this.remoteService.findPage({ id, type });
     const page = findPageResult && findPageResult.items[0];
     if (page) {
       this.setPreviewIds(page);
@@ -91,7 +90,6 @@ export class SlotParser {
         const contentSlot = this.getSlot(page, slotName);
         if (contentSlot) {
           if (contentSlot.children?.length === 0) {
-
             // If the slot has no content, render button
             const button = this.createAddContentButton(slotName);
             element.appendChild(button);
@@ -194,10 +192,10 @@ export class SlotParser {
         // Remove attribute of now non-empty slot
         document.querySelector(`[data-fcecom-slot-name=${slotName}]`)?.removeAttribute('data-preview-id');
       }
-      this.logger.info('Created section', createSectionResult)
+      this.logger.info('Created section', createSectionResult);
     } else {
       // This is the case if the user canceled the creation as well
-      this.logger.warn('Failed to create section', createSectionResult)
+      this.logger.warn('Failed to create section', createSectionResult);
     }
   }
 
@@ -209,10 +207,8 @@ export class SlotParser {
    * @return {*}
    */
   private async ensurePageExists(params: CreatePagePayload) {
-    const pageResult = await this.remoteService.findPage({
-      id: params.id,
-      type: params.type,
-    });
+    const { id, type } = params;
+    const pageResult = await this.remoteService.findPage({ id, type });
 
     const page = pageResult && pageResult.items[0];
     if (page) {
@@ -233,17 +229,13 @@ export class SlotParser {
       throw new EcomError('806', 'Failed to create page');
     }
 
-
     // Find new page to get preview ID
-    const newPageResult = await this.pollForCaasPage({
-      id: params.id,
-      type: params.type,
-    });
+    const newPageResult = await this.pollForCaasPage({ id, type });
 
     const newPage = newPageResult && newPageResult.items[0];
     if (!newPage) {
       this.logger.error('Failed to find new page:', newPageResult);
-      throw new EcomError('806' ,'Failed to find new page');
+      throw new EcomError('806', 'Failed to find new page');
     }
     return newPage;
   }
@@ -265,7 +257,7 @@ export class SlotParser {
             .findPage(payload)
             .then((response) => {
               if (response.items?.length >= 1) {
-                this.logger.info(`Page ${payload} found after ${tries} tries`)
+                this.logger.info(`Page ${payload} found after ${tries} tries`);
                 rootResolve(response);
               } else {
                 // Not found, trigger catch
@@ -294,7 +286,7 @@ export class SlotParser {
    * @private
    * @param page Page item to find the slot in.
    * @param slotName Name of the slot to get.
-   * @return {*} 
+   * @return {*}
    */
   private getSlot(page: FindPageItem, slotName: string): FindPageResponse['items'][0] | null {
     const contentSlot = page.children.find((child: any) => child.name === slotName);

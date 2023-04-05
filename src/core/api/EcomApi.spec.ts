@@ -9,7 +9,7 @@ import { SlotParser } from '../integrations/tpp/SlotParser';
 import { EcomHooks } from '../integrations/tpp/HookService.meta';
 import { HookService } from '../integrations/tpp/HookService';
 import { TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
-import { Logging, LogLevel, Logger } from "../utils/logging/Logger";
+import { Logger, Logging, LogLevel } from '../utils/logging/Logger';
 
 jest.spyOn(PreviewDecider, 'isPreview').mockResolvedValue(true);
 
@@ -41,7 +41,7 @@ describe('EcomApi', () => {
       // Arrange & Act
       new EcomApi(API_URL, LogLevel.WARNING);
       // Assert
-      expect(Logging.logLevel).toBe(LogLevel.WARNING)
+      expect(Logging.logLevel).toBe(LogLevel.WARNING);
     });
     it('throws an error if given URL is invalid', () => {
       expect(() => {
@@ -56,6 +56,13 @@ describe('EcomApi', () => {
         new EcomApi(' ');
         // Assert
       }).toThrow('You do need to specify a baseUrl.');
+    });
+    it('throws an error if no URL is given', () => {
+      expect(() => {
+        // Act
+        new EcomApi(undefined as any);
+        // Assert
+      }).toThrow('Invalid baseUrl passed');
     });
   });
 
@@ -125,6 +132,13 @@ describe('EcomApi', () => {
         // Assert
       }).not.toThrow();
     });
+    it('throws on invalid parameters', async () => {
+      // Arrange
+      api['tppService'] = mockTppService;
+
+      // Act & Assert
+      await expect(async () => await api.createSection(undefined as any)).rejects.toThrow('Invalid payload passed');
+    });
   });
 
   describe('init()', () => {
@@ -140,12 +154,12 @@ describe('EcomApi', () => {
       const tppServiceClassMock = jest.fn().mockReturnValue(tppServiceInstanceMock);
       jest.spyOn(PreviewDecider, 'isPreview').mockResolvedValue(true);
       jest.doMock('./TPPService', () => ({
-        TPPService: tppServiceClassMock
+        TPPService: tppServiceClassMock,
       }));
       const slotParserInstanceMock = mock<SlotParser>();
       const slotParserClassMock = jest.fn().mockReturnValue(slotParserInstanceMock);
       jest.doMock('../integrations/tpp/SlotParser', () => ({
-        SlotParser: slotParserClassMock
+        SlotParser: slotParserClassMock,
       }));
       // Act
       const result = await api.init();
@@ -162,12 +176,12 @@ describe('EcomApi', () => {
       const tppServiceClassMock = jest.fn().mockReturnValue(tppServiceInstanceMock);
       jest.spyOn(PreviewDecider, 'isPreview').mockResolvedValue(true);
       jest.doMock('./TPPService', () => ({
-        TPPService: tppServiceClassMock
+        TPPService: tppServiceClassMock,
       }));
       const slotParserInstanceMock = mock<SlotParser>();
       const slotParserClassMock = jest.fn().mockReturnValue(slotParserInstanceMock);
       jest.doMock('../integrations/tpp/SlotParser', () => ({
-        SlotParser: slotParserClassMock
+        SlotParser: slotParserClassMock,
       }));
       // Act
       const result = await api.init();
@@ -221,6 +235,13 @@ describe('EcomApi', () => {
       // Assert
       expect(mockRemoteService.findPage.mock.calls[0][0]).toEqual(payload);
     });
+    it('throws on invalid parameters', async () => {
+      // Arrange
+      api['tppService'] = mockTppService;
+
+      // Act & Assert
+      await expect(async () => await api.findPage(undefined as any)).rejects.toThrow('Invalid params passed');
+    });
   });
 
   describe('fetchNavigation()', () => {
@@ -234,6 +255,13 @@ describe('EcomApi', () => {
       await api.fetchNavigation(payload);
       // Assert
       expect(mockRemoteService.fetchNavigation.mock.calls[0][0]).toEqual(payload);
+    });
+    it('throws on invalid parameters', async () => {
+      // Arrange
+      api['tppService'] = mockTppService;
+
+      // Act & Assert
+      await expect(async () => await api.fetchNavigation(undefined as any)).rejects.toThrow('Invalid params passed');
     });
   });
 
@@ -249,6 +277,13 @@ describe('EcomApi', () => {
       // Assert
       expect(mockRemoteService.findElement.mock.calls[0][0]).toEqual(payload);
     });
+    it('throws on invalid parameters', async () => {
+      // Arrange
+      api['tppService'] = mockTppService;
+
+      // Act & Assert
+      await expect(async () => await api.findElement(undefined as any)).rejects.toThrow('Invalid params passed');
+    });
   });
 
   describe('setDefaultLocale()', () => {
@@ -260,6 +295,13 @@ describe('EcomApi', () => {
       // Assert
       expect(api.defaultLocale).toBe(locale);
       expect(mockRemoteService.setDefaultLocale).toBeCalledWith(locale);
+    });
+    it('throws on invalid parameters', () => {
+      // Arrange
+      api['tppService'] = mockTppService;
+
+      // Act & Assert
+      expect(() => api.setDefaultLocale(undefined as any)).toThrow('Invalid locale passed');
     });
   });
 
@@ -273,16 +315,13 @@ describe('EcomApi', () => {
         fsPageTemplate: 'TEMPLATE',
         id: 'ID',
         type: 'content',
-        locale: 'LOCALE'
+        locale: 'LOCALE',
       } as SetElementParams;
       // Act
       await api.setElement(params);
       // Assert
-      expect(mockTppService.setElement.mock.calls[0][0]).toEqual({
-        id: params.id,
-        type: params.type,
-        locale: params.locale
-      });
+      const { id, type, locale } = params;
+      expect(mockTppService.setElement.mock.calls[0][0]).toEqual({ id, type, locale });
       expect(mockSlotParser.parseSlots.mock.calls[0][0]).toEqual(params);
     });
     it('it uses fallback locale', async () => {
@@ -293,29 +332,24 @@ describe('EcomApi', () => {
       const params = {
         fsPageTemplate: 'TEMPLATE',
         id: 'ID',
-        type: 'content'
+        type: 'content',
       } as SetElementParams;
       // Act
       await api.setElement(params);
       // Assert
-      expect(mockTppService.setElement.mock.calls[0][0]).toEqual({
-        id: params.id,
-        type: params.type,
-        locale: locale
-      });
+      const { id, type } = params;
+      expect(mockTppService.setElement.mock.calls[0][0]).toEqual({ id, type, locale });
     });
-    it('does not throw if no params are passed', async () => {
+    it('passes null as params', async () => {
       // Arrange
       api['tppService'] = mockTppService;
       const mockSlotParser = mock<SlotParser>();
       api['slotParser'] = mockSlotParser;
       // Act
-      expect(async () => {
-        await api.setElement(null);
-        // Assert
-        expect(mockTppService.setElement).not.toBeCalled();
-        expect(mockSlotParser.parseSlots).not.toBeCalled();
-      }).not.toThrow();
+      await api.setElement(null);
+      // Assert
+      expect(mockTppService.setElement).toBeCalledWith(null);
+      expect(mockSlotParser.parseSlots).not.toBeCalled();
     });
     it('does not throw if no TPPService is set', async () => {
       // Arrange
@@ -325,7 +359,7 @@ describe('EcomApi', () => {
       const params = {
         fsPageTemplate: 'TEMPLATE',
         id: 'ID',
-        type: 'content'
+        type: 'content',
       } as SetElementParams;
       // Act
       expect(async () => {
@@ -334,6 +368,13 @@ describe('EcomApi', () => {
         expect(mockSlotParser.parseSlots).not.toHaveBeenCalled();
         expect(mockLogger.warn.mock.calls[0][0]).toEqual('Tried to access TPP while not in preview');
       }).not.toThrow();
+    });
+    it('throws on invalid parameters', async () => {
+      // Arrange
+      api['tppService'] = mockTppService;
+
+      // Act & Assert
+      await expect(async () => await api.setElement(undefined as any)).rejects.toThrow('Invalid params passed');
     });
   });
 
