@@ -17,7 +17,9 @@ Clone [this repository](https://github.com/e-Spirit/fcecom-frontend-api-backend)
 
 ## Legal Notices
 
-The Connect for Commerce Frontend API module is a product of [Crownpeak Technology GmbH](https://www.crownpeak.com), Dortmund, Germany. The Connect for Commerce Frontend API module is subject to the Apache-2.0 license.
+The Connect for Commerce Frontend API client module is a product of [Crownpeak Technology GmbH](https://www.crownpeak.com), Dortmund, Germany. The Connect for Commerce Frontend API client module is subject to the Apache-2.0 license.
+
+Details regarding any third-party software products in use but not created by Crownpeak Technology GmbH, as well as the third-party licenses and, if applicable, update information can be found in the file THIRD-PARTY.txt.
 
 ## Disclaimer
 
