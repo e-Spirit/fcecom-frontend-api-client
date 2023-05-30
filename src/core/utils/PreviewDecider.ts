@@ -1,3 +1,4 @@
+import { ReferrerStore } from './ReferrerStore';
 import { getLogger } from './logging/Logger';
 
 /**
@@ -53,13 +54,7 @@ export class PreviewDecider {
    * @return {*} The referrer.
    */
   static getReferrer(): string {
-    if (this.isBrowserEnvironment())
-      try {
-        return new URL(window.document.referrer).origin;
-      } catch (err: unknown) {
-        return document.referrer;
-      }
-    return '';
+    return ReferrerStore.getReferrer();
   }
 
   /**

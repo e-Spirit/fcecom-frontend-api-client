@@ -45,8 +45,10 @@ module.exports = {
 
   output: {
     // /dist/bundle.js
-    filename: 'bundle.js',
+    filename: '[name].js',
     path: path.resolve(__dirname, 'dist'),
+    // Treat each entry point as a standalone module, no shared chunks
+    chunkLoading: false,
 
     // Clear /dist/ at first
     clean: true,
@@ -66,4 +68,9 @@ module.exports = {
       maxChunks: 1,
     }),
   ],
+
+  entry: {
+    bundle: './src/index.ts',
+    static: './src/static/index.ts',
+  },
 };

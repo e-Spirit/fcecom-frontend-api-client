@@ -21,6 +21,7 @@ export type CreatePagePayload = {
 
   /**
    * DisplayNames in different languages (optional).
+   * Language abbreviation must be two letters and uppercase.
    */
   displayNames?: {
     [lang: string]: string;

@@ -2,7 +2,6 @@
  * @module
  * @internal
  */
-import { inspect } from 'node-inspect-extracted';
 import { EcomError } from '../../api/errors';
 
 /**
@@ -69,13 +68,7 @@ export const formatOutput = (...args: any[]) => {
     .filter((entry) => entry !== '');
 
   if (entries.length) {
-    return inspect(entries.join(' · '), {
-      showHidden: false,
-      depth: null,
-      colors: false,
-      compact: true,
-      breakLength: Infinity,
-    }).replace(/'/g, '');
+    return entries.join(' · ').replace(/'/g, '');
   }
 
   return '';

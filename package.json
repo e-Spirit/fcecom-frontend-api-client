@@ -1,6 +1,6 @@
 {
   "name": "fcecom-frontend-api-client",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "FirstSpirit Connect for Commerce - Frontend API Client",
   "main": "dist/bundle.js",
   "module": "dist/bundle.js",
@@ -34,7 +34,6 @@
   "author": "Crownpeak Technology GmbH",
   "license": "Apache-2.0",
   "dependencies": {
-    "node-inspect-extracted": "^2.0.0",
     "tslib": "^2.4.1"
   },
   "devDependencies": {

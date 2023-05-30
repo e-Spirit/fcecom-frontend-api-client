@@ -17,6 +17,7 @@ import { TPPService } from './TPPService';
 import { EcomHooks, HookPayloadTypes } from '../integrations/tpp/HookService.meta';
 import { getLogger, Logging, LogLevel } from '../utils/logging/Logger';
 import { isDefined, isNonNullable } from '../utils/helper';
+import { ReferrerStore } from '../utils/ReferrerStore';
 
 /**
  * Frontend API for Connect for Commerce.
@@ -66,6 +67,7 @@ export class EcomApi {
    * @return {*} Whether the initialization was successful.
    */
   async init(): Promise<boolean> {
+    ReferrerStore.init();
     const isPreviewNeeded = await PreviewDecider.isPreview();
     if (isPreviewNeeded) {
       // Import dependencies dynamically

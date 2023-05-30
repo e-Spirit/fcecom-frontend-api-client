@@ -5,6 +5,7 @@
 
 import { SNAP } from './TPPWrapper.meta';
 import { getLogger } from '../../utils/logging/Logger';
+import { ReferrerStore } from '../../utils/ReferrerStore';
 
 export class TPPLoader {
   private readonly logger = getLogger('TPPLoader');
@@ -22,7 +23,8 @@ export class TPPLoader {
           const version = data.tpp._response.version;
           this.logger.debug('load TPP_SNAP version %o', version);
 
-          const url = `${window.document.referrer}fs5webedit/snap.js`;
+          const fsHost = ReferrerStore.getReferrer();
+          const url = `${fsHost}/fs5webedit/snap.js`;
           const scriptTag = document.body.appendChild(document.createElement('script'));
 
           scriptTag.onerror = scriptTag.onload = async () => {

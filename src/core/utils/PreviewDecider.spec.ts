@@ -1,7 +1,10 @@
 import { PreviewDecider } from './PreviewDecider';
+import { ReferrerStore } from './ReferrerStore';
 
 const API_URL = 'https://api_url:3000';
 const TEST_REFERRER = 'https://referrer_url';
+
+jest.mock('./ReferrerStore');
 
 let fetchResponse: any;
 
@@ -22,7 +25,7 @@ describe('PreviewDecider', () => {
     });
     describe('in browser', () => {
       beforeEach(() => {
-        jest.spyOn(document, 'referrer', 'get').mockImplementation(() => TEST_REFERRER);
+        jest.spyOn(ReferrerStore, 'getReferrer').mockImplementation(() => TEST_REFERRER);
         jest.spyOn(window, 'self', 'get').mockImplementation(() => window);
       });
       it('should return true if the server returns true', async () => {
@@ -67,7 +70,7 @@ describe('PreviewDecider', () => {
   });
   describe('not in browser', () => {
     beforeEach(() => {
-      jest.spyOn(document, 'referrer', 'get').mockImplementation(() => '');
+      jest.spyOn(ReferrerStore, 'getReferrer').mockImplementation(() => '');
       jest.spyOn(window, 'self', 'get').mockImplementation(() => undefined as any);
     });
     it('should return false', async () => {
@@ -75,30 +78,6 @@ describe('PreviewDecider', () => {
       const result = await PreviewDecider.isPreview();
       // Assert
       expect(result).toEqual(false);
-    });
-  });
-
-  describe('getReferrer()', () => {
-    describe('in browser', () => {
-      beforeEach(() => {
-        jest.spyOn(window, 'self', 'get').mockImplementation(() => window);
-      });
-      it('returns the referrers origin', async () => {
-        // Arrange
-        jest.spyOn(document, 'referrer', 'get').mockImplementation(() => 'https://referrer.com:3000/mypath');
-        // Act
-        const result = PreviewDecider.getReferrer();
-        // Assert
-        expect(result).toEqual('https://referrer.com:3000');
-      });
-      it('returns referrer if origin cannot be extracted', async () => {
-        // Arrange
-        jest.spyOn(document, 'referrer', 'get').mockImplementation(() => 'blubb');
-        // Act
-        const result = PreviewDecider.getReferrer();
-        // Assert
-        expect(result).toEqual('blubb');
-      });
     });
   });
   describe('not in browser', () => {
