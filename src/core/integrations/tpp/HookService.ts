@@ -33,14 +33,38 @@ export class HookService {
   }
 
   /**
+   * This method removed an existing hook from the registry.
+   * @param name The namespace for which the hook was added.
+   * @param func The function meant to be executed when the hook was called.
+   */
+  removeHook<Name extends EcomHooks, Func extends HookPayloadTypes[Name]>(name: Name, func: (payload: Func) => void) {
+    if (this.hooks[name]) {
+      const hookIndex = this.hooks[name]?.indexOf(func as any) as number ?? -1;
+      if (hookIndex !== -1) this.hooks[name]?.splice(hookIndex, 1);
+    }
+  }
+
+  /**
    * This method calls a hook and executes all functions registered under the provided namespace.
    * @param name The namespace for which the hook is to be added.
-   * @param params The payload to be passed to the executed methods.
+   * @param payload The payload to be passed to the executed methods.
    */
   public callHook<T extends keyof HookPayloadTypes, V extends HookPayloadTypes[T]>(name: T, payload: V): void {
     if (this.hooks[name]) {
       this.hooks[name]?.forEach((func) => func(payload as any));
     }
+  }
+
+  /**
+   * This method removes all registered hooks.
+   */
+  public clear() {
+    delete this.hooks[EcomHooks.CONTENT_CHANGED]
+    delete this.hooks[EcomHooks.CONTENT_CHANGED]
+    delete this.hooks[EcomHooks.OPEN_STOREFRONT_URL]
+    delete this.hooks[EcomHooks.REQUEST_PREVIEW_ELEMENT]
+    delete this.hooks[EcomHooks.SECTION_CREATED]
+    delete this.hooks[EcomHooks.PAGE_CREATED]
   }
 }
 

@@ -16,11 +16,25 @@ import { RemoteService } from './RemoteService';
 import { TPPService } from './TPPService';
 import { EcomHooks, HookPayloadTypes } from '../integrations/tpp/HookService.meta';
 import { getLogger, Logging, LogLevel } from '../utils/logging/Logger';
-import { isDefined, isNonNullable } from '../utils/helper';
+import { extractSlotSections, isDefined, isNonNullable } from '../utils/helper';
 import { ReferrerStore } from '../utils/ReferrerStore';
 
 /**
  * Frontend API for Connect for Commerce.
+ *
+ * @example
+ * ```javascript
+ * import { EcomApi, LogLevel } from 'fcecom-frontend-api-client';
+ *
+ * const api = new EcomApi(
+ *   'http://localhost:3001/api', // The URL to your backend service
+ *   LogLevel.DEBUG // The loglevel to use for clientside logs
+ * );
+ *
+ * api.setDefaultLocale('de_DE'); // Default language to use (can also be set on the server)
+ *
+ * await api.init();
+ * ```
  *
  * @export
  * @class EcomApi
@@ -59,6 +73,33 @@ export class EcomApi {
       throw new Error(MISSING_BASE_URL);
     }
     this.remoteService = new RemoteService(this.baseUrl);
+  }
+
+  /**
+   * Returns all sections belonging to a specified slotName inside a provided FindPageResponse.
+   *
+   * @example
+   * ```javascript
+   * const slotName = 'sup_content'
+   *
+   * api
+   *   .findPage({
+   *     locale: 'de_DE',
+   *     id: `Content Page`,
+   *     type: 'content',
+   *   })
+   *   .then((pageResult) => {
+   *     const sections = extractSlotSections(pageResult, slotName); // <-- Extract Sections
+   *     console.log('Sections:', sections)
+   *   })
+   *```
+   *
+   * @param findPageResponse response of calling `findPage()`.
+   * @param slotName SlotName to filter the sections on.
+   * @return {*} Filtered sections as flat Array.
+   */
+  static extractSlotSections(findPageResponse: FindPageResponse, slotName: string) {
+    return extractSlotSections(findPageResponse, slotName);
   }
 
   /**
@@ -210,6 +251,24 @@ export class EcomApi {
   /**
    * Register a new hook.
    *
+   * @example
+   * ```typescript
+   * import { EcomHooks } from 'fcecom-frontend-api-client';
+   *
+   * type OpenStoreFrontUrlPayload = {
+   *   id: string; // ID of the element to open.
+   *   name: string; // Display name of the element to open · Only passed when triggered via report.
+   *   type: string; // Type of the element to open.
+   *   url: string; // URL of the element to open in the storefront.
+   * };
+   *
+   * const handleHook = (payload: OpenStorefrontUrlHookPayload) => {
+   *   // ... Custom logic
+   * }
+   *
+   * api.addHook(EcomHooks.OPEN_STOREFRONT_URL, handleHook); <-- Register Hook
+   * ```
+   *
    * @template T
    * @template V
    * @param name Name of the hook.
@@ -222,7 +281,39 @@ export class EcomApi {
     isNonNullable(name, 'Invalid name passed');
     isNonNullable(func, 'Invalid func passed');
 
-    return this.tppService?.getHookService().addHook(name, func);
+    return this.tppService.getHookService().addHook(name, func);
+  }
+
+  /**
+   * Remove a registered hook.
+   *
+   * @example
+   * ```typescript
+   * import { EcomHooks } from 'fcecom-frontend-api-client';
+   *
+   * const handleHook = (payload) => {
+   *   // ... Custom logic
+   * }
+   *
+   * api.addHook(EcomHooks.OPEN_STOREFRONT_URL, handleHook);
+   *
+   * // To remove the registered hook, pass the exact instance
+   * api.removeHook(EcomHooks.OPEN_STOREFRONT_URL, handleHook); <-- Remove hook
+   * ```
+   *
+   * @template T
+   * @template V
+   * @param name Name of the hook.
+   * @param func The hook's callback.
+   * @return {*}
+   */
+  removeHook<Name extends EcomHooks, Func extends HookPayloadTypes[Name]>(name: Name, func: (payload: Func) => void) {
+    if (!this.tppService) return this.logger.warn('Tried to access TPP while not in preview');
+
+    isNonNullable(name, 'Invalid name passed');
+    isNonNullable(func, 'Invalid func passed');
+
+    return this.tppService.getHookService().removeHook(name, func);
   }
 }
 

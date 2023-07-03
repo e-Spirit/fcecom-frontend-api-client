@@ -3,7 +3,7 @@
  * @module SlotParser
  */
 
-import { CreatePagePayload, FindPageItem, FindPageParams, FindPageResponse, SetElementParams } from '../../api/EcomApi.meta';
+import { CreatePagePayload, FindPageItem, FindPageParams, FindPageResponse, PageSlot, SetElementParams } from '../../api/EcomApi.meta';
 import { EcomError } from '../../api/errors';
 import { RemoteService } from '../../api/RemoteService';
 import { TPPService } from '../../api/TPPService';
@@ -11,7 +11,6 @@ import { addContentButton } from '../dom/addContentElement/addContentElement';
 import { HookService } from './HookService';
 import { EcomHooks } from './HookService.meta';
 import { getLogger } from '../../utils/logging/Logger';
-import { isNonNullable } from '../../utils/helper';
 
 /**
  * Parses the current document's DOM and handles slots.
@@ -51,19 +50,17 @@ export class SlotParser {
   /**
    * Parses the current document's DOM and handles slots.
    *
-   * @param currentCreatePagePayload
+   * @param params
    */
   async parseSlots(params: SetElementParams) {
-    this.clear();
     this.currentCreatePagePayload = params;
     const { id, type } = params;
+
     const findPageResult = await this.remoteService.findPage({ id, type });
     const page = findPageResult && findPageResult.items[0];
-    if (page) {
-      this.setPreviewIds(page);
-    } else {
-      this.setupAllAddContentButtons();
-    }
+
+    this.clear();
+    page ? this.setPreviewIds(page) : this.setupAllAddContentButtons();
   }
 
   /**
@@ -288,7 +285,7 @@ export class SlotParser {
    * @param slotName Name of the slot to get.
    * @return {*}
    */
-  private getSlot(page: FindPageItem, slotName: string): FindPageResponse['items'][0] | null {
+  private getSlot(page: FindPageItem, slotName: string): PageSlot | null {
     const contentSlot = page.children.find((child: any) => child.name === slotName);
     if (contentSlot) {
       return contentSlot;

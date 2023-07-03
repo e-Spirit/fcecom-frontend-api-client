@@ -17,14 +17,28 @@ export type FindPageResponse = {
   items: FindPageItem[];
 };
 
-export type FindPageItem = {
+export type PageSection = {
+  id: string;
   previewId: string;
 
-  children: {
-    name: string;
-    previewId: string;
-    children: [];
-  }[];
+  type: string;
+  sectionType: string;
+
+  data: object;
+  children: [];
+
+  displayed?: boolean;
+}
+
+export type PageSlot = {
+  name: string;
+  previewId: string;
+  children: PageSection[];
+};
+
+export type FindPageItem = {
+  previewId: string;
+  children: PageSlot[];
 };
 
 export type FetchNavigationParams = {

@@ -4,6 +4,7 @@
  */
 import { EcomInvalidParameterError } from '../api/errors';
 import { ParamObject } from './meta';
+import { FindPageResponse, PageSection } from '../api/Remoteservice.meta';
 
 /**
  * Removes empty properties of an object.
@@ -38,4 +39,36 @@ export function isDefined(value: unknown, message?: string): asserts value is No
  */
 export function isNonNullable(value: unknown, message?: string): asserts value is NonNullable<unknown> {
   if (typeof value === 'undefined' || value === null) throw new EcomInvalidParameterError(message ?? 'Non-nullable value was null / undefined');
+}
+
+/**
+ * Returns all sections belonging to a specified slotName inside a provided FindPageResponse.
+ *
+ * @example
+ * ```javascript
+ * const slotName = 'sup_content'
+ *
+ * api
+ *   .findPage({
+ *     locale: 'de_DE',
+ *     id: `Content Page`,
+ *     type: 'content',
+ *   })
+ *   .then((pageResult) => {
+ *     const sections = extractSlotSections(pageResult, slotName); // <-- Extract Sections
+ *     console.log('Sections:', sections)
+ *   })
+ *```
+ *
+ * @param findPageResponse response of calling `findPage()`.
+ * @param slotName SlotName to filter the sections on.
+ * @return {*} Filtered sections as flat Array.
+ */
+export function extractSlotSections(findPageResponse: FindPageResponse, slotName: string): Array<PageSection> {
+  isNonNullable(findPageResponse, 'findPageResponse missing');
+  isNonNullable(slotName, 'SlotName is missing');
+
+  if (!findPageResponse.items?.length) return [];
+
+  return findPageResponse.items[0].children.find((child: any) => child.name === slotName)?.children ?? [];
 }

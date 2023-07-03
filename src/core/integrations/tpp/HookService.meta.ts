@@ -2,7 +2,7 @@ import { CreateSectionPayload } from '../../api/TPPService.meta';
 
 /**
  * This enumeration contains the possible hooks to use.
- * See the [example](../../../hooks) for more information.
+ * See the [example](../../../../hooks) for more information.
  */
 export enum EcomHooks {
   /**
