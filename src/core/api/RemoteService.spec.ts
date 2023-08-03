@@ -38,8 +38,8 @@ describe('RemoteService', () => {
   describe('findPage()', () => {
     it('it finds a page', async () => {
       // Arrange
-      fetchResponse = {};
-
+      fetchResponse = { items: ['testPage'] };
+      const expectedResult = 'testPage';
       // Act
       const result = await service.findPage({
         id: 'plumber0PIERRE*porch',
@@ -48,12 +48,13 @@ describe('RemoteService', () => {
       });
 
       // Assert
-      expect(result).toEqual(fetchResponse);
+      expect(result).toEqual(expectedResult);
       expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/findPage?id=plumber0PIERRE*porch&locale=de&type=product`, expect.anything());
     });
     it('it uses default values for parameters when finding a page', async () => {
       // Arrange
-      fetchResponse = {};
+      fetchResponse = { items: ['testPage'] };
+      const expectedResult = 'testPage';
       service.setDefaultLocale('en_GB');
 
       // Act
@@ -63,7 +64,7 @@ describe('RemoteService', () => {
       });
 
       // Assert
-      expect(result).toEqual(fetchResponse);
+      expect(result).toEqual(expectedResult);
       expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/findPage?id=plumber0PIERRE*porch&locale=${service.defaultLocale}&type=product`, expect.anything());
     });
     it('throws error if fetch was not ok and status is 401', async () => {
@@ -203,13 +204,13 @@ describe('RemoteService', () => {
 
       // Act
       const result = await service.findElement({
-        id: 'plumber0PIERRE*porch',
+        fsPageId: 'plumber0PIERRE*porch',
         locale: 'de',
       });
 
       // Assert
       expect(result).toEqual(fetchResponse);
-      expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/findElement?id=plumber0PIERRE*porch&locale=de`, expect.anything());
+      expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/findElement?fsPageId=plumber0PIERRE*porch&locale=de`, expect.anything());
     });
     it('it uses default values for parameters when finding a page', async () => {
       // Arrange
@@ -218,12 +219,12 @@ describe('RemoteService', () => {
 
       // Act
       const result = await service.findElement({
-        id: 'plumber0PIERRE*porch',
+        fsPageId: 'plumber0PIERRE*porch',
       });
 
       // Assert
       expect(result).toEqual(fetchResponse);
-      expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/findElement?id=plumber0PIERRE*porch&locale=${service.defaultLocale}`, expect.anything());
+      expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/findElement?fsPageId=plumber0PIERRE*porch&locale=${service.defaultLocale}`, expect.anything());
     });
   });
 

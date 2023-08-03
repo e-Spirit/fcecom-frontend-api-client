@@ -9,6 +9,7 @@ describe('addContentElement', () => {
     it('returns an element', () => {
       // Arrange
       const params = {
+        slotName: 'sub_content',
         handleClick: jest.fn(),
         extraCSS: 'EXTRACSS',
       };

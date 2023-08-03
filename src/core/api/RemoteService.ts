@@ -7,7 +7,7 @@ import { EcomClientError, EcomError, EcomInvalidParameterError, ERROR_CODES, Htt
 import { removeNullishObjectProperties } from '../utils/helper';
 import { ParamObject } from '../utils/meta';
 import { PreviewDecider } from '../utils/PreviewDecider';
-import { FetchNavigationParams, FetchNavigationResponse, FindElementParams, FindElementResponse, FindPageParams, FindPageResponse } from './EcomApi.meta';
+import { FetchNavigationParams, FetchNavigationResponse, FindElementParams, FindPageItem, FindPageParams, FindPageResponse } from './EcomApi.meta';
 import { getLogger } from '../utils/logging/Logger';
 
 /**
@@ -45,10 +45,10 @@ export class RemoteService {
    * @param params Parameters to use to find the page.
    * @return {*} Details about the page.
    */
-  async findPage(params: FindPageParams): Promise<FindPageResponse> {
+  async findPage(params: FindPageParams): Promise<FindPageItem> {
     const { id, locale = this.defaultLocale, type } = params;
     try {
-      return await this.performGetRequest<FindPageParams, FindPageResponse>('findPage', { id, locale, type });
+      return (await this.performGetRequest<FindPageParams, FindPageResponse>('findPage', { id, locale, type }))?.items?.[0];
     } catch (err: unknown) {
       let ecomError: EcomError;
       if (err instanceof HttpError && err.status === 401) {
@@ -96,14 +96,14 @@ export class RemoteService {
    * @param params Parameters to use to find the element.
    * @return {*} Details about the navigation.
    */
-  async findElement(params: FindElementParams): Promise<FindElementResponse> {
+  async findElement(params: FindElementParams): Promise<FindPageItem> {
     if (!params) {
       this.logger.warn('Invalid params passed');
       throw new EcomInvalidParameterError('Invalid params passed');
     }
-    const { id, locale = this.defaultLocale } = params;
-    return this.performGetRequest<FindElementParams, FindElementResponse>('findElement', {
-      id,
+    const { fsPageId, locale = this.defaultLocale } = params;
+    return this.performGetRequest<FindElementParams, FindPageItem>('findElement', {
+      fsPageId,
       locale,
     });
   }

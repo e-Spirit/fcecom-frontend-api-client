@@ -4,7 +4,7 @@
  */
 import { EcomInvalidParameterError } from '../api/errors';
 import { ParamObject } from './meta';
-import { FindPageResponse, PageSection } from '../api/Remoteservice.meta';
+import { FindPageItem, PageSection } from '../api/Remoteservice.meta';
 
 /**
  * Removes empty properties of an object.
@@ -60,15 +60,15 @@ export function isNonNullable(value: unknown, message?: string): asserts value i
  *   })
  *```
  *
- * @param findPageResponse response of calling `findPage()`.
+ * @param page response of calling `findPage()`.
  * @param slotName SlotName to filter the sections on.
  * @return {*} Filtered sections as flat Array.
  */
-export function extractSlotSections(findPageResponse: FindPageResponse, slotName: string): Array<PageSection> {
-  isNonNullable(findPageResponse, 'findPageResponse missing');
+export function extractSlotSections(page: FindPageItem, slotName: string): Array<PageSection> {
+  isNonNullable(page, 'page missing');
   isNonNullable(slotName, 'SlotName is missing');
 
-  if (!findPageResponse.items?.length) return [];
+  if (!page) return [];
 
-  return findPageResponse.items[0].children.find((child: any) => child.name === slotName)?.children ?? [];
+  return page.children?.find((child: any) => child.name === slotName)?.children ?? [];
 }

@@ -84,6 +84,28 @@ export interface Status {
 }
 
 /**
+ * @internal
+ */
+export interface Button {
+  label: string;
+  _name?: string;
+  css?: string;
+  execute?(scope: ButtonScope, item: any): Promise<void>;
+  isEnabled?(scope: ButtonScope): Promise<boolean>;
+}
+
+/**
+ * @internal
+ */
+export interface ButtonScope {
+  $node: HTMLElement;
+  $button: HTMLElement;
+  previewId: string;
+  status: Status;
+  language: string;
+}
+
+/**
  * @ignore
  */
 export interface SNAP {
@@ -120,4 +142,6 @@ export interface SNAP {
   getPreviewLanguage(): Promise<string>;
 
   showMessage(message: string, kind: string, title?: string): void;
+
+  registerButton(button: Button, index: number): void;
 }

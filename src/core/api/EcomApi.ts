@@ -4,10 +4,9 @@ import {
   FetchNavigationParams,
   FetchNavigationResponse,
   FindElementParams,
-  FindElementResponse,
+  FindPageItem,
   FindPageParams,
-  FindPageResponse,
-  SetElementParams,
+  PageTarget,
 } from './EcomApi.meta';
 import { TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
 import { PreviewDecider } from '../utils/PreviewDecider';
@@ -16,8 +15,9 @@ import { RemoteService } from './RemoteService';
 import { TPPService } from './TPPService';
 import { EcomHooks, HookPayloadTypes } from '../integrations/tpp/HookService.meta';
 import { getLogger, Logging, LogLevel } from '../utils/logging/Logger';
-import { extractSlotSections, isDefined, isNonNullable } from '../utils/helper';
+import { extractSlotSections, isNonNullable } from '../utils/helper';
 import { ReferrerStore } from '../utils/ReferrerStore';
+import { Verbosity } from '../utils/debugging/verbosity';
 
 /**
  * Frontend API for Connect for Commerce.
@@ -94,12 +94,12 @@ export class EcomApi {
    *   })
    *```
    *
-   * @param findPageResponse response of calling `findPage()`.
+   * @param page response of calling `findPage()`.
    * @param slotName SlotName to filter the sections on.
    * @return {*} Filtered sections as flat Array.
    */
-  static extractSlotSections(findPageResponse: FindPageResponse, slotName: string) {
-    return extractSlotSections(findPageResponse, slotName);
+  static extractSlotSections(page: FindPageItem, slotName: string) {
+    return extractSlotSections(page, slotName);
   }
 
   /**
@@ -109,14 +109,17 @@ export class EcomApi {
    */
   async init(): Promise<boolean> {
     ReferrerStore.init();
-    const isPreviewNeeded = await PreviewDecider.isPreview();
-    if (isPreviewNeeded) {
+
+    if (await PreviewDecider.isPreview()) {
+      Verbosity.enablePreview();
+
       // Import dependencies dynamically
       const tppServicePromise = import('./TPPService');
       const slotParserPromise = import('../integrations/tpp/SlotParser');
+
       return Promise.all([tppServicePromise, slotParserPromise])
         .then(([{ TPPService }, { SlotParser }]) => {
-          this.tppService = new TPPService(this.remoteService);
+          this.tppService = new TPPService();
           this.slotParser = new SlotParser(this.remoteService, this.tppService);
           return this.tppService.init();
         })
@@ -126,6 +129,7 @@ export class EcomApi {
           return false;
         });
     }
+
     return false;
   }
 
@@ -135,7 +139,7 @@ export class EcomApi {
    * @param params Parameters to use to find the page.
    * @return {*} Details about the page.
    */
-  async findPage(params: FindPageParams): Promise<FindPageResponse> {
+  async findPage(params: FindPageParams): Promise<FindPageItem> {
     isNonNullable(params, 'Invalid params passed');
 
     return this.remoteService.findPage(params);
@@ -159,7 +163,7 @@ export class EcomApi {
    * @param params Parameters to use to find the element.
    * @return {*} Details about the element.
    */
-  async findElement(params: FindElementParams): Promise<FindElementResponse> {
+  async findElement(params: FindElementParams): Promise<FindPageItem> {
     isNonNullable(params, 'Invalid params passed');
 
     return this.remoteService.findElement(params);
@@ -180,20 +184,21 @@ export class EcomApi {
   /**
    * Sets the element currently displayed in the storefront.
    *
-   * @param params Parameter
+   * @param pageTarget Parameter
    */
-  async setElement(params: SetElementParams | null) {
+  async setElement(pageTarget: PageTarget) {
     if (!this.tppService) return this.logger.warn('Tried to access TPP while not in preview');
 
-    isDefined(params, 'Invalid params passed');
+    isNonNullable(pageTarget, 'Invalid params passed');
 
-    if (!params) {
-      this.tppService?.setElement(null);
-    } else {
-      const { id, type, locale = this.defaultLocale } = params;
-      await this.tppService?.setElement({ id, type, locale });
-      await this.slotParser?.parseSlots(params);
-    }
+    // Get Page
+    let page: FindPageItem;
+    if (pageTarget.isFsDriven) page = await this.remoteService.findElement(pageTarget);
+    else page = await this.remoteService.findPage(pageTarget);
+
+    // Set Status Provider
+    await this.tppService?.setElement(page);
+    await this.slotParser?.parseSlots(pageTarget, page);
   }
 
   /**
@@ -245,7 +250,7 @@ export class EcomApi {
    *
    */
   clear() {
-    this.slotParser?.clear();
+    this?.slotParser?.clear();
   }
 
   /**

@@ -5,10 +5,9 @@
 
 import { HookService } from '../integrations/tpp/HookService';
 import { EcomHooks } from '../integrations/tpp/HookService.meta';
-import { SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
-import { EcomClientError, EcomError, EcomInvalidParameterError, EcomModuleError, ERROR_CODES } from './errors';
-import { CreatePagePayload, CreatePageResponse, CreateSectionPayload, FindPageParams } from './EcomApi.meta';
-import { RemoteService } from './RemoteService';
+import { ButtonScope, SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
+import { EcomClientError, EcomError, EcomModuleError, ERROR_CODES } from './errors';
+import { CreatePagePayload, CreatePageResponse, CreateSectionPayload, FindPageItem } from './EcomApi.meta';
 import { getLogger } from '../utils/logging/Logger';
 
 /**
@@ -30,31 +29,18 @@ export class TPPService {
 
   private tppPromise?: Promise<any>;
   private tpp?: TPPWrapperInterface;
-  private remoteService: RemoteService;
-
-  constructor(remoteService: RemoteService) {
-    this.remoteService = remoteService;
-  }
 
   /**
    * Sets the element currently being displayed.
    *
-   * @param params Params to identify the element.
+   * @param page Page to be previewed
    */
-  async setElement(params: FindPageParams | null) {
+  async setElement(page: FindPageItem | null) {
     const tpp = await this.getTppInstance();
     const snap = await tpp?.TPP_SNAP;
-    if (params === null) {
-      snap?.setPreviewElement(null);
-      return;
-    }
-    const findPageResult = await this.remoteService.findPage(params);
-    const page = findPageResult && findPageResult.items[0];
-    if (page && page.previewId) {
-      snap?.setPreviewElement(page.previewId);
-    } else {
-      snap?.setPreviewElement(null);
-    }
+
+    // Set Preview Element
+    snap?.setPreviewElement(page?.previewId ?? null);
   }
 
   /**
@@ -131,6 +117,7 @@ export class TPPService {
         this.setTPPWrapper(new TPPWrapper());
         this.initPreviewHooks();
         this.initMessagesToServer();
+        this.addTranslationstudioButton();
         return Promise.resolve(true);
       })
       .catch((err: unknown) => {
@@ -340,6 +327,39 @@ export class TPPService {
       // Invalid response from module
       this.logger.error('Invalid module response', response);
       throw new EcomClientError(ERROR_CODES.CREATE_PAGE_FAILED, 'Cannot create page');
+    }
+  }
+
+  /**
+   * Executes a script on the FS Server which returns the installed Project Apps
+   * @private
+   */
+  private async getProjectApps(): Promise<any> {
+    const snap = await this.checkForTPP();
+    if (!snap) return;
+    return await snap.execute('script:tpp_list_projectapps');
+  }
+
+  /**
+   * Adds a button which triggers Translation Studio if it is installed
+   * @private
+   */
+  private async addTranslationstudioButton(): Promise<void> {
+    const snap = await this.checkForTPP();
+    if (!snap) return;
+    const projectApps = await this.getProjectApps();
+    
+    if (Array.isArray(projectApps) && projectApps.some((projectApp: string) => projectApp.includes('TranslationStudio'))) {
+      snap.registerButton({
+        _name: 'translation_studio',
+        label: 'Translate',
+        css: 'tpp-icon-translate',
+        execute: ({ status: { id: elementId }, language }) =>
+            snap.execute('script:translationstudio_ocm_translationhelper', { language, elementId }),
+        isEnabled(scope: ButtonScope): Promise<boolean> {
+          return Promise.resolve(true);
+        }
+      }, 2);
     }
   }
 }

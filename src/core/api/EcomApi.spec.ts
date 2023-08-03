@@ -1,7 +1,7 @@
 import { EcomApi } from './EcomApi';
 import { PreviewDecider } from '../utils/PreviewDecider';
-import { CreatePagePayload, CreateSectionPayload, SetElementParams } from './TPPService.meta';
-import { FindElementParams, FindPageParams } from './Remoteservice.meta';
+import { CreatePagePayload, CreateSectionPayload, FsDrivenPageTarget, ShopDrivenPageTarget } from './TPPService.meta';
+import {FindElementParams, FindPageItem, FindPageParams} from './Remoteservice.meta';
 import { mock } from 'jest-mock-extended';
 import { RemoteService } from './RemoteService';
 import { TPPService } from './TPPService';
@@ -269,7 +269,7 @@ describe('EcomApi', () => {
     it('it calls RemoteService.findElement', async () => {
       // Arrange
       const payload = {
-        id: 'plumber0PIERRE*porch',
+        fsPageId: 'plumber0PIERRE*porch',
         locale: 'de',
       } as FindElementParams;
       // Act
@@ -315,41 +315,48 @@ describe('EcomApi', () => {
         fsPageTemplate: 'TEMPLATE',
         id: 'ID',
         type: 'content',
-        locale: 'LOCALE',
-      } as SetElementParams;
+        isFsDriven: false,
+      } as ShopDrivenPageTarget;
+
+      const pageItem: FindPageItem = {
+        previewId: 'testPreviewId',
+        children: []
+      }
+      jest.spyOn(mockRemoteService, 'findPage').mockResolvedValue(pageItem);
       // Act
       await api.setElement(params);
       // Assert
-      const { id, type, locale } = params;
-      expect(mockTppService.setElement.mock.calls[0][0]).toEqual({ id, type, locale });
+      expect(mockRemoteService.findPage.mock.calls[0][0]).toEqual(params);
+      expect(mockTppService.setElement.mock.calls[0][0]).toEqual(pageItem);
       expect(mockSlotParser.parseSlots.mock.calls[0][0]).toEqual(params);
     });
-    it('it uses fallback locale', async () => {
+    it('it fetches a shop driven page via findPage', async () => {
       // Arrange
-      const locale = 'de_DE';
-      api.setDefaultLocale(locale);
       api['tppService'] = mockTppService;
       const params = {
         fsPageTemplate: 'TEMPLATE',
         id: 'ID',
         type: 'content',
-      } as SetElementParams;
+        isFsDriven: false,
+      } as ShopDrivenPageTarget;
       // Act
       await api.setElement(params);
       // Assert
-      const { id, type } = params;
-      expect(mockTppService.setElement.mock.calls[0][0]).toEqual({ id, type, locale });
+      expect(mockRemoteService.findPage.mock.calls[0][0]).toEqual(params);
     });
-    it('passes null as params', async () => {
+    it('it fetches an fs driven page via findElement', async () => {
       // Arrange
       api['tppService'] = mockTppService;
-      const mockSlotParser = mock<SlotParser>();
-      api['slotParser'] = mockSlotParser;
+      const params = {
+        fsPageTemplate: 'TEMPLATE',
+        fsPageId: 'ID',
+        type: 'content',
+        isFsDriven: true,
+      } as FsDrivenPageTarget;
       // Act
-      await api.setElement(null);
+      await api.setElement(params);
       // Assert
-      expect(mockTppService.setElement).toBeCalledWith(null);
-      expect(mockSlotParser.parseSlots).not.toBeCalled();
+      expect(mockRemoteService.findElement.mock.calls[0][0]).toEqual(params);
     });
     it('does not throw if no TPPService is set', async () => {
       // Arrange
@@ -360,7 +367,8 @@ describe('EcomApi', () => {
         fsPageTemplate: 'TEMPLATE',
         id: 'ID',
         type: 'content',
-      } as SetElementParams;
+        isFsDriven: false
+      } as ShopDrivenPageTarget;
       // Act
       expect(async () => {
         await api.setElement(params);

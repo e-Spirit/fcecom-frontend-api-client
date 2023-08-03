@@ -1,11 +1,11 @@
 import { mock } from 'jest-mock-extended';
 import { RemoteService } from '../../api/RemoteService';
-import { FindPageItem, FindPageResponse } from '../../api/Remoteservice.meta';
+import { FindPageItem } from '../../api/Remoteservice.meta';
 import { TPPService } from '../../api/TPPService';
-import { SetElementParams } from '../../api/TPPService.meta';
 import { HookService } from './HookService';
 import { EcomHooks } from './HookService.meta';
 import { SlotParser } from './SlotParser';
+import { FsDrivenPageTarget, ShopDrivenPageTarget } from '../../api/TPPService.meta';
 
 const mockRemoteService = mock<RemoteService>();
 const mockTppService = mock<TPPService>();
@@ -38,48 +38,43 @@ describe('SlotParser', () => {
           addContentCb = cb;
         }
       });
-      mockRemoteService.findPage.mockResolvedValue({
-        items: [],
-      } as FindPageResponse);
+      const page = {
+        previewId: 'testPreviewId',
+        children: [],
+      } as FindPageItem;
+      mockRemoteService.findPage.mockResolvedValue(page);
       const params = {
         fsPageTemplate: 'FSTEMPLATE',
         id: 'ID',
         type: 'content',
-      } as SetElementParams;
+      } as ShopDrivenPageTarget;
       // Act
       parser = new SlotParser(mockRemoteService, mockTppService);
-      await parser.parseSlots(params);
+      await parser.parseSlots(params, page);
       // @ts-ignore - Will be set during constructor callback
       addContentCb({ content: null });
       // Assert
       const { id, type } = params;
       expect(mockRemoteService.findPage.mock.calls[0][0].id).toEqual(id);
       expect(mockRemoteService.findPage.mock.calls[0][0].type).toEqual(type);
-      expect(mockRemoteService.findPage.mock.calls[1][0].id).toEqual(id);
-      expect(mockRemoteService.findPage.mock.calls[1][0].type).toEqual(type);
       // TODO: Add assertion for buttons
     });
   });
   describe('parseSlots', () => {
     it('sets up add content buttons for each section if page does not already exist', async () => {
       // Arrange
-      mockRemoteService.findPage.mockResolvedValue({
-        items: [],
-      } as FindPageResponse);
       const params = {
         fsPageTemplate: 'FSTEMPLATE',
         id: 'ID',
         type: 'content',
-      } as SetElementParams;
+      } as ShopDrivenPageTarget;
       // Act
-      await parser.parseSlots(params);
+      await parser.parseSlots(params, null);
       // Assert
-      const { id, type } = params;
-      expect(mockRemoteService.findPage.mock.calls[0][0].id).toEqual(id);
-      expect(mockRemoteService.findPage.mock.calls[0][0].type).toEqual(type);
       // TODO: Add assertion for buttons
+      expect(document.querySelector('fcecom-add-content-button-wrapper')).toBeDefined();
     });
-    it('sets preview ids for each section if page already exists', async () => {
+    it('sets preview ids for each section if shop driven page already exists', async () => {
       // Arrange
       const page = {
         previewId: 'PREVIEWID',
@@ -94,25 +89,49 @@ describe('SlotParser', () => {
           },
         ],
       } as FindPageItem;
-      mockRemoteService.findPage.mockResolvedValue({
-        items: [page],
-      } as FindPageResponse);
+      mockRemoteService.findPage.mockResolvedValue(page);
       const params = {
         fsPageTemplate: 'FSTEMPLATE',
         id: 'ID',
         type: 'content',
-      } as SetElementParams;
+      } as ShopDrivenPageTarget;
 
       // Act
-      await parser.parseSlots(params);
+      await parser.parseSlots(params, page);
       // Assert
-      const {type, id} = params;
-      expect(mockRemoteService.findPage.mock.calls[0][0].id).toEqual(id);
-      expect(mockRemoteService.findPage.mock.calls[0][0].type).toEqual(type);
       expect(document.querySelector(`[data-fcecom-slot-name="${page.children[0].name}"][data-preview-id="${page.children[0].previewId}"]`)).toBeDefined();
       expect(document.querySelector(`[data-fcecom-slot-name="${page.children[1].name}"][data-preview-id="${page.children[1].previewId}"]`)).toBeDefined();
       // TODO: Add assertion for buttons
     });
+  });
+  it('sets preview ids for each section if fs driven page already exists', async () => {
+    // Arrange
+    const page = {
+      previewId: 'PREVIEWID',
+      children: [
+        {
+          name: 'SLOTNAME',
+          previewId: 'PREVIEWID',
+        },
+        {
+          name: 'SLOTNAME2',
+          previewId: 'PREVIEWID2',
+        },
+      ],
+    } as FindPageItem;
+    const params = {
+      fsPageTemplate: 'FSTEMPLATE',
+      fsPageId: 'ID',
+      type: 'content',
+      isFsDriven: true,
+    } as FsDrivenPageTarget;
+
+    // Act
+    await parser.parseSlots(params, page);
+    // Assert
+    expect(document.querySelector(`[data-fcecom-slot-name="${page.children[0].name}"][data-preview-id="${page.children[0].previewId}"]`)).toBeDefined();
+    expect(document.querySelector(`[data-fcecom-slot-name="${page.children[1].name}"][data-preview-id="${page.children[1].previewId}"]`)).toBeDefined();
+    // TODO: Add assertion for buttons
   });
   describe('clear', () => {
     it('clears the DOM', async () => {
@@ -130,15 +149,13 @@ describe('SlotParser', () => {
           },
         ],
       } as FindPageItem;
-      mockRemoteService.findPage.mockResolvedValue({
-        items: [page],
-      } as FindPageResponse);
+      mockRemoteService.findPage.mockResolvedValue(page);
       const params = {
         fsPageTemplate: 'FSTEMPLATE',
         id: 'ID',
         type: 'content',
-      } as SetElementParams;
-      await parser.parseSlots(params);
+      } as ShopDrivenPageTarget;
+      await parser.parseSlots(params, page);
       // Act
       parser.clear();
       // Assert

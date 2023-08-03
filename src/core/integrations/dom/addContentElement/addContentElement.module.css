@@ -16,9 +16,9 @@
   transition: 0.3s;
   border: 2px dashed rgba(86, 86, 86, 0.15);
   height: 180px;
-  margin: var(--fcecom-add-content-button-margin);
-  width: calc(100% - 2 * var(--fcecom-add-content-button-margin));
-  max-width: calc(100% - 2 * var(--fcecom-add-content-button-margin));
+  margin: var(--fcecom-add-content-button-margin) 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .fcecom-add-content-button svg.plus-button {

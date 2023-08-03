@@ -2,6 +2,7 @@ import { AddContentButtonParams } from './addContentElement.meta';
 
 import css from './addContentElement.module.css';
 import plusSVG from './plusButton.module.svg';
+import { Verbosity } from '../../../utils/debugging/verbosity';
 
 /**
  * Creates the HTML for the "Add content" button.
@@ -9,7 +10,7 @@ import plusSVG from './plusButton.module.svg';
  * @param param Parameters to create the button with.
  * @returns
  */
-export const addContentButton = ({ handleClick, extraCSS }: AddContentButtonParams): HTMLElement => {
+export const addContentButton = ({ slotName, handleClick, extraCSS }: AddContentButtonParams): HTMLElement => {
   const addStyle = (style: string) => {
     const styleElement = document.createElement('style');
     styleElement.textContent = style;
@@ -34,6 +35,13 @@ export const addContentButton = ({ handleClick, extraCSS }: AddContentButtonPara
   buttonContainer.appendChild(buttonIcon);
   buttonIcon.classList.add('square-icon');
   buttonIcon.ariaHidden = 'true';
+
+  if (Verbosity.debugMode()) {
+    const slotNameElement = document.createElement('span');
+    buttonContainer.prepend(slotNameElement);
+    slotNameElement.style.paddingBottom = '10px';
+    slotNameElement.innerText = `Slot "${slotName}"`;
+  }
 
   const svgTemplate = document.createElement('template');
   svgTemplate.innerHTML = plusSVG;

@@ -1,6 +1,6 @@
 {
   "name": "fcecom-frontend-api-client",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "FirstSpirit Connect for Commerce - Frontend API Client",
   "main": "dist/bundle.js",
   "module": "dist/bundle.js",
@@ -8,7 +8,8 @@
   "scripts": {
     "clean": "rimraf dist",
     "ci": "npm ci",
-    "build:watch": "npx webpack --env=mode=dev",
+    "build:dev": "npx webpack --env=mode=dev",
+    "build:watch": "npx webpack --env=mode=watch",
     "start": "npm run build:watch",
     "build": "npx webpack --env=mode=build ",
     "format": "prettier --write \"src/**/*.{ts,js,json}\"",

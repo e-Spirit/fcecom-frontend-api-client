@@ -1,5 +1,5 @@
 import { extractSlotSections, isDefined, isNonNullable, removeNullishObjectProperties } from './helper';
-import { FindPageResponse } from '../api/Remoteservice.meta';
+import { FindPageItem } from '../api/Remoteservice.meta';
 import { expectedSection } from './helper.spec.data';
 
 describe('helper', () => {
@@ -104,25 +104,21 @@ describe('extractSlotSections()', () => {
     expect(
       extractSlotSections(
         {
-          items: [
+          previewId: 'test-preview-id',
+          children: [
             {
-              previewId: 'test-preview-id',
-              children: [
-                {
-                  name: slotName,
-                  children: [expectedSection],
-                },
-              ],
+              name: slotName,
+              children: [expectedSection],
             },
           ],
-        } as FindPageResponse,
+        } as FindPageItem,
         slotName
       )[0]
     ).toBe(expectedSection);
   });
   it('throws on invalid parameters', async () => {
     // Act & Assert
-    await expect(async () => extractSlotSections(undefined as any, slotName)).rejects.toThrow('findPageResponse missing');
-    await expect(async () => extractSlotSections({} as FindPageResponse, undefined as any)).rejects.toThrow('SlotName is missing');
+    await expect(async () => extractSlotSections(undefined as any, slotName)).rejects.toThrow('page missing');
+    await expect(async () => extractSlotSections({} as FindPageItem, undefined as any)).rejects.toThrow('SlotName is missing');
   });
 });

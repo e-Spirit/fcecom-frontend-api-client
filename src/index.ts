@@ -2,8 +2,8 @@ export { EcomApi } from './core/api/EcomApi';
 export { LogLevel } from './core/utils/logging/Logger';
 export {
   EcomHooks,
-  ContentChangedHookPayload as ContentChangeHookPayload,
-  PageCreatedHookPayload as CreatePageHookPayload,
+  ContentChangedHookPayload,
+  PageCreatedHookPayload,
   OpenStoreFrontUrlHookPayload,
   RequestPreviewElementHookPayload,
 } from './core/integrations/tpp/HookService.meta';
@@ -15,12 +15,15 @@ export {
   FindPageParams,
   FindPageItem,
   FindPageResponse,
-  SetElementParams,
+  PageTarget,
+  ShopDrivenPageTarget,
+  FsDrivenPageTarget,
   FindElementParams,
-  FindElementResponse,
   PageSection,
   PageSlot,
   CreatePageResponse,
 } from './core/api/EcomApi.meta';
 export { addContentButton } from './core/integrations/dom/addContentElement/addContentElement';
 export { AddContentButtonParams } from './core/integrations/dom/addContentElement/addContentElement.meta';
+export { SectionCreatingCancelledPayload, PageCreationFailedPayload } from './core/api/TPPService.meta';
+export { EcomError } from './core/api/errors';

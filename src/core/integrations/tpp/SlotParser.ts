@@ -3,13 +3,13 @@
  * @module SlotParser
  */
 
-import { CreatePagePayload, FindPageItem, FindPageParams, FindPageResponse, PageSlot, SetElementParams } from '../../api/EcomApi.meta';
-import { EcomError } from '../../api/errors';
+import { FindElementParams, FindPageItem, FindPageParams, PageSlot, PageTarget, ShopDrivenPageTarget } from '../../api/EcomApi.meta';
+import { EcomError, ERROR_CODES } from '../../api/errors';
 import { RemoteService } from '../../api/RemoteService';
 import { TPPService } from '../../api/TPPService';
 import { addContentButton } from '../dom/addContentElement/addContentElement';
 import { HookService } from './HookService';
-import { EcomHooks } from './HookService.meta';
+import { ContentChangedHookPayload, EcomHooks } from './HookService.meta';
 import { getLogger } from '../../utils/logging/Logger';
 
 /**
@@ -20,11 +20,12 @@ import { getLogger } from '../../utils/logging/Logger';
  */
 export class SlotParser {
   private addContentButtons = new Array<HTMLElement>();
-  private currentCreatePagePayload?: CreatePagePayload;
+  private pageTarget?: PageTarget;
   private remoteService: RemoteService;
   private tppService: TPPService;
   private hookService: HookService = HookService.getInstance();
   private logger = getLogger('SlotParser');
+  private fsDrivenPage: boolean = false;
 
   /**
    * Creates an instance of SlotParser.
@@ -36,12 +37,18 @@ export class SlotParser {
     this.remoteService = remoteService;
     this.tppService = tppService;
 
-    this.tppService.getHookService().addHook(EcomHooks.CONTENT_CHANGED, async (payload) => {
+    this.tppService.getHookService().addHook(EcomHooks.CONTENT_CHANGED, async (payload: ContentChangedHookPayload) => {
       if (!payload.content) {
         // Section was removed
-        if (this.currentCreatePagePayload) {
+        if (this.pageTarget) {
           // Trigger new adding of buttons
-          await this.parseSlots(this.currentCreatePagePayload);
+          // Get Page
+          let page: FindPageItem;
+          if (this.pageTarget.isFsDriven) page = await this.remoteService.findElement(this.pageTarget);
+          else page = await this.remoteService.findPage(this.pageTarget);
+
+          // Parse Slots
+          await this.parseSlots(this.pageTarget, page);
         }
       }
     });
@@ -50,14 +57,11 @@ export class SlotParser {
   /**
    * Parses the current document's DOM and handles slots.
    *
-   * @param params
+   * @param pageTarget Target to identify the element.
+   * @param page Page to be previewed.
    */
-  async parseSlots(params: SetElementParams) {
-    this.currentCreatePagePayload = params;
-    const { id, type } = params;
-
-    const findPageResult = await this.remoteService.findPage({ id, type });
-    const page = findPageResult && findPageResult.items[0];
+  async parseSlots(pageTarget: PageTarget, page: FindPageItem | null) {
+    this.pageTarget = pageTarget;
 
     this.clear();
     page ? this.setPreviewIds(page) : this.setupAllAddContentButtons();
@@ -106,9 +110,7 @@ export class SlotParser {
     const elements = document.querySelectorAll('[data-fcecom-slot-name]');
     elements.forEach((element) => {
       const slotName = element.getAttribute('data-fcecom-slot-name');
-      if (slotName) {
-        this.setupAddContentButton(slotName);
-      }
+      if (slotName) this.setupAddContentButton(slotName);
     });
   }
 
@@ -136,6 +138,7 @@ export class SlotParser {
    */
   private createAddContentButton(slotName: string): HTMLElement {
     return addContentButton({
+      slotName,
       handleClick: async () => {
         return this.addContent(slotName).catch(async (err) => {
           this.logger.error('Failed to add content to slot', slotName, err);
@@ -164,16 +167,20 @@ export class SlotParser {
    * @param slotName Name of the slot to add a section to.
    */
   private async addContent(slotName: string) {
-    if (!this.currentCreatePagePayload) {
+    if (!this.pageTarget) {
       this.logger.error('No current element set');
       return;
     }
 
     // Create page if it does not exist
-    const newPage = await this.ensurePageExists(this.currentCreatePagePayload);
+    let page: FindPageItem;
+    if (this.pageTarget.isFsDriven) page = await this.remoteService.findElement(this.pageTarget as FindElementParams);
+    else page = await this.ensurePageExists(this.pageTarget as ShopDrivenPageTarget);
+
+    this.hookService.callHook(EcomHooks.ENSURED_PAGE_EXISTS, page);
 
     const createSectionPayload = {
-      pageId: newPage.previewId,
+      pageId: page.previewId,
       slotName: slotName,
     };
 
@@ -181,18 +188,20 @@ export class SlotParser {
     const createSectionResult = await this.tppService.createSection(createSectionPayload);
 
     if (createSectionResult) {
-      this.hookService.callHook(EcomHooks.SECTION_CREATED, createSectionPayload);
 
-      if (this.getSlot(newPage, slotName)?.children.length === 0) {
+      if (this.getSlot(page, slotName)?.children.length === 0) {
         // The new section is the first one of the page
         this.deleteAddContentButton(slotName);
         // Remove attribute of now non-empty slot
         document.querySelector(`[data-fcecom-slot-name=${slotName}]`)?.removeAttribute('data-preview-id');
       }
+
+      this.hookService.callHook(EcomHooks.SECTION_CREATED, createSectionPayload);
       this.logger.info('Created section', createSectionResult);
     } else {
       // This is the case if the user canceled the creation as well
       this.logger.warn('Failed to create section', createSectionResult);
+      this.hookService.callHook(EcomHooks.SECTION_CREATION_CANCELLED, { slotName });
     }
   }
 
@@ -200,40 +209,34 @@ export class SlotParser {
    * Makes sure the page exists in FirstSpirit.
    *
    * @private
-   * @param params Parameters to identify the current page.
+   * @param pageTarget Parameters to identify the current page.
    * @return {*}
    */
-  private async ensurePageExists(params: CreatePagePayload) {
-    const { id, type } = params;
-    const pageResult = await this.remoteService.findPage({ id, type });
+  private async ensurePageExists(pageTarget: ShopDrivenPageTarget) {
+    // Query Page
+    const page = await this.remoteService.findPage(pageTarget);
+    if (page) return page;
 
-    const page = pageResult && pageResult.items[0];
-    if (page) {
-      return page;
-    }
+    // Create new one
+    this.hookService.callHook(EcomHooks.PAGE_CREATING, pageTarget);
+    const createPageResult = await this.tppService.createPage(pageTarget);
 
-    try {
-      const createPageResult = await this.tppService.createPage(params);
-
-      if (!createPageResult) {
-        this.logger.error('Failed to create page:', createPageResult);
-        throw new EcomError('806', 'Failed to create page');
-      }
-    } catch (err: unknown) {
-      if (err instanceof EcomError) {
-        throw err;
-      }
-      throw new EcomError('806', 'Failed to create page');
+    if (!createPageResult) {
+      this.logger.error('Failed to create page:', createPageResult);
+      const error = new EcomError(ERROR_CODES.FIND_NEW_PAGE_FAILED, 'Failed to create page');
+      this.hookService.callHook(EcomHooks.PAGE_CREATION_FAILED, { error });
+      throw error;
     }
 
     // Find new page to get preview ID
-    const newPageResult = await this.pollForCaasPage({ id, type });
-
-    const newPage = newPageResult && newPageResult.items[0];
+    const newPage = await this.pollForCaasPage(pageTarget);
     if (!newPage) {
-      this.logger.error('Failed to find new page:', newPageResult);
-      throw new EcomError('806', 'Failed to find new page');
+      this.logger.error('Failed to find new page:', newPage);
+      const error = new EcomError(ERROR_CODES.FIND_NEW_PAGE_FAILED, 'Failed to create page');
+      this.hookService.callHook(EcomHooks.PAGE_CREATION_FAILED, { error });
+      throw error;
     }
+
     return newPage;
   }
 
@@ -244,16 +247,16 @@ export class SlotParser {
    * @param payload Payload of the page to look for.
    * @return {*} The page if found.
    */
-  private async pollForCaasPage(payload: FindPageParams) {
+  private async pollForCaasPage(payload: ShopDrivenPageTarget) {
     const MAX_TRIES = 5;
     const WAIT_TIME = 2000;
-    return new Promise<FindPageResponse>((rootResolve, rootReject) => {
+    return new Promise<FindPageItem>((rootResolve, rootReject) => {
       const findPage = (payload: FindPageParams, tries = 1) => {
         return new Promise((resolve) => {
           this.remoteService
             .findPage(payload)
             .then((response) => {
-              if (response.items?.length >= 1) {
+              if (response) {
                 this.logger.info(`Page ${payload} found after ${tries} tries`);
                 rootResolve(response);
               } else {
@@ -287,9 +290,7 @@ export class SlotParser {
    */
   private getSlot(page: FindPageItem, slotName: string): PageSlot | null {
     const contentSlot = page.children.find((child: any) => child.name === slotName);
-    if (contentSlot) {
-      return contentSlot;
-    }
+    if (contentSlot) return contentSlot;
     return null;
   }
 }

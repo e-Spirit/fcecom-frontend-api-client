@@ -60,10 +60,13 @@ export class HookService {
    */
   public clear() {
     delete this.hooks[EcomHooks.CONTENT_CHANGED]
-    delete this.hooks[EcomHooks.CONTENT_CHANGED]
     delete this.hooks[EcomHooks.OPEN_STOREFRONT_URL]
     delete this.hooks[EcomHooks.REQUEST_PREVIEW_ELEMENT]
     delete this.hooks[EcomHooks.SECTION_CREATED]
+    delete this.hooks[EcomHooks.PAGE_CREATING]
+    delete this.hooks[EcomHooks.SECTION_CREATION_CANCELLED]
+    delete this.hooks[EcomHooks.PAGE_CREATION_FAILED]
+    delete this.hooks[EcomHooks.ENSURED_PAGE_EXISTS]
     delete this.hooks[EcomHooks.PAGE_CREATED]
   }
 }
@@ -73,5 +76,9 @@ interface HookMap {
   [EcomHooks.OPEN_STOREFRONT_URL]?: ((payload: HookPayloadTypes[EcomHooks.OPEN_STOREFRONT_URL]) => void)[];
   [EcomHooks.REQUEST_PREVIEW_ELEMENT]?: ((payload: HookPayloadTypes[EcomHooks.REQUEST_PREVIEW_ELEMENT]) => void)[];
   [EcomHooks.SECTION_CREATED]?: ((payload: HookPayloadTypes[EcomHooks.SECTION_CREATED]) => void)[];
+  [EcomHooks.PAGE_CREATING]?: ((payload: HookPayloadTypes[EcomHooks.PAGE_CREATING]) => void)[];
+  [EcomHooks.SECTION_CREATION_CANCELLED]?: ((payload: HookPayloadTypes[EcomHooks.SECTION_CREATION_CANCELLED]) => void)[];
+  [EcomHooks.PAGE_CREATION_FAILED]?: ((payload: HookPayloadTypes[EcomHooks.PAGE_CREATION_FAILED]) => void)[];
+  [EcomHooks.ENSURED_PAGE_EXISTS]?: ((payload: HookPayloadTypes[EcomHooks.ENSURED_PAGE_EXISTS]) => void)[];
   [EcomHooks.PAGE_CREATED]?: ((payload: HookPayloadTypes[EcomHooks.PAGE_CREATED]) => void)[];
 }

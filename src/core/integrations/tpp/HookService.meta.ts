@@ -1,4 +1,10 @@
-import { CreateSectionPayload } from '../../api/TPPService.meta';
+import {
+  CreateSectionPayload,
+  SectionCreatingCancelledPayload,
+  PageCreationFailedPayload,
+  PageTarget
+} from '../../api/TPPService.meta';
+import { FindPageItem } from '../../api/Remoteservice.meta';
 
 /**
  * This enumeration contains the possible hooks to use.
@@ -25,6 +31,26 @@ export enum EcomHooks {
    * A hook that is fired when a new section is created via the 'Add Content' button in the Content Creator.
    */
   SECTION_CREATED = 'sectionCreated',
+
+  /**
+   * A hook that is fired when a page could not be found when trying to create a section and a new one is directly created.
+   */
+  PAGE_CREATING = "pageCreating",
+
+  /**
+   * A hook that is fired when a necessary page was created or found to create a new section.
+   */
+  ENSURED_PAGE_EXISTS = 'ensuredPageExists',
+
+  /**
+   * A hook that is fired after Section Creation has been cancelled.
+   */
+  SECTION_CREATION_CANCELLED = 'sectionCreationCancelled',
+
+  /**
+   * A hook that is fired after Page Creation has failed.
+   */
+  PAGE_CREATION_FAILED = 'pageCreationFailed',
 
   /**
    * A hook that is fired when a new page is created via the  'Create page' button in the Content Creator.
@@ -91,5 +117,9 @@ export interface HookPayloadTypes {
   [EcomHooks.OPEN_STOREFRONT_URL]: OpenStoreFrontUrlHookPayload;
   [EcomHooks.REQUEST_PREVIEW_ELEMENT]: RequestPreviewElementHookPayload;
   [EcomHooks.SECTION_CREATED]: CreateSectionPayload;
+  [EcomHooks.PAGE_CREATING]: PageTarget;
+  [EcomHooks.SECTION_CREATION_CANCELLED]: SectionCreatingCancelledPayload;
+  [EcomHooks.ENSURED_PAGE_EXISTS]: FindPageItem;
+  [EcomHooks.PAGE_CREATION_FAILED]: PageCreationFailedPayload;
   [EcomHooks.PAGE_CREATED]: PageCreatedHookPayload;
 }
