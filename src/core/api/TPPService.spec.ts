@@ -1,5 +1,5 @@
 import { mock } from 'jest-mock-extended';
-import { SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
+import { CreateSectionResponse, SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
 import { TPPLoader } from '../integrations/tpp/TPPLoader';
 import { TPPWrapper } from '../integrations/tpp/TPPWrapper';
 import { TPPService } from './TPPService';
@@ -59,7 +59,7 @@ describe('TPPService', () => {
       const snap = mock<SNAP>();
 
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
 
       const page = {
         previewId: 'PREVIEWID',
@@ -92,7 +92,7 @@ describe('TPPService', () => {
       const snap = mock<SNAP>();
 
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const findPageSpy = jest.spyOn(mockRemoteService, 'findPage');
       const setPreviewElementSpy = jest.spyOn(snap, 'setPreviewElement');
       // Act
@@ -107,7 +107,7 @@ describe('TPPService', () => {
       const snap = mock<SNAP>();
 
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       jest.spyOn(mockRemoteService, 'findPage').mockResolvedValueOnce(undefined as any);
       const setPreviewElementSpy = jest.spyOn(snap, 'setPreviewElement');
       // Act
@@ -123,7 +123,7 @@ describe('TPPService', () => {
       const snap = mock<SNAP>();
 
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const response = { success: true, error: null };
       const spy = jest.spyOn(snap, 'execute').mockResolvedValue(`Json ${JSON.stringify(response)}`);
 
@@ -157,7 +157,7 @@ describe('TPPService', () => {
       const snap = mock<SNAP>();
 
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const spy = jest.spyOn(snap, 'execute').mockResolvedValue(true).mockRejectedValueOnce(new Error());
 
       // Act
@@ -194,7 +194,7 @@ describe('TPPService', () => {
       const snap = mock<SNAP>();
 
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const spy = jest.spyOn(snap, 'execute').mockResolvedValue(true).mockResolvedValueOnce('Not valid response');
 
       // Act
@@ -231,7 +231,7 @@ describe('TPPService', () => {
       const snap = mock<SNAP>();
 
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const spy = jest.spyOn(snap, 'execute').mockResolvedValue(true).mockResolvedValueOnce('Json Not valid JSON');
 
       // Act
@@ -268,7 +268,7 @@ describe('TPPService', () => {
       const snap = mock<SNAP>();
 
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const response = { success: false, error: { code: 123, cause: 'Some cause' } } as CreatePageResponse;
       const spy = jest
         .spyOn(snap, 'execute')
@@ -310,8 +310,8 @@ describe('TPPService', () => {
       // Arrange
       const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
-      const spy = jest.spyOn(snap, 'createSection').mockResolvedValue(true);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
+      const spy = jest.spyOn(snap, 'createSection').mockResolvedValue({} as CreateSectionResponse);
 
       // Act
       await service.createSection({
@@ -332,7 +332,7 @@ describe('TPPService', () => {
       const snap = mock<SNAP>();
 
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const tppError = new Error();
       const spy = jest.spyOn(snap, 'createSection').mockRejectedValueOnce(tppError);
 
@@ -399,7 +399,7 @@ describe('TPPService', () => {
       const error = 'Not an EcomError';
       const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
 
       // Act
       await service.handleError(error);
@@ -419,7 +419,7 @@ describe('TPPService', () => {
       const error = new EcomClientError(code, message);
       const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
 
       // Act
       await service.handleError(error);
@@ -439,7 +439,7 @@ describe('TPPService', () => {
       const error = new EcomModuleError(code, message);
       const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
 
       // Act
       await service.handleError(error);
@@ -459,7 +459,7 @@ describe('TPPService', () => {
       // Arrange
       //const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(null);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(null);
       const onContentChangeSpy = jest.spyOn(snap, 'onContentChange');
       const onRerenderViewSpy = jest.spyOn(snap, 'onRerenderView');
       const onRequestPreviewElementSpy = jest.spyOn(snap, 'onRequestPreviewElement');
@@ -478,7 +478,7 @@ describe('TPPService', () => {
       // Arrange
       const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const spy = jest.spyOn(snap, 'onContentChange');
       const previewId = 'PREVIEWID';
       const node = mock<HTMLElement>();
@@ -509,7 +509,7 @@ describe('TPPService', () => {
       // Arrange
       const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const spy = jest.spyOn(snap, 'onRerenderView');
       const previewId = 'PREVIEWID';
       const node = mock<HTMLElement>();
@@ -547,7 +547,7 @@ describe('TPPService', () => {
       // Arrange
       const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const spy = jest.spyOn(snap, 'onRequestPreviewElement');
       const previewId = 'PREVIEWID';
       spy.mockImplementation((cb) => {
@@ -573,7 +573,7 @@ describe('TPPService', () => {
       // Arrange
       const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const spy = jest.spyOn(window, 'addEventListener');
       const payload = 'PAYLOAD';
       const message = {
@@ -602,7 +602,7 @@ describe('TPPService', () => {
       // Arrange
       const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const spy = jest.spyOn(window, 'addEventListener');
       const payload = 'PAYLOAD';
       const message = {
@@ -634,7 +634,7 @@ describe('TPPService', () => {
       // Arrange
       //const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(null);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(null);
       const onContentChangeSpy = jest.spyOn(snap, 'onContentChange');
       const onRerenderViewSpy = jest.spyOn(snap, 'onRerenderView');
       const onRequestPreviewElementSpy = jest.spyOn(snap, 'onRequestPreviewElement');
@@ -653,7 +653,7 @@ describe('TPPService', () => {
       // Arrange
       const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const spy = jest.spyOn(snap, 'onContentChange');
       const previewId = 'PREVIEWID';
       const node = mock<HTMLElement>();
@@ -684,7 +684,7 @@ describe('TPPService', () => {
       // Arrange
       const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const spy = jest.spyOn(snap, 'onRerenderView');
       const previewId = 'PREVIEWID';
       const node = mock<HTMLElement>();
@@ -722,7 +722,7 @@ describe('TPPService', () => {
       // Arrange
       const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const spy = jest.spyOn(snap, 'onRequestPreviewElement');
       const previewId = 'PREVIEWID';
       spy.mockImplementation((cb) => {
@@ -748,7 +748,7 @@ describe('TPPService', () => {
       // Arrange
       const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const spy = jest.spyOn(window, 'addEventListener');
       const payload = 'PAYLOAD';
       const message = {
@@ -777,7 +777,7 @@ describe('TPPService', () => {
       // Arrange
       const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
-      tppWrapper["TPP_SNAP"] = Promise.resolve(snap);
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const spy = jest.spyOn(window, 'addEventListener');
       const payload = 'PAYLOAD';
       const message = {

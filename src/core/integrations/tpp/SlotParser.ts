@@ -188,7 +188,6 @@ export class SlotParser {
     const createSectionResult = await this.tppService.createSection(createSectionPayload);
 
     if (createSectionResult) {
-
       if (this.getSlot(page, slotName)?.children.length === 0) {
         // The new section is the first one of the page
         this.deleteAddContentButton(slotName);
@@ -196,7 +195,10 @@ export class SlotParser {
         document.querySelector(`[data-fcecom-slot-name=${slotName}]`)?.removeAttribute('data-preview-id');
       }
 
-      this.hookService.callHook(EcomHooks.SECTION_CREATED, createSectionPayload);
+      this.hookService.callHook(EcomHooks.SECTION_CREATED, {
+        ...createSectionPayload,
+        identifier: createSectionResult.identifier,
+      });
       this.logger.info('Created section', createSectionResult);
     } else {
       // This is the case if the user canceled the creation as well

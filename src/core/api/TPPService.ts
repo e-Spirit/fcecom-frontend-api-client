@@ -7,7 +7,7 @@ import { HookService } from '../integrations/tpp/HookService';
 import { EcomHooks } from '../integrations/tpp/HookService.meta';
 import { ButtonScope, SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
 import { EcomClientError, EcomError, EcomModuleError, ERROR_CODES } from './errors';
-import { CreatePagePayload, CreatePageResponse, CreateSectionPayload, FindPageItem } from './EcomApi.meta';
+import { CreatePagePayload, CreatePageResponse, CreateSectionPayload, FindPageItem, CreateSectionResponse } from './EcomApi.meta';
 import { getLogger } from '../utils/logging/Logger';
 
 /**
@@ -83,7 +83,7 @@ export class TPPService {
    * @param payload Payload to use when creating a section.
    * @return {*} Whether the section was created.
    */
-  async createSection(payload: CreateSectionPayload): Promise<boolean | void> {
+  async createSection(payload: CreateSectionPayload): Promise<CreateSectionResponse | void> {
     const tpp = await this.getTppInstance();
     const snap = await tpp?.TPP_SNAP;
 

@@ -1,9 +1,4 @@
-import {
-  CreateSectionPayload,
-  SectionCreatingCancelledPayload,
-  PageCreationFailedPayload,
-  PageTarget
-} from '../../api/TPPService.meta';
+import { SectionCreatingCancelledPayload, PageCreationFailedPayload, PageTarget } from '../../api/TPPService.meta';
 import { FindPageItem } from '../../api/Remoteservice.meta';
 
 /**
@@ -35,7 +30,7 @@ export enum EcomHooks {
   /**
    * A hook that is fired when a page could not be found when trying to create a section and a new one is directly created.
    */
-  PAGE_CREATING = "pageCreating",
+  PAGE_CREATING = 'pageCreating',
 
   /**
    * A hook that is fired when a necessary page was created or found to create a new section.
@@ -93,6 +88,22 @@ export type OpenStoreFrontUrlHookPayload = {
   url: string;
 };
 
+export type CreateSectionHookPayload = {
+  /**
+   * Preview ID of page in FirstSpirit.
+   */
+  pageId: string;
+  /**
+   * Name of slot where the section should be created into as defined in the FirstSpirit template.
+   */
+  slotName: string;
+
+  /**
+   * Identifier of the section.
+   */
+  identifier: string;
+};
+
 export type RequestPreviewElementHookPayload = {
   /**
    * Preview ID of the requested element.
@@ -107,8 +118,6 @@ export type PageCreatedHookPayload = {
   previewId: string;
 };
 
-export { CreateSectionPayload as SectionCreatedHookPayload };
-
 /**
  * @internal
  */
@@ -116,7 +125,7 @@ export interface HookPayloadTypes {
   [EcomHooks.CONTENT_CHANGED]: ContentChangedHookPayload;
   [EcomHooks.OPEN_STOREFRONT_URL]: OpenStoreFrontUrlHookPayload;
   [EcomHooks.REQUEST_PREVIEW_ELEMENT]: RequestPreviewElementHookPayload;
-  [EcomHooks.SECTION_CREATED]: CreateSectionPayload;
+  [EcomHooks.SECTION_CREATED]: CreateSectionHookPayload;
   [EcomHooks.PAGE_CREATING]: PageTarget;
   [EcomHooks.SECTION_CREATION_CANCELLED]: SectionCreatingCancelledPayload;
   [EcomHooks.ENSURED_PAGE_EXISTS]: FindPageItem;

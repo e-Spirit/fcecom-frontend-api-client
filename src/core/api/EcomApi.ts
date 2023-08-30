@@ -111,6 +111,7 @@ export class EcomApi {
     ReferrerStore.init();
 
     if (await PreviewDecider.isPreview()) {
+      this.logger.info('Initializing preview...');
       Verbosity.enablePreview();
 
       // Import dependencies dynamically
@@ -187,7 +188,7 @@ export class EcomApi {
    * @param pageTarget Parameter
    */
   async setElement(pageTarget: PageTarget) {
-    if (!this.tppService) return this.logger.warn('Tried to access TPP while not in preview');
+    if (!this.tppService) return;
 
     isNonNullable(pageTarget, 'Invalid params passed');
 
@@ -208,7 +209,7 @@ export class EcomApi {
    * @return {*} Whether the page was created.
    */
   async createPage(payload: CreatePagePayload): Promise<any> {
-    if (!this.tppService) return this.logger.warn('Tried to access TPP while not in preview');
+    if (!this.tppService) return;
 
     isNonNullable(payload, 'Invalid payload passed');
 
@@ -222,7 +223,7 @@ export class EcomApi {
    * @return {*} Whether the section was created.
    */
   async createSection(payload: CreateSectionPayload): Promise<any> {
-    if (!this.tppService) return this.logger.warn('Tried to access TPP while not in preview');
+    if (!this.tppService) return;
 
     isNonNullable(payload, 'Invalid payload passed');
 
@@ -239,7 +240,6 @@ export class EcomApi {
    */
   async getTppInstance(): Promise<TPPWrapperInterface | null> {
     if (!this.tppService) {
-      this.logger.warn('Tried to access TPP while not in preview');
       return null;
     }
     return this.tppService?.getTppInstance() || null;
@@ -281,7 +281,7 @@ export class EcomApi {
    * @return {*}
    */
   addHook<Name extends EcomHooks, Func extends HookPayloadTypes[Name]>(name: Name, func: (payload: Func) => void) {
-    if (!this.tppService) return this.logger.warn('Tried to access TPP while not in preview');
+    if (!this.tppService) return;
 
     isNonNullable(name, 'Invalid name passed');
     isNonNullable(func, 'Invalid func passed');
@@ -313,7 +313,7 @@ export class EcomApi {
    * @return {*}
    */
   removeHook<Name extends EcomHooks, Func extends HookPayloadTypes[Name]>(name: Name, func: (payload: Func) => void) {
-    if (!this.tppService) return this.logger.warn('Tried to access TPP while not in preview');
+    if (!this.tppService) return;
 
     isNonNullable(name, 'Invalid name passed');
     isNonNullable(func, 'Invalid func passed');

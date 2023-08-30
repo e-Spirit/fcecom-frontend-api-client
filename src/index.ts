@@ -6,6 +6,7 @@ export {
   PageCreatedHookPayload,
   OpenStoreFrontUrlHookPayload,
   RequestPreviewElementHookPayload,
+  CreateSectionHookPayload,
 } from './core/integrations/tpp/HookService.meta';
 export {
   CreatePagePayload,

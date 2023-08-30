@@ -106,12 +106,26 @@ export interface ButtonScope {
 }
 
 /**
+ * @internal
+ */
+export interface CreateSectionResponse {
+  displayName: string;
+  displayed: boolean;
+  formData: object;
+  fsType: 'Section';
+  identifier: string;
+  name: string;
+  template: object;
+  metaFormData: object;
+}
+
+/**
  * @ignore
  */
 export interface SNAP {
   isConnected: Promise<boolean>;
 
-  createSection(previewId: string, options?: CreateSectionOptions): Promise<boolean> | void;
+  createSection(previewId: string, options?: CreateSectionOptions): Promise<CreateSectionResponse> | void;
 
   createPage(path: string, uid: string, template: string, options?: CreatePageOptions): Promise<boolean> | void;
 

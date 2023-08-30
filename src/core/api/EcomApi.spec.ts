@@ -100,7 +100,6 @@ describe('EcomApi', () => {
       expect(async () => {
         await api.createPage(payload);
         // Assert
-        expect(mockLogger.warn.mock.calls[0][0]).toEqual('Tried to access TPP while not in preview');
       }).not.toThrow();
     });
   });
@@ -128,7 +127,6 @@ describe('EcomApi', () => {
       // Act
       expect(async () => {
         await api.createSection(payload);
-        expect(mockLogger.warn.mock.calls[0][0]).toEqual('Tried to access TPP while not in preview');
         // Assert
       }).not.toThrow();
     });
@@ -217,7 +215,6 @@ describe('EcomApi', () => {
       // Act
       const result = await api.getTppInstance();
       // Assert
-      expect(mockLogger.warn.mock.calls[0][0]).toEqual('Tried to access TPP while not in preview');
       expect(result).toBeNull();
     });
   });
@@ -374,7 +371,6 @@ describe('EcomApi', () => {
         await api.setElement(params);
         // Assert
         expect(mockSlotParser.parseSlots).not.toHaveBeenCalled();
-        expect(mockLogger.warn.mock.calls[0][0]).toEqual('Tried to access TPP while not in preview');
       }).not.toThrow();
     });
     it('throws on invalid parameters', async () => {
@@ -428,7 +424,6 @@ describe('EcomApi', () => {
       expect(() => {
         api.addHook(EcomHooks.CONTENT_CHANGED, mockHook);
         // Assert
-        expect(mockLogger.warn.mock.calls[0][0]).toEqual('Tried to access TPP while not in preview');
       }).not.toThrow();
     });
   });

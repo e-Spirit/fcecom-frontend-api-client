@@ -1,4 +1,4 @@
-import { EcomError } from "./errors";
+import { EcomError } from './errors';
 
 /**
  * In case of shop-driven pages, CreatePagePayload have to be used.
@@ -6,7 +6,7 @@ import { EcomError } from "./errors";
  *
  * Both cases need the locale, which can be replaced by the defaultLocale setting.
  */
-export type PageTarget = ShopDrivenPageTarget | FsDrivenPageTarget
+export type PageTarget = ShopDrivenPageTarget | FsDrivenPageTarget;
 
 export type ShopDrivenPageTarget = CreatePagePayload & {
   /**
@@ -110,4 +110,36 @@ export type CreatePageResponse = {
     code: number;
     cause: string;
   } | null;
+};
+
+/**
+ * Response of the section creation.
+ */
+export type CreateSectionResponse = {
+  /**
+   * The display name of the section.
+   */
+  displayName: string;
+  /**
+   * Whether the section is displayed.
+   */
+  displayed: boolean;
+  /**
+   * The FS form data representing the section.
+   */
+  formData: object;
+  /**
+   * The type of section.
+   */
+  fsType: 'Section';
+  /**
+   * The section identifier.
+   */
+  identifier: string;
+  /**
+   * The name of the section template.
+   */
+  name: string;
+  template: object;
+  metaFormData: object;
 };
