@@ -332,9 +332,9 @@ export class TPPService {
 
   /**
    * Executes a script on the FS Server which returns the installed Project Apps
-   * @private
+   * @protected
    */
-  private async getProjectApps(): Promise<any> {
+  protected async getProjectApps(): Promise<any> {
     const snap = await this.checkForTPP();
     if (!snap) return;
     return await snap.execute('script:tpp_list_projectapps');
@@ -342,24 +342,26 @@ export class TPPService {
 
   /**
    * Adds a button which triggers Translation Studio if it is installed
-   * @private
+   * @protected
    */
-  private async addTranslationstudioButton(): Promise<void> {
+  protected async addTranslationstudioButton(): Promise<void> {
     const snap = await this.checkForTPP();
     if (!snap) return;
     const projectApps = await this.getProjectApps();
-    
+
     if (Array.isArray(projectApps) && projectApps.some((projectApp: string) => projectApp.includes('TranslationStudio'))) {
-      snap.registerButton({
-        _name: 'translation_studio',
-        label: 'Translate',
-        css: 'tpp-icon-translate',
-        execute: ({ status: { id: elementId }, language }) =>
-            snap.execute('script:translationstudio_ocm_translationhelper', { language, elementId }),
-        isEnabled(scope: ButtonScope): Promise<boolean> {
-          return Promise.resolve(true);
-        }
-      }, 2);
+      snap.registerButton(
+        {
+          _name: 'translation_studio',
+          label: 'Translate',
+          css: 'tpp-icon-translate',
+          execute: ({ status: { id: elementId }, language }) => snap.execute('script:translationstudio_ocm_translationhelper', { language, elementId }),
+          isEnabled(scope: ButtonScope): Promise<boolean> {
+            return Promise.resolve(true);
+          },
+        },
+        2
+      );
     }
   }
 }

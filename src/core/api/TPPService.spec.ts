@@ -1,5 +1,5 @@
 import { mock } from 'jest-mock-extended';
-import { CreateSectionResponse, SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
+import { Button, ButtonScope, CreateSectionResponse, SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
 import { TPPLoader } from '../integrations/tpp/TPPLoader';
 import { TPPWrapper } from '../integrations/tpp/TPPWrapper';
 import { TPPService } from './TPPService';
@@ -24,6 +24,14 @@ class TestableTPPService extends TPPService {
 
   public async test_initPreviewHooks() {
     await this.initPreviewHooks();
+  }
+
+  public async test_getProjectApps(): Promise<any> {
+    return await this.getProjectApps();
+  }
+
+  public async test_addTranslationstudioButton() {
+    await this.addTranslationstudioButton();
   }
 }
 
@@ -801,6 +809,98 @@ describe('TPPService', () => {
       // assert
       expect(spy).toBeCalledWith('message', expect.anything());
       expect(mockHookService.callHook).not.toHaveBeenCalled();
+    });
+  });
+  describe('TranslationStudio Integration', () => {
+    const testProjectAppsWithTS = ['TranslationStudio', 'Module_1', 'Module_2'];
+    const testProjectAppsWithoutTS = ['Module_1', 'Module_2', 'Moduule_3'];
+
+    describe('getProjectApps', () => {
+      it('executes list project apps script on server', async () => {
+        // Arrange
+        const snap = mock<SNAP>();
+        // @ts-ignore - TODO: Make properly test possible
+        tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
+        const spy = jest.spyOn(snap, 'execute').mockResolvedValue(testProjectAppsWithTS);
+
+        // Act
+        const result = await service.test_getProjectApps();
+
+        // Assert
+        expect(spy).toHaveBeenCalledWith('script:tpp_list_projectapps');
+        expect(result).toEqual(testProjectAppsWithTS);
+      });
+
+      it('returns if tpp is not available', async () => {
+        // Arrange
+        // @ts-ignore - TODO: Make properly test possible
+        tppWrapper['TPP_SNAP'] = Promise.resolve(null);
+        const spy = jest.spyOn(snap, 'execute');
+
+        // Act
+        service.test_getProjectApps();
+
+        // Assert
+        expect(spy).not.toHaveBeenCalled();
+      });
+    });
+    describe('addTranslationstudioButton', () => {
+      it('adds a ts studio button when ts studio is installed', async () => {
+        // Arrange
+        const snap = mock<SNAP>();
+        // @ts-ignore - TODO: Make properly test possible
+        tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
+        const executeSpy = jest.spyOn(snap, 'execute').mockResolvedValueOnce(testProjectAppsWithTS);
+        const registerButtonSpy = jest.spyOn(snap, 'registerButton');
+
+        const button: Button = {
+          _name: 'translation_studio',
+          label: 'Translate',
+          css: 'tpp-icon-translate',
+          execute: ({ status: { id: elementId }, language }) => snap.execute('script:translationstudio_ocm_translationhelper', { language, elementId }),
+          isEnabled(scope: ButtonScope): Promise<boolean> {
+            return Promise.resolve(true);
+          },
+        };
+
+        // Act
+        await service.test_addTranslationstudioButton();
+
+        // Assert
+        expect(executeSpy).toHaveBeenCalledWith('script:tpp_list_projectapps');
+        // JSON stringify for deep equality check
+        expect(JSON.stringify(registerButtonSpy.mock.calls[0][0])).toEqual(JSON.stringify(button));
+        expect(registerButtonSpy.mock.calls[0][1]).toEqual(2);
+      });
+
+      it('does not add a button if TranslationStudio is not available', async () => {
+        // Arrange
+        const snap = mock<SNAP>();
+        // @ts-ignore - TODO: Make properly test possible
+        tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
+        jest.spyOn(snap, 'execute').mockResolvedValue(testProjectAppsWithoutTS);
+        const registerButtonSpy = jest.spyOn(snap, 'registerButton');
+        // Act
+        await service.test_addTranslationstudioButton();
+
+        // Assert
+        expect(registerButtonSpy).not.toHaveBeenCalled();
+      });
+
+      it('returns if tpp is not available', async () => {
+        // Arrange
+        // @ts-ignore - TODO: Make properly test possible
+        tppWrapper['TPP_SNAP'] = Promise.resolve(null);
+        const executeSpy = jest.spyOn(snap, 'execute').mockResolvedValueOnce(testProjectAppsWithTS);
+        const registerButtonSpy = jest.spyOn(snap, 'registerButton');
+
+        // Act
+        await service.test_addTranslationstudioButton();
+
+        // Assert
+        expect(executeSpy).not.toHaveBeenCalled();
+        expect(registerButtonSpy).not.toHaveBeenCalled();
+      });
     });
   });
 });

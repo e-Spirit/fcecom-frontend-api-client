@@ -9,7 +9,7 @@ export enum EcomHooks {
   /**
    * A hook that is fired when the content of a section has been changed via the Content Creator.
    * Not fired when a new section is created via 'Add content' button. Use SECTION_CREATED instead.
-   * This is a proxy for [TPP.onContentChange](https://docs.e-spirit.com/tpp/snap/index.html#oncontentchangehandler).
+   * This is a proxy for [TPP.onContentChange](https://docs.e-spirit.com/tpp/snap/index.html#oncontentchangehandler){target=_blank}.
    */
   CONTENT_CHANGED = 'contentChanged',
   /**
@@ -18,7 +18,7 @@ export enum EcomHooks {
   OPEN_STOREFRONT_URL = 'openStoreFrontUrl',
   /**
    * A hook that is fired when the language is changed or an item is clicked in the Content Creator navigation.
-   * This is a proxy for [TPP.onRequestPreviewElement](https://docs.e-spirit.com/tpp/snap/index.html#onrequestpreviewelementhandler).
+   * This is a proxy for [TPP.onRequestPreviewElement](https://docs.e-spirit.com/tpp/snap/index.html#onrequestpreviewelementhandler){target=_blank}.
    */
   REQUEST_PREVIEW_ELEMENT = 'requestPreviewElement',
 
