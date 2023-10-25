@@ -1,3 +1,8 @@
+## [0.13.1](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v0.13.0...v0.13.1) (2023-10-25)
+
+### Changes
+* Fixed a bug in the static.js file that resulted in missing display names for reference pages.
+
 ## [0.13.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v0.12.1...v0.13.0) (2023-10-06)
 
 ### Changes
