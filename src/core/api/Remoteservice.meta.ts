@@ -28,7 +28,7 @@ export type PageSection = {
   children: [];
 
   displayed?: boolean;
-}
+};
 
 export type PageSlot = {
   name: string;

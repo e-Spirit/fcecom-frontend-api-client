@@ -8,8 +8,8 @@ import { EcomError, ERROR_CODES } from '../../api/errors';
 import { RemoteService } from '../../api/RemoteService';
 import { TPPService } from '../../api/TPPService';
 import { addContentButton } from '../dom/addContentElement/addContentElement';
-import { HookService } from './HookService';
-import { ContentChangedHookPayload, EcomHooks } from './HookService.meta';
+import { HookService } from '../../../connect/HookService';
+import { ContentChangedHookPayload, EcomHooks } from '../../../connect/HookService.meta';
 import { getLogger } from '../../utils/logging/Logger';
 
 /**
@@ -37,7 +37,7 @@ export class SlotParser {
     this.remoteService = remoteService;
     this.tppService = tppService;
 
-    this.tppService.getHookService().addHook(EcomHooks.CONTENT_CHANGED, async (payload: ContentChangedHookPayload) => {
+    HookService.getInstance().addHook(EcomHooks.CONTENT_CHANGED, async (payload: ContentChangedHookPayload) => {
       if (!payload.content) {
         // Section was removed
         if (this.pageTarget) {
@@ -198,6 +198,7 @@ export class SlotParser {
       this.hookService.callHook(EcomHooks.SECTION_CREATED, {
         ...createSectionPayload,
         identifier: createSectionResult.identifier,
+        sectionData: createSectionResult,
       });
       this.logger.info('Created section', createSectionResult);
     } else {

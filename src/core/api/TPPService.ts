@@ -3,12 +3,15 @@
  * @module TPPService
  */
 
-import { HookService } from '../integrations/tpp/HookService';
-import { EcomHooks } from '../integrations/tpp/HookService.meta';
-import { ButtonScope, SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
+import { HookService, Ready } from '../../connect/HookService';
+import { EcomHooks } from '../../connect/HookService.meta';
+import { SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
 import { EcomClientError, EcomError, EcomModuleError, ERROR_CODES } from './errors';
-import { CreatePagePayload, CreatePageResponse, CreateSectionPayload, FindPageItem, CreateSectionResponse } from './EcomApi.meta';
+import { CreatePagePayload, CreatePageResponse, CreateSectionPayload, CreateSectionResponse, FindPageItem } from './EcomApi.meta';
 import { getLogger } from '../utils/logging/Logger';
+
+import { SNAPButtonScope } from '../../connect/TPPBroker.meta';
+import { TPPBroker } from '../../connect/TPPBroker';
 
 /**
  * Service to handle TPP actions.
@@ -29,6 +32,7 @@ export class TPPService {
 
   private tppPromise?: Promise<any>;
   private tpp?: TPPWrapperInterface;
+  protected currentPageRefPreviewId: string | null = null;
 
   /**
    * Sets the element currently being displayed.
@@ -41,6 +45,7 @@ export class TPPService {
 
     // Set Preview Element
     snap?.setPreviewElement(page?.previewId ?? null);
+    this.currentPageRefPreviewId = page?.previewId ?? null;
   }
 
   /**
@@ -81,9 +86,10 @@ export class TPPService {
    * Creates a section within a given FirstSpirit page.
    *
    * @param payload Payload to use when creating a section.
+   * @param index The position of the new section in the slot.
    * @return {*} Whether the section was created.
    */
-  async createSection(payload: CreateSectionPayload): Promise<CreateSectionResponse | void> {
+  async createSection(payload: CreateSectionPayload, index?: number): Promise<CreateSectionResponse | void> {
     const tpp = await this.getTppInstance();
     const snap = await tpp?.TPP_SNAP;
 
@@ -91,6 +97,7 @@ export class TPPService {
       const result = await snap?.createSection(payload.pageId, {
         body: payload.slotName,
         result: true,
+        index,
       });
       if (result) this.logger.info('Create Section', result);
       return result;
@@ -118,6 +125,7 @@ export class TPPService {
         this.initPreviewHooks();
         this.initMessagesToServer();
         this.addTranslationstudioButton();
+        this.overrideAddSiblingSectionButton();
         return Promise.resolve(true);
       })
       .catch((err: unknown) => {
@@ -125,6 +133,10 @@ export class TPPService {
         this.logger.error('Failed to initialize TPP Service', err);
         return false;
       });
+  }
+
+  async isPreviewInitialized() {
+    return !!(await this.checkForTPP());
   }
 
   /**
@@ -191,6 +203,9 @@ export class TPPService {
     const snap = await this.checkForTPP();
     if (!snap) return;
 
+    Ready.snap = snap;
+    HookService.getInstance().callHook(EcomHooks.PREVIEW_INITIALIZED, { TPP_BROKER: TPPBroker.getInstance() });
+
     snap.onContentChange((node, previewId, content) => {
       HookService.getInstance().callHook(EcomHooks.CONTENT_CHANGED, {
         node,
@@ -205,18 +220,14 @@ export class TPPService {
      * To make things easier, we trigger the same hook as in onContentChange
      **/
     snap.onRerenderView(async () => {
+      // TODO: find a better solution
+      /*
+       When onRerenderView is fired, we assume this is a case we can not handle.
+       This is a TPP fallback when onContentChange is not triggered.
+       For now, we just log a warning message till we find a better solution.
+      */
       const previewElement = await snap.getPreviewElement();
-      // Use tpps' renderElement to get the updated section content and do not fetch it from the CaaS,
-      // because it might not have been deployed yet to produce same behavior as on onContentChange.
-      const renderResult = await snap.renderElement(previewElement);
-
-      const node = document.querySelector<HTMLElement>(`[data-preview-id="${previewElement}"]`);
-
-      HookService.getInstance().callHook(EcomHooks.CONTENT_CHANGED, {
-        node: node,
-        previewId: previewElement,
-        content: renderResult,
-      });
+      this.logger.warn(`Could not handle change event for page with id: ${previewElement.split('.')[0]}.`);
     });
 
     snap.onRequestPreviewElement((previewId) => {
@@ -290,10 +301,6 @@ export class TPPService {
     });
   }
 
-  getHookService(): HookService {
-    return HookService.getInstance();
-  }
-
   /**
    * Sets the TPPWrapper instance.
    *
@@ -356,12 +363,73 @@ export class TPPService {
           label: 'Translate',
           css: 'tpp-icon-translate',
           execute: ({ status: { id: elementId }, language }) => snap.execute('script:translationstudio_ocm_translationhelper', { language, elementId }),
-          isEnabled(scope: ButtonScope): Promise<boolean> {
+          isEnabled(scope: SNAPButtonScope): Promise<boolean> {
             return Promise.resolve(true);
           },
         },
         2
       );
     }
+  }
+
+  /**
+   * Overrides the default "Create Section" button in the tpp frame.
+   * @protected
+   */
+  protected async overrideAddSiblingSectionButton(): Promise<void> {
+    const snap = await this.checkForTPP();
+    if (!snap) return;
+
+    snap.overrideDefaultButton('add-sibling-section', {
+      label: 'Add Section',
+      execute: async ({ $node, previewId }: SNAPButtonScope) => await this.addSiblingSection($node, previewId),
+    });
+  }
+
+  /**
+   * Function which is executed by the overridden "Create Section" button in the tpp frame.
+   * Needed to achieve a similar behavior as the creation of the first section in the slot.
+   *
+   * The previewId of the section where the button is clicked is added to the hook payload.
+   * This can be used to render the new section in the correct place in the slot.
+   *
+   * @param node The existing section on which the button is clicked.
+   * @param siblingPreviewId The previewId of the section where the button is clicked.
+   * @protected
+   */
+  protected async addSiblingSection(node: Node, siblingPreviewId: string) {
+    const slotName = node.parentElement?.getAttribute('data-fcecom-slot-name');
+
+    if (this.currentPageRefPreviewId && slotName) {
+      const position = this.getNodeIndex(node) < 0 ? 0 : this.getNodeIndex(node) + 1;
+      const createSectionResult = await this.createSection(
+        {
+          pageId: this.currentPageRefPreviewId,
+          slotName,
+        },
+        position
+      );
+      if (createSectionResult) {
+        HookService.getInstance().callHook(EcomHooks.SECTION_CREATED, {
+          pageId: this.currentPageRefPreviewId,
+          identifier: createSectionResult.identifier,
+          slotName: slotName,
+          siblingPreviewId: siblingPreviewId,
+          sectionData: createSectionResult,
+        });
+      }
+    }
+  }
+
+  /**
+   * Returns the index of a node within its parent node.
+   * @param node
+   * @return The index of the node or -1 if it has no parent.
+   * @protected
+   */
+  protected getNodeIndex(node: Node) {
+    const children = node.parentElement?.childNodes;
+    const childNodes = Array.from(children?.values() ?? []);
+    return childNodes.indexOf(node as ChildNode);
   }
 }

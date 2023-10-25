@@ -1,15 +1,15 @@
 import { EcomApi } from './EcomApi';
 import { PreviewDecider } from '../utils/PreviewDecider';
 import { CreatePagePayload, CreateSectionPayload, FsDrivenPageTarget, ShopDrivenPageTarget } from './TPPService.meta';
-import {FindElementParams, FindPageItem, FindPageParams} from './Remoteservice.meta';
+import { FindElementParams, FindPageItem, FindPageParams } from './Remoteservice.meta';
 import { mock } from 'jest-mock-extended';
 import { RemoteService } from './RemoteService';
 import { TPPService } from './TPPService';
 import { SlotParser } from '../integrations/tpp/SlotParser';
-import { EcomHooks } from '../integrations/tpp/HookService.meta';
-import { HookService } from '../integrations/tpp/HookService';
+import { EcomHooks } from '../../connect/HookService.meta';
 import { TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
 import { Logger, Logging, LogLevel } from '../utils/logging/Logger';
+import { HookService } from '../../connect/HookService';
 
 jest.spyOn(PreviewDecider, 'isPreview').mockResolvedValue(true);
 
@@ -317,8 +317,8 @@ describe('EcomApi', () => {
 
       const pageItem: FindPageItem = {
         previewId: 'testPreviewId',
-        children: []
-      }
+        children: [],
+      };
       jest.spyOn(mockRemoteService, 'findPage').mockResolvedValue(pageItem);
       // Act
       await api.setElement(params);
@@ -364,7 +364,7 @@ describe('EcomApi', () => {
         fsPageTemplate: 'TEMPLATE',
         id: 'ID',
         type: 'content',
-        isFsDriven: false
+        isFsDriven: false,
       } as ShopDrivenPageTarget;
       // Act
       expect(async () => {
@@ -408,7 +408,7 @@ describe('EcomApi', () => {
       // Arrange
       api['tppService'] = mockTppService;
       const mockHookService = mock<HookService>();
-      jest.spyOn(mockTppService, 'getHookService').mockReturnValueOnce(mockHookService);
+      jest.spyOn(HookService, 'getInstance').mockReturnValueOnce(mockHookService);
       const mockHook = jest.fn();
       // Act
       api.addHook(EcomHooks.CONTENT_CHANGED, mockHook);

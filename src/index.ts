@@ -7,7 +7,8 @@ export {
   OpenStoreFrontUrlHookPayload,
   RequestPreviewElementHookPayload,
   CreateSectionHookPayload,
-} from './core/integrations/tpp/HookService.meta';
+  PreviewInitializedHookPayload,
+} from './connect/HookService.meta';
 export {
   CreatePagePayload,
   CreateSectionPayload,
@@ -28,3 +29,5 @@ export { addContentButton } from './core/integrations/dom/addContentElement/addC
 export { AddContentButtonParams } from './core/integrations/dom/addContentElement/addContentElement.meta';
 export { SectionCreatingCancelledPayload, PageCreationFailedPayload } from './core/api/TPPService.meta';
 export { EcomError } from './core/api/errors';
+export { SNAPConnect, SNAPMoveSectionOptions, SNAPButtonScope, SNAPButton, SNAPStatus } from './connect/TPPBroker.meta';
+export { TPPBroker } from './connect/TPPBroker';

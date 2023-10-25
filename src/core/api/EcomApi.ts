@@ -13,11 +13,12 @@ import { PreviewDecider } from '../utils/PreviewDecider';
 import { SlotParser } from '../integrations/tpp/SlotParser';
 import { RemoteService } from './RemoteService';
 import { TPPService } from './TPPService';
-import { EcomHooks, HookPayloadTypes } from '../integrations/tpp/HookService.meta';
+import { EcomHooks, HookPayloadTypes } from '../../connect/HookService.meta';
 import { getLogger, Logging, LogLevel } from '../utils/logging/Logger';
 import { extractSlotSections, isNonNullable } from '../utils/helper';
 import { ReferrerStore } from '../utils/ReferrerStore';
 import { Verbosity } from '../utils/debugging/verbosity';
+import { HookService } from '../../connect/HookService';
 
 /**
  * Frontend API for Connect for Commerce.
@@ -281,12 +282,10 @@ export class EcomApi {
    * @return {*}
    */
   addHook<Name extends EcomHooks, Func extends HookPayloadTypes[Name]>(name: Name, func: (payload: Func) => void) {
-    if (!this.tppService) return;
-
     isNonNullable(name, 'Invalid name passed');
     isNonNullable(func, 'Invalid func passed');
 
-    return this.tppService.getHookService().addHook(name, func);
+    return HookService.getInstance().addHook(name, func);
   }
 
   /**
@@ -313,12 +312,10 @@ export class EcomApi {
    * @return {*}
    */
   removeHook<Name extends EcomHooks, Func extends HookPayloadTypes[Name]>(name: Name, func: (payload: Func) => void) {
-    if (!this.tppService) return;
-
     isNonNullable(name, 'Invalid name passed');
     isNonNullable(func, 'Invalid func passed');
 
-    return this.tppService.getHookService().removeHook(name, func);
+    return HookService.getInstance().removeHook(name, func);
   }
 }
 

@@ -1,5 +1,6 @@
-import { SectionCreatingCancelledPayload, PageCreationFailedPayload, PageTarget } from '../../api/TPPService.meta';
-import { FindPageItem } from '../../api/Remoteservice.meta';
+import { SectionCreatingCancelledPayload, PageCreationFailedPayload, PageTarget } from '../core/api/TPPService.meta';
+import { FindPageItem } from '../core/api/Remoteservice.meta';
+import { TPPBroker } from './TPPBroker';
 
 /**
  * This enumeration contains the possible hooks to use.
@@ -51,6 +52,12 @@ export enum EcomHooks {
    * A hook that is fired when a new page is created via the  'Create page' button in the Content Creator.
    */
   PAGE_CREATED = 'pageCreated',
+
+  /**
+   * This hook can be called as soon as the TPP object is fully loaded.
+   * It provides an interface to access internal APIs.
+   */
+  PREVIEW_INITIALIZED = 'previewInitialized',
 }
 
 export type ContentChangedHookPayload = {
@@ -97,11 +104,18 @@ export type CreateSectionHookPayload = {
    * Name of slot where the section should be created into as defined in the FirstSpirit template.
    */
   slotName: string;
-
   /**
    * Identifier of the section.
    */
   identifier: string;
+  /**
+   * If it is not the first section in the slot, the sibling of the newly created section.
+   */
+  siblingPreviewId?: string;
+  /**
+   * The data of the created section.
+   */
+  sectionData: any;
 };
 
 export type RequestPreviewElementHookPayload = {
@@ -118,6 +132,10 @@ export type PageCreatedHookPayload = {
   previewId: string;
 };
 
+export type PreviewInitializedHookPayload = {
+  TPP_BROKER: TPPBroker;
+};
+
 /**
  * @internal
  */
@@ -131,4 +149,5 @@ export interface HookPayloadTypes {
   [EcomHooks.ENSURED_PAGE_EXISTS]: FindPageItem;
   [EcomHooks.PAGE_CREATION_FAILED]: PageCreationFailedPayload;
   [EcomHooks.PAGE_CREATED]: PageCreatedHookPayload;
+  [EcomHooks.PREVIEW_INITIALIZED]: PreviewInitializedHookPayload;
 }

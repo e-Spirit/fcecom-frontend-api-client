@@ -2,14 +2,13 @@ import { mock } from 'jest-mock-extended';
 import { RemoteService } from '../../api/RemoteService';
 import { FindPageItem } from '../../api/Remoteservice.meta';
 import { TPPService } from '../../api/TPPService';
-import { HookService } from './HookService';
-import { EcomHooks } from './HookService.meta';
+import { HookService } from '../../../connect/HookService';
+import { EcomHooks } from '../../../connect/HookService.meta';
 import { SlotParser } from './SlotParser';
 import { FsDrivenPageTarget, ShopDrivenPageTarget } from '../../api/TPPService.meta';
 
 const mockRemoteService = mock<RemoteService>();
 const mockTppService = mock<TPPService>();
-const mockHookService = mock<HookService>();
 
 jest.mock('../dom/addContentElement/addContentElement', () => {
   return {
@@ -19,7 +18,6 @@ jest.mock('../dom/addContentElement/addContentElement', () => {
 let parser: SlotParser;
 describe('SlotParser', () => {
   beforeEach(() => {
-    jest.spyOn(mockTppService, 'getHookService').mockReturnValue(mockHookService);
     parser = new SlotParser(mockRemoteService, mockTppService);
     document.body.innerHTML = `
       <div data-fcecom-slot-name="SLOTNAME"></div>
@@ -33,7 +31,7 @@ describe('SlotParser', () => {
     it('sets up buttons again if hook was triggered and content was set before', async () => {
       // Arrange
       let addContentCb: (params: any) => void;
-      jest.spyOn(mockHookService, 'addHook').mockImplementation((name, cb) => {
+      jest.spyOn(HookService.getInstance(), 'addHook').mockImplementation((name, cb) => {
         if (name === EcomHooks.CONTENT_CHANGED) {
           addContentCb = cb;
         }

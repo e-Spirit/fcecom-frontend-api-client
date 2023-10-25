@@ -3,7 +3,7 @@ export type AddContentButtonParams = {
    * To display the slotName inside the addContentButton in debug mode,
    * it is passed as a parameter
    */
-  slotName: string
+  slotName: string;
   /**
    * Click event handler to attach to the button.
    *

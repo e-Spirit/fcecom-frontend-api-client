@@ -1,5 +1,5 @@
 import { mock } from 'jest-mock-extended';
-import { Button, ButtonScope, CreateSectionResponse, SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
+import { CreateSectionResponse, SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
 import { TPPLoader } from '../integrations/tpp/TPPLoader';
 import { TPPWrapper } from '../integrations/tpp/TPPWrapper';
 import { TPPService } from './TPPService';
@@ -7,9 +7,11 @@ import { RemoteService } from './RemoteService';
 import { FindPageItem } from './Remoteservice.meta';
 import { EcomClientError, EcomModuleError, ERROR_CODES } from './errors';
 import * as logger from '../utils/logging/Logger';
-import { CreatePageResponse } from './TPPService.meta';
-import { HookService } from '../integrations/tpp/HookService';
-import { EcomHooks } from '../integrations/tpp/HookService.meta';
+import { CreatePageResponse, CreateSectionPayload } from './TPPService.meta';
+import { HookService, Ready } from '../../connect/HookService';
+import { EcomHooks } from '../../connect/HookService.meta';
+import { SNAPButton, SNAPButtonScope } from '../../connect/TPPBroker.meta';
+import { TPPBroker } from '../../connect/TPPBroker';
 
 const tppLoader = new TPPLoader();
 const snap = mock<SNAP>();
@@ -32,6 +34,22 @@ class TestableTPPService extends TPPService {
 
   public async test_addTranslationstudioButton() {
     await this.addTranslationstudioButton();
+  }
+
+  public async test_overrideAddSiblingSectionButton() {
+    await this.overrideAddSiblingSectionButton();
+  }
+
+  public async test_addSiblingSection(node: Node, previewId: string) {
+    await this.addSiblingSection(node, previewId);
+  }
+
+  public test_getNodeIndex(node: Node): number {
+    return this.getNodeIndex(node);
+  }
+
+  public setCurrentPageRefPreviewId(pageRefPreviewId: string | null) {
+    this.currentPageRefPreviewId = pageRefPreviewId;
   }
 }
 
@@ -481,6 +499,7 @@ describe('TPPService', () => {
       expect(onRerenderViewSpy).not.toHaveBeenCalled();
       expect(onRequestPreviewElementSpy).not.toHaveBeenCalled();
       expect(addEventListenerSpy).not.toHaveBeenCalled();
+      expect(Ready.snap).toBeUndefined();
     });
     it('adds onContentChange handler and invokes CONTENT_CHANGED hook', async () => {
       // Arrange
@@ -511,44 +530,33 @@ describe('TPPService', () => {
           content,
         })
       );
+      expect(mockHookService.callHook).toBeCalledWith(EcomHooks.PREVIEW_INITIALIZED, expect.objectContaining({ TPP_BROKER: TPPBroker.getInstance() }));
+      expect(Ready.snap).toBe(snap);
     });
 
-    it('adds onRerenderView handler and invokes CONTENT_CHANGED hook', async () => {
+    it('adds onRerenderView handler and logs if fired', async () => {
       // Arrange
       const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
       tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const spy = jest.spyOn(snap, 'onRerenderView');
-      const previewId = 'PREVIEWID';
-      const node = mock<HTMLElement>();
-      const content = 'CONTENT';
+      const previewId = 'PREVIEWID.en_GB';
+      const expectedLog = 'Could not handle change event for page with id: PREVIEWID.';
       spy.mockImplementation((cb) => {
         // Trigger callback
         cb();
       });
-      const mockHookService = mock<HookService>();
-      jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
-      const renderElementSpy = jest.spyOn(snap, 'renderElement');
-      renderElementSpy.mockResolvedValue(content);
+
       jest.spyOn(snap, 'getPreviewElement').mockResolvedValue(previewId);
-      const querySelectorSpy = jest.spyOn(document, 'querySelector');
-      querySelectorSpy.mockReturnValue(node);
+      const loggerSpy = jest.spyOn(mockLogger, 'warn');
 
       // act
       await service.test_initPreviewHooks();
 
       // assert
       expect(spy).toHaveBeenCalled();
-      expect(renderElementSpy).toBeCalledWith(previewId);
-      expect(querySelectorSpy).toBeCalledWith(`[data-preview-id="${previewId}"]`);
-      expect(mockHookService.callHook).toBeCalledWith(
-        EcomHooks.CONTENT_CHANGED,
-        expect.objectContaining({
-          node,
-          previewId,
-          content,
-        })
-      );
+      expect(loggerSpy).toBeCalledWith(expectedLog);
+      expect(Ready.snap).toBe(snap);
     });
 
     it('adds onRequestPreviewElement handler', async () => {
@@ -576,6 +584,8 @@ describe('TPPService', () => {
           previewId,
         })
       );
+      expect(mockHookService.callHook).toBeCalledWith(EcomHooks.PREVIEW_INITIALIZED, expect.objectContaining({ TPP_BROKER: TPPBroker.getInstance() }));
+      expect(Ready.snap).toBe(snap);
     });
     it('adds openStoreFrontUrl message handler and invokes OPEN_STOREFRONT_URL hook if topic matches', async () => {
       // Arrange
@@ -605,6 +615,8 @@ describe('TPPService', () => {
       // assert
       expect(spy).toBeCalledWith('message', expect.anything());
       expect(mockHookService.callHook).toBeCalledWith(EcomHooks.OPEN_STOREFRONT_URL, payload);
+      expect(mockHookService.callHook).toBeCalledWith(EcomHooks.PREVIEW_INITIALIZED, expect.objectContaining({ TPP_BROKER: TPPBroker.getInstance() }));
+      expect(Ready.snap).toBe(snap);
     });
     it('adds openStoreFrontUrl message handler and does nothing if topic doesnt match', async () => {
       // Arrange
@@ -633,182 +645,9 @@ describe('TPPService', () => {
 
       // assert
       expect(spy).toBeCalledWith('message', expect.anything());
-      expect(mockHookService.callHook).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('initPreviewHooks()', () => {
-    it('returns if tpp is not loaded', async () => {
-      // Arrange
-      //const snap = mock<SNAP>();
-      // @ts-ignore - TODO: Make properly test possible
-      tppWrapper['TPP_SNAP'] = Promise.resolve(null);
-      const onContentChangeSpy = jest.spyOn(snap, 'onContentChange');
-      const onRerenderViewSpy = jest.spyOn(snap, 'onRerenderView');
-      const onRequestPreviewElementSpy = jest.spyOn(snap, 'onRequestPreviewElement');
-      const addEventListenerSpy = jest.spyOn(window, 'addEventListener');
-
-      // act
-      await service.test_initPreviewHooks();
-
-      // assert
-      expect(onContentChangeSpy).not.toHaveBeenCalled();
-      expect(onRerenderViewSpy).not.toHaveBeenCalled();
-      expect(onRequestPreviewElementSpy).not.toHaveBeenCalled();
-      expect(addEventListenerSpy).not.toHaveBeenCalled();
-    });
-    it('adds onContentChange handler and invokes CONTENT_CHANGED hook', async () => {
-      // Arrange
-      const snap = mock<SNAP>();
-      // @ts-ignore - TODO: Make properly test possible
-      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
-      const spy = jest.spyOn(snap, 'onContentChange');
-      const previewId = 'PREVIEWID';
-      const node = mock<HTMLElement>();
-      const content = 'CONTENT';
-      spy.mockImplementation((cb) => {
-        // Trigger callback
-        cb(node, previewId, content);
-      });
-      const mockHookService = mock<HookService>();
-      jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
-
-      // act
-      await service.test_initPreviewHooks();
-
-      // assert
-      expect(spy).toHaveBeenCalled();
-      expect(mockHookService.callHook).toBeCalledWith(
-        EcomHooks.CONTENT_CHANGED,
-        expect.objectContaining({
-          node,
-          previewId,
-          content,
-        })
-      );
-    });
-
-    it('adds onRerenderView handler and invokes CONTENT_CHANGED hook', async () => {
-      // Arrange
-      const snap = mock<SNAP>();
-      // @ts-ignore - TODO: Make properly test possible
-      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
-      const spy = jest.spyOn(snap, 'onRerenderView');
-      const previewId = 'PREVIEWID';
-      const node = mock<HTMLElement>();
-      const content = 'CONTENT';
-      spy.mockImplementation((cb) => {
-        // Trigger callback
-        cb();
-      });
-      const mockHookService = mock<HookService>();
-      jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
-      const renderElementSpy = jest.spyOn(snap, 'renderElement');
-      renderElementSpy.mockResolvedValue(content);
-      jest.spyOn(snap, 'getPreviewElement').mockResolvedValue(previewId);
-      const querySelectorSpy = jest.spyOn(document, 'querySelector');
-      querySelectorSpy.mockReturnValue(node);
-
-      // act
-      await service.test_initPreviewHooks();
-
-      // assert
-      expect(spy).toHaveBeenCalled();
-      expect(renderElementSpy).toBeCalledWith(previewId);
-      expect(querySelectorSpy).toBeCalledWith(`[data-preview-id="${previewId}"]`);
-      expect(mockHookService.callHook).toBeCalledWith(
-        EcomHooks.CONTENT_CHANGED,
-        expect.objectContaining({
-          node,
-          previewId,
-          content,
-        })
-      );
-    });
-
-    it('adds onRequestPreviewElement handler', async () => {
-      // Arrange
-      const snap = mock<SNAP>();
-      // @ts-ignore - TODO: Make properly test possible
-      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
-      const spy = jest.spyOn(snap, 'onRequestPreviewElement');
-      const previewId = 'PREVIEWID';
-      spy.mockImplementation((cb) => {
-        // Trigger callback
-        cb(previewId);
-      });
-      const mockHookService = mock<HookService>();
-      jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
-
-      // act
-      await service.test_initPreviewHooks();
-
-      // assert
-      expect(spy).toHaveBeenCalled();
-      expect(mockHookService.callHook).toBeCalledWith(
-        EcomHooks.REQUEST_PREVIEW_ELEMENT,
-        expect.objectContaining({
-          previewId,
-        })
-      );
-    });
-    it('adds openStoreFrontUrl message handler and invokes OPEN_STOREFRONT_URL hook if topic matches', async () => {
-      // Arrange
-      const snap = mock<SNAP>();
-      // @ts-ignore - TODO: Make properly test possible
-      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
-      const spy = jest.spyOn(window, 'addEventListener');
-      const payload = 'PAYLOAD';
-      const message = {
-        data: {
-          fcecom: {
-            topic: 'openStoreFrontUrl',
-            payload,
-          },
-        },
-      };
-      spy.mockImplementation((type, cb) => {
-        // Trigger callback
-        if (typeof cb === 'function') cb(message as any);
-      });
-      const mockHookService = mock<HookService>();
-      jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
-
-      // act
-      await service.test_initPreviewHooks();
-
-      // assert
-      expect(spy).toBeCalledWith('message', expect.anything());
-      expect(mockHookService.callHook).toBeCalledWith(EcomHooks.OPEN_STOREFRONT_URL, payload);
-    });
-    it('adds openStoreFrontUrl message handler and does nothing if topic doesnt match', async () => {
-      // Arrange
-      const snap = mock<SNAP>();
-      // @ts-ignore - TODO: Make properly test possible
-      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
-      const spy = jest.spyOn(window, 'addEventListener');
-      const payload = 'PAYLOAD';
-      const message = {
-        data: {
-          fcecom: {
-            topic: 'ANYOTHERTOPIC',
-            payload,
-          },
-        },
-      };
-      spy.mockImplementation((type, cb) => {
-        // Trigger callback
-        if (typeof cb === 'function') cb(message as any);
-      });
-      const mockHookService = mock<HookService>();
-      jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
-
-      // act
-      await service.test_initPreviewHooks();
-
-      // assert
-      expect(spy).toBeCalledWith('message', expect.anything());
-      expect(mockHookService.callHook).not.toHaveBeenCalled();
+      expect(mockHookService.callHook).not.toHaveBeenCalledWith(EcomHooks.OPEN_STOREFRONT_URL, expect.anything());
+      expect(mockHookService.callHook).toBeCalledWith(EcomHooks.PREVIEW_INITIALIZED, expect.objectContaining({ TPP_BROKER: TPPBroker.getInstance() }));
+      expect(Ready.snap).toBe(snap);
     });
   });
   describe('TranslationStudio Integration', () => {
@@ -838,7 +677,7 @@ describe('TPPService', () => {
         const spy = jest.spyOn(snap, 'execute');
 
         // Act
-        service.test_getProjectApps();
+        await service.test_getProjectApps();
 
         // Assert
         expect(spy).not.toHaveBeenCalled();
@@ -853,12 +692,12 @@ describe('TPPService', () => {
         const executeSpy = jest.spyOn(snap, 'execute').mockResolvedValueOnce(testProjectAppsWithTS);
         const registerButtonSpy = jest.spyOn(snap, 'registerButton');
 
-        const button: Button = {
+        const button: SNAPButton = {
           _name: 'translation_studio',
           label: 'Translate',
           css: 'tpp-icon-translate',
           execute: ({ status: { id: elementId }, language }) => snap.execute('script:translationstudio_ocm_translationhelper', { language, elementId }),
-          isEnabled(scope: ButtonScope): Promise<boolean> {
+          isEnabled(scope: SNAPButtonScope): Promise<boolean> {
             return Promise.resolve(true);
           },
         };
@@ -900,6 +739,284 @@ describe('TPPService', () => {
         // Assert
         expect(executeSpy).not.toHaveBeenCalled();
         expect(registerButtonSpy).not.toHaveBeenCalled();
+      });
+    });
+  });
+  describe('Custom create sibling section', () => {
+    describe('overrideAddSiblingSectionButton', () => {
+      it('returns if tpp is not available', async () => {
+        // Arrange
+        // @ts-ignore - TODO: Make properly test possible
+        tppWrapper['TPP_SNAP'] = Promise.resolve(null);
+        const spy = jest.spyOn(snap, 'overrideDefaultButton');
+
+        // Act
+        await service.test_overrideAddSiblingSectionButton();
+
+        // Assert
+        expect(spy).not.toHaveBeenCalled();
+      });
+    });
+    it('overrides the create section button', async () => {
+      // Arrange
+      const snap = mock<SNAP>();
+      // @ts-ignore - TODO: Make properly test possible
+      tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
+      const overrideDefaultButtonSpy = jest.spyOn(snap, 'overrideDefaultButton');
+
+      const buttonToOverride = 'add-sibling-section';
+      const button: SNAPButton = {
+        label: 'Add Section',
+        execute: async ({ $node, previewId }: SNAPButtonScope) => await service.test_addSiblingSection($node, previewId),
+      };
+
+      // Act
+      await service.test_overrideAddSiblingSectionButton();
+
+      // Assert
+      // JSON stringify for deep equality check
+      expect(JSON.stringify(overrideDefaultButtonSpy.mock.calls[0][0])).toMatch(buttonToOverride);
+      expect(JSON.stringify(overrideDefaultButtonSpy.mock.calls[0][1])).toEqual(JSON.stringify(button));
+    });
+
+    describe('addSiblingSection', () => {
+      it('calls section created hook', async () => {
+        // Arrange
+        const siblingPreviewId = 'previewId';
+
+        const parentElement = document.createElement('div');
+        const node = document.createElement('div');
+        parentElement.appendChild(node);
+
+        const sectionData: CreateSectionResponse = {
+          displayName: 'test',
+          displayed: true,
+          formData: {},
+          fsType: 'Section',
+          identifier: 'identifier',
+          name: 'name',
+          template: {},
+          metaFormData: {},
+        };
+        const expectedHookPayload = {
+          pageId: 'pageID',
+          identifier: 'identifier',
+          slotName: 'slotName',
+          siblingPreviewId,
+          sectionData,
+        };
+
+        const expectedCreateSectionPayload: CreateSectionPayload = {
+          pageId: expectedHookPayload.pageId,
+          slotName: expectedHookPayload.slotName,
+        };
+
+        const mockHookService = mock<HookService>();
+        jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
+        const serviceSpy = jest.spyOn(service, 'createSection').mockResolvedValue(sectionData);
+        jest.spyOn(parentElement, 'getAttribute').mockReturnValue(expectedHookPayload.slotName);
+        service.setCurrentPageRefPreviewId(expectedHookPayload.pageId);
+
+        // Act
+        await service.test_addSiblingSection(node, siblingPreviewId);
+        // Assert
+        expect(serviceSpy.mock.calls[0][0]).toEqual(expectedCreateSectionPayload);
+        expect(serviceSpy.mock.calls[0][1]).toEqual(1);
+        expect(mockHookService.callHook).toBeCalledWith(EcomHooks.SECTION_CREATED, expectedHookPayload);
+      });
+
+      it('does not call section created hook if slotName is undefined', async () => {
+        // Arrange
+        const siblingPreviewId = 'previewId';
+        const parentElement = document.createElement('div');
+        const node = document.createElement('div');
+        parentElement.appendChild(node);
+
+        const sectionData: CreateSectionResponse = {
+          displayName: 'test',
+          displayed: true,
+          formData: {},
+          fsType: 'Section',
+          identifier: 'identifier',
+          name: 'name',
+          template: {},
+          metaFormData: {},
+        };
+        const expectedHookPayload = {
+          pageId: 'pageID',
+          identifier: 'identifier',
+          siblingPreviewId,
+          sectionData,
+        };
+
+        const mockHookService = mock<HookService>();
+        jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
+        jest.spyOn(service, 'createSection').mockResolvedValue(sectionData);
+        service.setCurrentPageRefPreviewId(expectedHookPayload.pageId);
+
+        // Act
+        await service.test_addSiblingSection(node, siblingPreviewId);
+        // Assert
+        expect(mockHookService.callHook).not.toHaveBeenCalled();
+      });
+
+      it('does not call section created hook if slotName is null', async () => {
+        // Arrange
+        const siblingPreviewId = 'previewId';
+        const parentElement = document.createElement('div');
+        const node = document.createElement('div');
+        parentElement.appendChild(node);
+
+        const sectionData: CreateSectionResponse = {
+          displayName: 'test',
+          displayed: true,
+          formData: {},
+          fsType: 'Section',
+          identifier: 'identifier',
+          name: 'name',
+          template: {},
+          metaFormData: {},
+        };
+        const expectedHookPayload = {
+          pageId: 'pageID',
+          identifier: 'identifier',
+          slotName: null,
+          siblingPreviewId,
+          sectionData,
+        };
+
+        const mockHookService = mock<HookService>();
+        jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
+        jest.spyOn(service, 'createSection').mockResolvedValue(sectionData);
+        jest.spyOn(parentElement, 'getAttribute').mockReturnValue(expectedHookPayload.slotName);
+        service.setCurrentPageRefPreviewId(expectedHookPayload.pageId);
+
+        // Act
+        await service.test_addSiblingSection(node, siblingPreviewId);
+        // Assert
+        expect(mockHookService.callHook).not.toHaveBeenCalled();
+      });
+
+      it('does not call section created hook if currentPagerefPreviewId is null', async () => {
+        // Arrange
+        const siblingPreviewId = 'previewId';
+        const parentElement = document.createElement('div');
+        const node = document.createElement('div');
+        parentElement.appendChild(node);
+
+        const sectionData: CreateSectionResponse = {
+          displayName: 'test',
+          displayed: true,
+          formData: {},
+          fsType: 'Section',
+          identifier: 'identifier',
+          name: 'name',
+          template: {},
+          metaFormData: {},
+        };
+        const expectedHookPayload = {
+          pageId: 'pageID',
+          identifier: 'identifier',
+          slotName: 'slotName',
+          siblingPreviewId,
+          sectionData,
+        };
+
+        const mockHookService = mock<HookService>();
+        jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
+        jest.spyOn(service, 'createSection').mockResolvedValue(sectionData);
+        jest.spyOn(parentElement, 'getAttribute').mockReturnValue(expectedHookPayload.slotName);
+        service.setCurrentPageRefPreviewId(null);
+
+        // Act
+        await service.test_addSiblingSection(node, siblingPreviewId);
+        // Assert
+        expect(mockHookService.callHook).not.toHaveBeenCalled();
+      });
+
+      it('does not call section created hook if currentPagerefPreviewId is null', async () => {
+        // Arrange
+        const siblingPreviewId = 'previewId';
+        const parentElement = document.createElement('div');
+        const node = document.createElement('div');
+        parentElement.appendChild(node);
+
+        const sectionData: CreateSectionResponse = {
+          displayName: 'test',
+          displayed: true,
+          formData: {},
+          fsType: 'Section',
+          identifier: 'identifier',
+          name: 'name',
+          template: {},
+          metaFormData: {},
+        };
+        const expectedHookPayload = {
+          pageId: 'pageID',
+          identifier: 'identifier',
+          slotName: 'slotName',
+          siblingPreviewId,
+          sectionData,
+        };
+        const expectedError = new Error('this is an error');
+
+        const mockCreateSection = jest.fn(() => {
+          throw expectedError;
+        });
+
+        const mockHookService = mock<HookService>();
+        jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
+        jest.spyOn(service, 'createSection').mockImplementationOnce(mockCreateSection);
+        jest.spyOn(parentElement, 'getAttribute').mockReturnValue(expectedHookPayload.slotName);
+        service.setCurrentPageRefPreviewId(expectedHookPayload.pageId);
+
+        let actualError;
+        // Act
+        try {
+          await service.test_addSiblingSection(node, siblingPreviewId);
+        } catch (err: unknown) {
+          actualError = err;
+        }
+
+        // Assert
+        expect(mockHookService.callHook).not.toHaveBeenCalled();
+        expect(actualError).toEqual(expectedError);
+      });
+    });
+    describe('getNodeIndex', () => {
+      it('return the index of the given node in the parent when first node', () => {
+        // Arrange
+        const parentElement = document.createElement('div');
+        const node = document.createElement('div');
+        parentElement.appendChild(node);
+
+        // Act
+        const result = service.test_getNodeIndex(node);
+        // Assert
+        expect(result).toEqual(0);
+      });
+
+      it('return the index of the given node in the parent when when second node', () => {
+        // Arrange
+        const parentElement = document.createElement('div');
+        const previousNode = document.createElement('div');
+        const node = document.createElement('div');
+        parentElement.appendChild(previousNode);
+        parentElement.appendChild(node);
+
+        // Act
+        const result = service.test_getNodeIndex(node);
+        // Assert
+        expect(result).toEqual(1);
+      });
+
+      it('return -1 when node has no parent', () => {
+        // Arrange
+        const node = document.createElement('div');
+        // Act
+        const result = service.test_getNodeIndex(node);
+        // Assert
+        expect(result).toEqual(-1);
       });
     });
   });

@@ -12,5 +12,8 @@
       "../../node_modules/@types"
     ]
   },
-  "include": ["src"]
+  "include": [
+    "src",
+    "../../node_modules/jest-extended/types/index.d.ts"
+  ]
 }

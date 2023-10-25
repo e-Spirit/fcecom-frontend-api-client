@@ -37,7 +37,7 @@ export class TPPLoader {
             }
 
             this.logger.debug('loaded TPP_SNAP via %o', url);
-            this.logger.info('Preview successfully initialized.')
+            this.logger.info('Preview successfully initialized.');
             resolve((window as any).TPP_SNAP);
           };
           scriptTag.src = url;

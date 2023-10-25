@@ -1,5 +1,5 @@
 import { EcomApi } from '../core/api/EcomApi';
-import { EcomHooks } from '../core/integrations/tpp/HookService.meta';
+import { EcomHooks } from '../connect/HookService.meta';
 import { LogLevel } from '../core/utils/logging/Logger';
 import { FsDrivenPageTarget, ShopDrivenPageTarget } from '../core/api/TPPService.meta';
 

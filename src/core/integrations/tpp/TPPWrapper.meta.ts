@@ -4,6 +4,7 @@
  */
 
 import { TPPLoader } from './TPPLoader';
+import { SNAPConnect } from '../../../connect/TPPBroker.meta';
 
 /**
  * @internal
@@ -53,61 +54,6 @@ export interface CreatePageOptions {
 /**
  * @internal
  */
-export interface Status {
-  storeType?: string;
-  uidType?: string;
-  elementType?: string;
-  id?: string;
-  displayName?: string;
-  uid?: string;
-  released?: boolean;
-  releaseSupported: boolean;
-  bookmark: boolean;
-  workflows?: any;
-  language?: string;
-  entityId?: string;
-  name: string;
-  permissions: {
-    see: boolean;
-    read: boolean;
-    change: boolean;
-    delete: boolean;
-    appendLeaf: boolean;
-    deleteLeaf: boolean;
-    release: boolean;
-    seeMeta: boolean;
-    changeMeta: boolean;
-    changePermission: boolean;
-  };
-  children: any[];
-  custom: any;
-}
-
-/**
- * @internal
- */
-export interface Button {
-  label: string;
-  _name?: string;
-  css?: string;
-  execute?(scope: ButtonScope, item: any): Promise<void>;
-  isEnabled?(scope: ButtonScope): Promise<boolean>;
-}
-
-/**
- * @internal
- */
-export interface ButtonScope {
-  $node: HTMLElement;
-  $button: HTMLElement;
-  previewId: string;
-  status: Status;
-  language: string;
-}
-
-/**
- * @internal
- */
 export interface CreateSectionResponse {
   displayName: string;
   displayed: boolean;
@@ -120,16 +66,20 @@ export interface CreateSectionResponse {
 }
 
 /**
+ * TODO: Implement Wrapper and document all published functions.
+ *  FCECOM-748
+ *  Provide safe TPP instance
+ */
+
+/**
  * @ignore
  */
-export interface SNAP {
+export interface SNAP extends SNAPConnect {
   isConnected: Promise<boolean>;
 
   createSection(previewId: string, options?: CreateSectionOptions): Promise<CreateSectionResponse> | void;
 
   createPage(path: string, uid: string, template: string, options?: CreatePageOptions): Promise<boolean> | void;
-
-  getPreviewElement(): Promise<string>;
 
   onContentChange(handler: ($node: HTMLElement, previewId: string, content: any) => any): void;
 
@@ -141,21 +91,9 @@ export interface SNAP {
 
   onNavigationChange(handler: (previewId: string) => void): void;
 
-  renderElement(previewId: string): Promise<string | object>;
-
   setPreviewElement(previewId: string | null): void;
-
-  getElementStatus(previewId: string): Promise<Status>;
 
   triggerRerenderView(): Promise<void>;
 
-  execute(identifier: string, params?: object, result?: boolean): Promise<any>;
-
-  showEditDialog(previewId: string): void;
-
   getPreviewLanguage(): Promise<string>;
-
-  showMessage(message: string, kind: string, title?: string): void;
-
-  registerButton(button: Button, index: number): void;
 }
