@@ -1,3 +1,9 @@
+## [0.15.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v0.13.1...v0.15.0) (2023-11-02)
+
+### Changes
+
+* Added the `triggerChange` function to the TPP_BROKER object.
+
 ## [0.13.1](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v0.13.0...v0.13.1) (2023-10-25)
 
 ### Changes

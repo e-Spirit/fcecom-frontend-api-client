@@ -178,4 +178,14 @@ export class TPPBroker implements SNAPConnect {
   startWorkflow(previewId: string, workflow: string): Promise<unknown> {
     return Ready.snap?.startWorkflow(previewId, workflow);
   }
+
+  /**
+   * Triggers onContentChange Handler. Can be used if a Custom Button changes the content.
+   *
+   * @param previewId The target PreviewId.
+   * @param content The updated content, if null renderElement is called.
+   */
+  triggerChange(previewId: string, content: string | object): void {
+    return Ready.snap?.triggerChange(previewId, content);
+  }
 }
