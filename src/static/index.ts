@@ -13,7 +13,7 @@ const handlePage = (id: string, type: string, isFsDriven: boolean, fsPageTemplat
     Array.from(Object.values(document.body.attributes))
       .filter((attr) => attr.name.match(new RegExp(NAME_PREFIX + '\\w{2}')) && attr.value)
       // Make sure display name keys are uppercase and only two characters long (e.g. 'EN')
-      .map((attr) => [attr.name.replace(NAME_PREFIX, '').substring(0, 2).toUpperCase(), attr.value])
+      .map((attr) => [attr.name.replace(NAME_PREFIX, '').toUpperCase(), attr.value])
   );
   if (locale) {
     api.setDefaultLocale(locale);

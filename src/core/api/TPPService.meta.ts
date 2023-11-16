@@ -55,7 +55,8 @@ export type CreatePagePayload = {
 
   /**
    * DisplayNames in different languages (optional).
-   * Language abbreviation must be two letters and uppercase.
+   * Language abbreviation must correspond to the according language defined in the FirstSpirit project.
+   * Either two letters or in locale format, all uppercase.
    */
   displayNames?: {
     [lang: string]: string;

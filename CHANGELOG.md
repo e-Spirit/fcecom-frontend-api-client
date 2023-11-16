@@ -1,3 +1,15 @@
+## [0.16.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v0.15.0...v0.16.0) (2023-11-16)
+
+### Changes
+
+* Moved the array access for `findPage()` from the client to the server package.
+* Improved mapping of store languages to FirstSpirit languages.
+* Updated information about language attributes in API documentation.
+
+### UPDATE NOTICE
+
+* For single element access in `findPage()`, we moved the array access to the Server package to support server side rendering. As by definition `findPage()` can only find one item, `findPage()` now returns a single FindPageItem instead of an Array with one FindPageItem.
+
 ## [0.15.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v0.13.1...v0.15.0) (2023-11-02)
 
 ### Changes

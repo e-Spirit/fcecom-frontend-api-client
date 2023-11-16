@@ -38,7 +38,7 @@ describe('RemoteService', () => {
   describe('findPage()', () => {
     it('it finds a page', async () => {
       // Arrange
-      fetchResponse = { items: ['testPage'] };
+      fetchResponse = 'testPage';
       const expectedResult = 'testPage';
       // Act
       const result = await service.findPage({
@@ -53,7 +53,7 @@ describe('RemoteService', () => {
     });
     it('it uses default values for parameters when finding a page', async () => {
       // Arrange
-      fetchResponse = { items: ['testPage'] };
+      fetchResponse = 'testPage';
       const expectedResult = 'testPage';
       service.setDefaultLocale('en_GB');
 

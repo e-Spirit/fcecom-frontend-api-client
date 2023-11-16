@@ -48,7 +48,7 @@ export class RemoteService {
   async findPage(params: FindPageParams): Promise<FindPageItem> {
     const { id, locale = this.defaultLocale, type } = params;
     try {
-      return (await this.performGetRequest<FindPageParams, FindPageResponse>('findPage', { id, locale, type }))?.items?.[0];
+      return (await this.performGetRequest<FindPageParams, FindPageResponse>('findPage', { id, locale, type }));
     } catch (err: unknown) {
       let ecomError: EcomError;
       if (err instanceof HttpError && err.status === 401) {

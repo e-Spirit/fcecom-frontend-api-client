@@ -13,9 +13,7 @@ export type FindPageParams = {
   type: string;
 };
 
-export type FindPageResponse = {
-  items: FindPageItem[];
-};
+export type FindPageResponse = FindPageItem;
 
 export type PageSection = {
   id: string;
