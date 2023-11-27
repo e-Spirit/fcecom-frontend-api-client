@@ -263,7 +263,6 @@ export class EcomApi {
    *
    * type OpenStoreFrontUrlPayload = {
    *   id: string; // ID of the element to open.
-   *   name: string; // Display name of the element to open · Only passed when triggered via report.
    *   type: string; // Type of the element to open.
    *   url: string; // URL of the element to open in the storefront.
    * };

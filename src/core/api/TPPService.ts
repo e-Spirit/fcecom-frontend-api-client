@@ -397,8 +397,8 @@ export class TPPService {
    * @param siblingPreviewId The previewId of the section where the button is clicked.
    * @protected
    */
-  protected async addSiblingSection(node: Node, siblingPreviewId: string) {
-    const slotName = node.parentElement?.getAttribute('data-fcecom-slot-name');
+  protected async addSiblingSection(node: HTMLElement, siblingPreviewId: string) {
+    const slotName = node.closest('[data-fcecom-slot-name]')?.getAttribute('data-fcecom-slot-name');
 
     if (this.currentPageRefPreviewId && slotName) {
       const position = this.getNodeIndex(node) < 0 ? 0 : this.getNodeIndex(node) + 1;
@@ -427,9 +427,12 @@ export class TPPService {
    * @return The index of the node or -1 if it has no parent.
    * @protected
    */
-  protected getNodeIndex(node: Node) {
-    const children = node.parentElement?.childNodes;
-    const childNodes = Array.from(children?.values() ?? []);
-    return childNodes.indexOf(node as ChildNode);
+  protected getNodeIndex(node: HTMLElement) {
+    const slot = node.closest('[data-fcecom-slot-name]');
+    // In the context of a slot we consider only a section which has a previewId on the first level as relevant.
+    // Deeper elements with previewIds may be images or catalog items.
+    const sections = Array.from(slot?.querySelectorAll('[data-preview-id]:not([data-preview-id] [data-preview-id])') ?? []);
+
+    return sections.indexOf(node);
   }
 }

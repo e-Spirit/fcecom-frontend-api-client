@@ -81,11 +81,6 @@ export type OpenStoreFrontUrlHookPayload = {
    */
   id: string;
   /**
-   * Display name of the element to open.
-   * Only passed when triggered via report.
-   */
-  name?: string;
-  /**
    * Type of the element to open.
    */
   type: string;

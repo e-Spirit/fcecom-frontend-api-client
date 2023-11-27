@@ -40,11 +40,11 @@ class TestableTPPService extends TPPService {
     await this.overrideAddSiblingSectionButton();
   }
 
-  public async test_addSiblingSection(node: Node, previewId: string) {
+  public async test_addSiblingSection(node: HTMLElement, previewId: string) {
     await this.addSiblingSection(node, previewId);
   }
 
-  public test_getNodeIndex(node: Node): number {
+  public test_getNodeIndex(node: HTMLElement): number {
     return this.getNodeIndex(node);
   }
 
@@ -780,13 +780,9 @@ describe('TPPService', () => {
     });
 
     describe('addSiblingSection', () => {
-      it('calls section created hook', async () => {
+      describe('calls section created hook', () => {
         // Arrange
         const siblingPreviewId = 'previewId';
-
-        const parentElement = document.createElement('div');
-        const node = document.createElement('div');
-        parentElement.appendChild(node);
 
         const sectionData: CreateSectionResponse = {
           displayName: 'test',
@@ -798,6 +794,7 @@ describe('TPPService', () => {
           template: {},
           metaFormData: {},
         };
+
         const expectedHookPayload = {
           pageId: 'pageID',
           identifier: 'identifier',
@@ -811,19 +808,53 @@ describe('TPPService', () => {
           slotName: expectedHookPayload.slotName,
         };
 
-        const mockHookService = mock<HookService>();
-        jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
-        const serviceSpy = jest.spyOn(service, 'createSection').mockResolvedValue(sectionData);
-        jest.spyOn(parentElement, 'getAttribute').mockReturnValue(expectedHookPayload.slotName);
-        service.setCurrentPageRefPreviewId(expectedHookPayload.pageId);
+        it('when section is direct child of slot', async () => {
+          // Arrange
+          const parentElement = document.createElement('div');
 
-        // Act
-        await service.test_addSiblingSection(node, siblingPreviewId);
-        // Assert
-        expect(serviceSpy.mock.calls[0][0]).toEqual(expectedCreateSectionPayload);
-        expect(serviceSpy.mock.calls[0][1]).toEqual(1);
-        expect(mockHookService.callHook).toBeCalledWith(EcomHooks.SECTION_CREATED, expectedHookPayload);
-      });
+          const node = document.createElement('div');
+          node.setAttribute('data-preview-id', 'previewId-0');
+          parentElement.appendChild(node);
+
+          const mockHookService = mock<HookService>();
+          jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
+          const serviceSpy = jest.spyOn(service, 'createSection').mockResolvedValue(sectionData);
+          parentElement.setAttribute('data-fcecom-slot-name', expectedHookPayload.slotName)
+          service.setCurrentPageRefPreviewId(expectedHookPayload.pageId);
+
+          // Act
+          await service.test_addSiblingSection(node, siblingPreviewId);
+          // Assert
+          expect(serviceSpy.mock.calls[0][0]).toEqual(expectedCreateSectionPayload);
+          expect(serviceSpy.mock.calls[0][1]).toEqual(1);
+          expect(mockHookService.callHook).toBeCalledWith(EcomHooks.SECTION_CREATED, expectedHookPayload);
+        });
+
+        it('when section is wrapped in another div in slot', async () => {
+          // Arrange
+          const parentElement = document.createElement('div');
+
+          const wrapper = document.createElement('div');
+
+          const node = document.createElement('div');
+          node.setAttribute('data-preview-id', 'previewId-0');
+          parentElement.appendChild(wrapper);
+          wrapper.appendChild(node);
+
+          const mockHookService = mock<HookService>();
+          jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
+          const serviceSpy = jest.spyOn(service, 'createSection').mockResolvedValue(sectionData);
+          parentElement.setAttribute('data-fcecom-slot-name', expectedHookPayload.slotName)
+          service.setCurrentPageRefPreviewId(expectedHookPayload.pageId);
+
+          // Act
+          await service.test_addSiblingSection(node, siblingPreviewId);
+          // Assert
+          expect(serviceSpy.mock.calls[0][0]).toEqual(expectedCreateSectionPayload);
+          expect(serviceSpy.mock.calls[0][1]).toEqual(1);
+          expect(mockHookService.callHook).toBeCalledWith(EcomHooks.SECTION_CREATED, expectedHookPayload);
+        });
+      })
 
       it('does not call section created hook if slotName is undefined', async () => {
         // Arrange
@@ -832,32 +863,18 @@ describe('TPPService', () => {
         const node = document.createElement('div');
         parentElement.appendChild(node);
 
-        const sectionData: CreateSectionResponse = {
-          displayName: 'test',
-          displayed: true,
-          formData: {},
-          fsType: 'Section',
-          identifier: 'identifier',
-          name: 'name',
-          template: {},
-          metaFormData: {},
-        };
-        const expectedHookPayload = {
-          pageId: 'pageID',
-          identifier: 'identifier',
-          siblingPreviewId,
-          sectionData,
-        };
+        const pageId = 'pageID';
 
         const mockHookService = mock<HookService>();
         jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
-        jest.spyOn(service, 'createSection').mockResolvedValue(sectionData);
-        service.setCurrentPageRefPreviewId(expectedHookPayload.pageId);
+        jest.spyOn(service, 'createSection');
+        service.setCurrentPageRefPreviewId(pageId);
 
         // Act
         await service.test_addSiblingSection(node, siblingPreviewId);
         // Assert
         expect(mockHookService.callHook).not.toHaveBeenCalled();
+        expect(service.createSection).not.toHaveBeenCalled();
       });
 
       it('does not call section created hook if slotName is null', async () => {
@@ -867,34 +884,20 @@ describe('TPPService', () => {
         const node = document.createElement('div');
         parentElement.appendChild(node);
 
-        const sectionData: CreateSectionResponse = {
-          displayName: 'test',
-          displayed: true,
-          formData: {},
-          fsType: 'Section',
-          identifier: 'identifier',
-          name: 'name',
-          template: {},
-          metaFormData: {},
-        };
-        const expectedHookPayload = {
-          pageId: 'pageID',
-          identifier: 'identifier',
-          slotName: null,
-          siblingPreviewId,
-          sectionData,
-        };
+        const slotName = null;
+        const pageId = 'pageID';
 
         const mockHookService = mock<HookService>();
         jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
-        jest.spyOn(service, 'createSection').mockResolvedValue(sectionData);
-        jest.spyOn(parentElement, 'getAttribute').mockReturnValue(expectedHookPayload.slotName);
-        service.setCurrentPageRefPreviewId(expectedHookPayload.pageId);
+        jest.spyOn(service, 'createSection');
+        jest.spyOn(parentElement, 'getAttribute').mockReturnValue(slotName);
+        service.setCurrentPageRefPreviewId(pageId);
 
         // Act
         await service.test_addSiblingSection(node, siblingPreviewId);
         // Assert
         expect(mockHookService.callHook).not.toHaveBeenCalled();
+        expect(service.createSection).not.toHaveBeenCalled();
       });
 
       it('does not call section created hook if currentPagerefPreviewId is null', async () => {
@@ -904,90 +907,55 @@ describe('TPPService', () => {
         const node = document.createElement('div');
         parentElement.appendChild(node);
 
-        const sectionData: CreateSectionResponse = {
-          displayName: 'test',
-          displayed: true,
-          formData: {},
-          fsType: 'Section',
-          identifier: 'identifier',
-          name: 'name',
-          template: {},
-          metaFormData: {},
-        };
-        const expectedHookPayload = {
-          pageId: 'pageID',
-          identifier: 'identifier',
-          slotName: 'slotName',
-          siblingPreviewId,
-          sectionData,
-        };
+        const slotName = 'slotName';
 
         const mockHookService = mock<HookService>();
         jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
-        jest.spyOn(service, 'createSection').mockResolvedValue(sectionData);
-        jest.spyOn(parentElement, 'getAttribute').mockReturnValue(expectedHookPayload.slotName);
+        jest.spyOn(service, 'createSection');
+        jest.spyOn(parentElement, 'getAttribute').mockReturnValue(slotName);
         service.setCurrentPageRefPreviewId(null);
 
         // Act
         await service.test_addSiblingSection(node, siblingPreviewId);
         // Assert
         expect(mockHookService.callHook).not.toHaveBeenCalled();
+        expect(service.createSection).not.toHaveBeenCalled();
       });
 
-      it('does not call section created hook if currentPagerefPreviewId is null', async () => {
+      it('does not call section created hook if createSectionResult is undefined', async () => {
         // Arrange
         const siblingPreviewId = 'previewId';
         const parentElement = document.createElement('div');
         const node = document.createElement('div');
         parentElement.appendChild(node);
 
-        const sectionData: CreateSectionResponse = {
-          displayName: 'test',
-          displayed: true,
-          formData: {},
-          fsType: 'Section',
-          identifier: 'identifier',
-          name: 'name',
-          template: {},
-          metaFormData: {},
-        };
-        const expectedHookPayload = {
-          pageId: 'pageID',
-          identifier: 'identifier',
-          slotName: 'slotName',
-          siblingPreviewId,
-          sectionData,
-        };
-        const expectedError = new Error('this is an error');
+        const slotName = 'slotName';
+        const pageId = 'pageID';
 
         const mockCreateSection = jest.fn(() => {
-          throw expectedError;
+          return Promise.resolve(undefined);
         });
 
         const mockHookService = mock<HookService>();
         jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
         jest.spyOn(service, 'createSection').mockImplementationOnce(mockCreateSection);
-        jest.spyOn(parentElement, 'getAttribute').mockReturnValue(expectedHookPayload.slotName);
-        service.setCurrentPageRefPreviewId(expectedHookPayload.pageId);
-
-        let actualError;
-        // Act
-        try {
-          await service.test_addSiblingSection(node, siblingPreviewId);
-        } catch (err: unknown) {
-          actualError = err;
-        }
+        jest.spyOn(parentElement, 'getAttribute').mockReturnValue(slotName);
+        service.setCurrentPageRefPreviewId(pageId);
 
         // Assert
         expect(mockHookService.callHook).not.toHaveBeenCalled();
-        expect(actualError).toEqual(expectedError);
+        expect(service.createSection).not.toHaveBeenCalled();
       });
     });
+
     describe('getNodeIndex', () => {
+      const slotname = 'slotName';
       it('return the index of the given node in the parent when first node', () => {
         // Arrange
         const parentElement = document.createElement('div');
+        parentElement.setAttribute('data-fcecom-slot-name', slotname);
         const node = document.createElement('div');
+        node.setAttribute('data-preview-id', 'previewId-0');
         parentElement.appendChild(node);
 
         // Act
@@ -999,8 +967,11 @@ describe('TPPService', () => {
       it('return the index of the given node in the parent when when second node', () => {
         // Arrange
         const parentElement = document.createElement('div');
+        parentElement.setAttribute('data-fcecom-slot-name', slotname);
         const previousNode = document.createElement('div');
+        previousNode.setAttribute('data-preview-id', 'previewId-0');
         const node = document.createElement('div');
+        node.setAttribute('data-preview-id', 'previewId-1');
         parentElement.appendChild(previousNode);
         parentElement.appendChild(node);
 
