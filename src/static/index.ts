@@ -1,13 +1,13 @@
 import { EcomApi } from '../core/api/EcomApi';
 import { EcomHooks } from '../connect/HookService.meta';
 import { LogLevel } from '../core/utils/logging/Logger';
-import { FsDrivenPageTarget, ShopDrivenPageTarget } from '../core/api/TPPService.meta';
+import { FsDrivenPageTarget } from '../core/api/TPPService.meta';
 
 const baseUrl = document.currentScript?.dataset.fsBaseUrl ?? 'http://localhost:3001/api';
 const logLevel = parseInt(document.currentScript?.dataset.fsLogLevel ?? LogLevel.INFO.toString());
 const api = new EcomApi(baseUrl, logLevel);
 
-const handlePage = (id: string, type: string, isFsDriven: boolean, fsPageTemplate: string, locale?: string) => {
+const handlePage = async (id: string, type: 'content' | 'product' | 'category', isFsDriven: boolean, fsPageTemplate: string, locale?: string) => {
   const NAME_PREFIX = 'data-fs-name-';
   const displayNames = Object.fromEntries(
     Array.from(Object.values(document.body.attributes))
@@ -15,15 +15,16 @@ const handlePage = (id: string, type: string, isFsDriven: boolean, fsPageTemplat
       // Make sure display name keys are uppercase and only two characters long (e.g. 'EN')
       .map((attr) => [attr.name.replace(NAME_PREFIX, '').toUpperCase(), attr.value])
   );
-  if (locale) {
-    api.setDefaultLocale(locale);
-  }
 
-  if (isFsDriven) api.setElement({ isFsDriven: true, locale, fsPageId: id } as FsDrivenPageTarget);
-  else api.setElement({ isFsDriven: false, id, locale, type, fsPageTemplate, displayNames } as ShopDrivenPageTarget);
+  if (locale) api.setDefaultLocale(locale);
+
+  if (isFsDriven) return await api.setPage({ isFsDriven: true, locale, fsPageId: id } as FsDrivenPageTarget);
+
+  const ensureExistence = String(document.body.dataset.ensureExistence).toLowerCase() == 'true';
+  return api.setPage({ isFsDriven: false, id, locale, type, fsPageTemplate, displayNames, ensureExistence });
 };
 
-const apiInitPromise = api.init().then(() => {
+const apiInitPromise = api.init().then(async () => {
   // Adapted from legacy
   const id = document.body.dataset.fsPageId;
   const type = document.body.dataset.fsPageType as 'content' | 'product' | 'category';
@@ -35,10 +36,10 @@ const apiInitPromise = api.init().then(() => {
   if (id && type && ['content', 'product', 'category'].includes(type) && fsPageTemplate) {
     console.debug('[FCECOM]', 'Setting element', { previewId, id, type, fsPageTemplate, locale });
 
-    handlePage(id, type, isFsDriven, fsPageTemplate, locale);
+    await handlePage(id, type, isFsDriven, fsPageTemplate, locale);
 
     if (!addedHooks.includes(EcomHooks.OPEN_STOREFRONT_URL)) {
-      // If no callback is defined, use default behavior
+      // If no callback is defined, use default behavior.
       // Default behavior is using URL received from the bridge
       api.addHook(EcomHooks.OPEN_STOREFRONT_URL, (payload) => {
         console.debug('[FCECOM]', 'FirstSpiritOpenStoreFrontUrl', payload);

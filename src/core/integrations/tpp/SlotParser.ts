@@ -43,7 +43,7 @@ export class SlotParser {
         if (this.pageTarget) {
           // Trigger new adding of buttons
           // Get Page
-          let page: FindPageItem;
+          let page: FindPageItem | null;
           if (this.pageTarget.isFsDriven) page = await this.remoteService.findElement(this.pageTarget);
           else page = await this.remoteService.findPage(this.pageTarget);
 

@@ -6,7 +6,9 @@ import {
   FindElementParams,
   FindPageItem,
   FindPageParams,
+  PageSection,
   PageTarget,
+  ShopDrivenPageTarget,
 } from './EcomApi.meta';
 import { TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
 import { PreviewDecider } from '../utils/PreviewDecider';
@@ -99,7 +101,7 @@ export class EcomApi {
    * @param slotName SlotName to filter the sections on.
    * @return {*} Filtered sections as flat Array.
    */
-  static extractSlotSections(page: FindPageItem, slotName: string) {
+  static extractSlotSections(page: FindPageItem, slotName: string): PageSection[] {
     return extractSlotSections(page, slotName);
   }
 
@@ -141,7 +143,7 @@ export class EcomApi {
    * @param params Parameters to use to find the page.
    * @return {*} Details about the page.
    */
-  async findPage(params: FindPageParams): Promise<FindPageItem> {
+  async findPage(params: FindPageParams): Promise<FindPageItem | null> {
     isNonNullable(params, 'Invalid params passed');
 
     return this.remoteService.findPage(params);
@@ -184,8 +186,82 @@ export class EcomApi {
   }
 
   /**
+   * Sets the element currently displayed in the storefront, finds the page and, if specified,
+   * creates a page if missing. After that, the requested page object is returned.
+   *
+   * @example
+   * ```typescript
+   * const pageResult: FindPageItem | null = await api.setPage({
+   *
+   *   // ensuring a page existence is disabled for FS-driven pages.
+   *   isFsDriven: false,
+   *
+   *   id: ...,
+   *   fsPageTemplate: ...,
+   *   type: ...,
+   *   displayNames: {
+   *     EN: ...,
+   *     DE: ...,
+   *   locale: ...
+   *
+   *   // Enable page creation when the page does not already exist.
+   *   ensureExistence: true
+   *
+   * });
+   * ```
+   *
+   * @param pageTarget A complete representation of the desired page object in FS
+   *  with all necessary information to create a missing page.
+   * @returns an existing page, newly created if ensureExistence is demanded or null if non-existent.
+   */
+  async setPage(pageTarget: PageTarget | null): Promise<FindPageItem | null> {
+    if (!this.tppService) return null;
+
+    if (pageTarget === null) {
+      await this.tppService.setElement(null);
+      return null;
+    }
+
+    isNonNullable(pageTarget, 'Invalid params passed');
+
+    const { isFsDriven, ensureExistence = false } = pageTarget;
+
+    // Get Page
+    let page: FindPageItem | null;
+
+    if (isFsDriven) page = await this.findElement(pageTarget);
+    else page = await this.findPage(pageTarget);
+
+    // ensure existence
+    if (page === null && !isFsDriven && ensureExistence) page = await this.createMissingPage(pageTarget);
+
+    // Set Status Provider
+    await this.tppService?.setElement(page);
+    await this.slotParser?.parseSlots(pageTarget, page);
+
+    return page;
+  }
+
+  private async createMissingPage(pageTarget: ShopDrivenPageTarget): Promise<FindPageItem | null> {
+    const { id, type, fsPageTemplate, displayNames } = pageTarget;
+    HookService.getInstance().callHook(EcomHooks.PAGE_CREATING, pageTarget);
+
+    const pageCreated = await this.createPage({ id, type, displayNames, fsPageTemplate });
+
+    if (pageCreated) {
+      const page = await this.findPage(pageTarget);
+      HookService.getInstance().callHook(EcomHooks.ENSURED_PAGE_EXISTS, page);
+      return page;
+    }
+
+    return null;
+  }
+
+  /**
    * Sets the element currently displayed in the storefront.
    *
+   * @deprecated In favor of {@link setPage}, this method is not maintained anymore
+   *  and will be removed in a future release
    * @param pageTarget Parameter
    */
   async setElement(pageTarget: PageTarget) {
@@ -194,7 +270,7 @@ export class EcomApi {
     isNonNullable(pageTarget, 'Invalid params passed');
 
     // Get Page
-    let page: FindPageItem;
+    let page: FindPageItem | null;
     if (pageTarget.isFsDriven) page = await this.remoteService.findElement(pageTarget);
     else page = await this.remoteService.findPage(pageTarget);
 
@@ -280,7 +356,7 @@ export class EcomApi {
    * @param func The hook's callback.
    * @return {*}
    */
-  addHook<Name extends EcomHooks, Func extends HookPayloadTypes[Name]>(name: Name, func: (payload: Func) => void) {
+  addHook<Name extends EcomHooks, Func extends HookPayloadTypes[Name]>(name: Name, func: (payload: Func) => void): void {
     isNonNullable(name, 'Invalid name passed');
     isNonNullable(func, 'Invalid func passed');
 
@@ -310,7 +386,7 @@ export class EcomApi {
    * @param func The hook's callback.
    * @return {*}
    */
-  removeHook<Name extends EcomHooks, Func extends HookPayloadTypes[Name]>(name: Name, func: (payload: Func) => void) {
+  removeHook<Name extends EcomHooks, Func extends HookPayloadTypes[Name]>(name: Name, func: (payload: Func) => void): void {
     isNonNullable(name, 'Invalid name passed');
     isNonNullable(func, 'Invalid func passed');
 

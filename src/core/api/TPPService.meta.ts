@@ -19,6 +19,11 @@ export type ShopDrivenPageTarget = CreatePagePayload & {
    * Locale of the element to display.
    */
   locale?: string;
+
+  /**
+   * If no page matching the pageTarget does exist, it can be automatically created.
+   */
+  ensureExistence?: boolean
 };
 
 export type FsDrivenPageTarget = {
@@ -37,6 +42,11 @@ export type FsDrivenPageTarget = {
    * Locale of the element to display.
    */
   locale?: string;
+
+  /**
+   * EnsureExisting is not available for FS-driven pages.
+   */
+  ensureExistence?: false;
 };
 
 export type CreatePagePayload = {

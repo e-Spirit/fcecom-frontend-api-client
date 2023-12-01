@@ -1,3 +1,9 @@
+## [0.18.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v0.17.0...v0.18.0) (2023-12-01)
+
+### Changes
+
+* Created method `setPage()`, replacing `setElement()` to add enhanced functionality like providing fetched pages directly and creating missing pages on demand.
+
 ## [0.17.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v0.16.0...v0.17.0) (2023-11-27)
 
 ### Changes

@@ -45,7 +45,7 @@ export class RemoteService {
    * @param params Parameters to use to find the page.
    * @return {*} Details about the page.
    */
-  async findPage(params: FindPageParams): Promise<FindPageItem> {
+  async findPage(params: FindPageParams): Promise<FindPageItem | null> {
     const { id, locale = this.defaultLocale, type } = params;
     try {
       return (await this.performGetRequest<FindPageParams, FindPageResponse>('findPage', { id, locale, type }));

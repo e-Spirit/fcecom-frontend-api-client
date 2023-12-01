@@ -141,7 +141,7 @@ export interface HookPayloadTypes {
   [EcomHooks.SECTION_CREATED]: CreateSectionHookPayload;
   [EcomHooks.PAGE_CREATING]: PageTarget;
   [EcomHooks.SECTION_CREATION_CANCELLED]: SectionCreatingCancelledPayload;
-  [EcomHooks.ENSURED_PAGE_EXISTS]: FindPageItem;
+  [EcomHooks.ENSURED_PAGE_EXISTS]: FindPageItem | null;
   [EcomHooks.PAGE_CREATION_FAILED]: PageCreationFailedPayload;
   [EcomHooks.PAGE_CREATED]: PageCreatedHookPayload;
   [EcomHooks.PREVIEW_INITIALIZED]: PreviewInitializedHookPayload;

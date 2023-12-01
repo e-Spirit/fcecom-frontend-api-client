@@ -10,6 +10,7 @@ import { EcomHooks } from '../../connect/HookService.meta';
 import { TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
 import { Logger, Logging, LogLevel } from '../utils/logging/Logger';
 import { HookService } from '../../connect/HookService';
+import { HttpError } from './errors';
 
 jest.spyOn(PreviewDecider, 'isPreview').mockResolvedValue(true);
 
@@ -299,6 +300,196 @@ describe('EcomApi', () => {
 
       // Act & Assert
       expect(() => api.setDefaultLocale(undefined as any)).toThrow('Invalid locale passed');
+    });
+  });
+
+  describe('setPage()', () => {
+    describe('replaces setPage() correctly', () => {
+      it('it passes calls to TPPService and SlotParser', async () => {
+        // Arrange
+        api['tppService'] = mockTppService;
+        const mockSlotParser = mock<SlotParser>();
+        api['slotParser'] = mockSlotParser;
+        const params = {
+          fsPageTemplate: 'TEMPLATE',
+          id: 'ID',
+          type: 'content',
+          isFsDriven: false,
+        } as ShopDrivenPageTarget;
+
+        const pageItem: FindPageItem = {
+          previewId: 'testPreviewId',
+          children: [],
+        };
+        jest.spyOn(mockRemoteService, 'findPage').mockResolvedValue(pageItem);
+        // Act
+        await api.setPage(params);
+        // Assert
+        expect(mockRemoteService.findPage.mock.calls[0][0]).toEqual(params);
+        expect(mockTppService.setElement.mock.calls[0][0]).toEqual(pageItem);
+        expect(mockSlotParser.parseSlots.mock.calls[0][0]).toEqual(params);
+      });
+      it('it fetches a shop driven page via findPage', async () => {
+        // Arrange
+        api['tppService'] = mockTppService;
+        const params = {
+          fsPageTemplate: 'TEMPLATE',
+          id: 'ID',
+          type: 'content',
+          isFsDriven: false,
+        } as ShopDrivenPageTarget;
+        // Act
+        await api.setPage(params);
+        // Assert
+        expect(mockRemoteService.findPage.mock.calls[0][0]).toEqual(params);
+      });
+      it('it fetches an fs driven page via findElement', async () => {
+        // Arrange
+        api['tppService'] = mockTppService;
+        const params = {
+          fsPageTemplate: 'TEMPLATE',
+          fsPageId: 'ID',
+          type: 'content',
+          isFsDriven: true,
+        } as FsDrivenPageTarget;
+        // Act
+        await api.setPage(params);
+        // Assert
+        expect(mockRemoteService.findElement.mock.calls[0][0]).toEqual(params);
+      });
+      it('does not throw if no TPPService is set', async () => {
+        // Arrange
+        api['tppService'] = undefined;
+        const mockSlotParser = mock<SlotParser>();
+        api['slotParser'] = mockSlotParser;
+        const params = {
+          fsPageTemplate: 'TEMPLATE',
+          id: 'ID',
+          type: 'content',
+          isFsDriven: false,
+        } as ShopDrivenPageTarget;
+        // Act
+        expect(async () => {
+          await api.setPage(params);
+          // Assert
+          expect(mockSlotParser.parseSlots).not.toHaveBeenCalled();
+        }).not.toThrow();
+      });
+      it('throws on invalid parameters', async () => {
+        // Arrange
+        api['tppService'] = mockTppService;
+
+        // Act & Assert
+        await expect(async () => await api.setPage(undefined as any)).rejects.toThrow('Invalid params passed');
+      });
+      it('clears the state on null parameter', async () => {
+        // Arrange
+        api['tppService'] = mockTppService;
+
+        const clearSpy = jest.spyOn(api, 'clear')
+        clearSpy.mockReturnValue()
+
+        // Act & Assert
+        expect(await api.setPage(null)).toBeNull()
+        expect(mockTppService.setElement.mock.calls[0][0]).toBeNull()
+      });
+    });
+
+    describe('ensureExistence', () => {
+      it('it calls createPage when ensureExistence is requested on a shop-driven page', async () => {
+        // Arrange
+        api['tppService'] = mockTppService;
+
+        const findElementSpy = jest.spyOn(api, 'findElement');
+
+        const findPageSpy = jest.spyOn(api, 'findPage');
+        findPageSpy.mockReturnValueOnce(Promise.resolve(null))
+
+        const createPageSpy = jest.spyOn(api, 'createPage');
+        const newPage = {
+          previewId: 'page_id',
+          children: [
+            {
+              previewId: 'slot_id',
+              name: 'slotName',
+            },
+          ],
+        } as FindPageItem;
+        createPageSpy.mockReturnValue(Promise.resolve(true));
+
+        findPageSpy.mockReturnValueOnce(Promise.resolve(newPage));
+
+        const payload = {
+          fsPageTemplate: 'product',
+          id: 'testUid',
+          type: 'product',
+          displayNames: {
+            en: 'Display Name EN',
+            de: 'Display Name DE',
+          },
+          isFsDriven: false,
+          ensureExistence: true
+        } as ShopDrivenPageTarget;
+        // Act
+        const foundPage = await api.setPage(payload);
+        // Assert
+        expect(foundPage).toBe(newPage);
+        expect(createPageSpy).toHaveBeenCalled();
+        expect(findElementSpy).toHaveBeenCalledTimes(0);
+      });
+      it('it does not call createPage when ensureExistence is disabled on a non-existent shop-driven page', async () => {
+        // Arrange
+        api['tppService'] = mockTppService;
+
+        const findPageSpy = jest.spyOn(api, 'findPage');
+        findPageSpy.mockReturnValueOnce(Promise.resolve(null))
+
+        const createPageSpy = jest.spyOn(api, 'createPage');
+        createPageSpy.mockReturnValue(Promise.resolve(true))
+
+        const payload = {
+          fsPageTemplate: 'product',
+          id: 'testUid',
+          type: 'product',
+          displayNames: {
+            en: 'Display Name EN',
+            de: 'Display Name DE',
+          },
+          isFsDriven: false,
+        } as ShopDrivenPageTarget;
+        // Act
+        const foundPage: FindPageItem | null = await api.setPage(payload);
+        // Assert
+        expect(foundPage).toBe(null);
+        expect(createPageSpy).toHaveBeenCalledTimes(0);
+      });
+      it('it does not call createPage when ensureExistence is disabled on a non-existent shop-driven page', async () => {
+        // Arrange
+        api['tppService'] = mockTppService;
+
+        const findPageSpy = jest.spyOn(api, 'findPage');
+        findPageSpy.mockImplementation(() => {
+          throw new HttpError(401, 'Unauthorized');
+        });
+
+        const createPageSpy = jest.spyOn(api, 'createPage');
+
+        const payload = {
+          fsPageTemplate: 'product',
+          id: 'testUid',
+          type: 'product',
+          displayNames: {
+            en: 'Display Name EN',
+            de: 'Display Name DE',
+          },
+          isFsDriven: false,
+          ensureExistence: false
+        } as ShopDrivenPageTarget;
+        // Act
+        await expect(async () => await api.setPage(payload)).rejects.toThrow(new HttpError(401, 'Unauthorized'));
+        // Assert
+        expect(createPageSpy).toHaveBeenCalledTimes(0);
+      });
     });
   });
 
