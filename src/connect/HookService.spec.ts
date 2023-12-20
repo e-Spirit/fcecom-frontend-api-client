@@ -21,7 +21,7 @@ describe('HookService.getInstance()', () => {
       // Act
       HookService.getInstance().callHook(EcomHooks.CONTENT_CHANGED, payload);
       // Assert
-      expect(testMethod).toBeCalledWith(payload);
+      expect(testMethod).toHaveBeenCalledWith(payload);
     });
     it('does not fail if no hook is set for the given type', () => {
       // Arrange
@@ -65,13 +65,13 @@ describe('HookService.getInstance()', () => {
         // Assert
       }).not.toThrow();
 
-      expect(errorSpy).toBeCalledTimes(2);
+      expect(errorSpy).toHaveBeenCalledTimes(2);
       expect(errorSpy.mock.calls[0][0]).toContain('The provided hook function is undefined.');
 
       expect(errorSpy.mock.calls[1][0]).toContain('Problem executing hook function. Moving on.');
       expect((errorSpy.mock.calls[1][1] as Error).message).toEqual('Test Error');
 
-      expect(correctExecutingFunction).toBeCalledWith(payload);
+      expect(correctExecutingFunction).toHaveBeenCalledWith(payload);
     });
   });
   describe('callExtraHook()', () => {
@@ -89,8 +89,8 @@ describe('HookService.getInstance()', () => {
       HookService.getInstance().addHook(EcomHooks.PREVIEW_INITIALIZED, handlePreviewInitialized);
 
       // assert
-      expect(callHook).not.toBeCalled();
-      expect(callExtraHook).toBeCalledWith(
+      expect(callHook).not.toHaveBeenCalled();
+      expect(callExtraHook).toHaveBeenCalledWith(
         EcomHooks.PREVIEW_INITIALIZED,
         expect.objectContaining({ TPP_BROKER: TPPBroker.getInstance() }),
         handlePreviewInitialized

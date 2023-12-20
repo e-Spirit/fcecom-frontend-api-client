@@ -164,7 +164,7 @@ describe('EcomApi', () => {
       const result = await api.init();
       // Assert
       expect(api['tppService']).toEqual(tppServiceInstanceMock);
-      expect(tppServiceInstanceMock.init).toBeCalled();
+      expect(tppServiceInstanceMock.init).toHaveBeenCalled();
       expect(api['slotParser']).toEqual(slotParserInstanceMock);
       expect(result).toEqual(true);
     });
@@ -292,7 +292,7 @@ describe('EcomApi', () => {
       api.setDefaultLocale(locale);
       // Assert
       expect(api.defaultLocale).toBe(locale);
-      expect(mockRemoteService.setDefaultLocale).toBeCalledWith(locale);
+      expect(mockRemoteService.setDefaultLocale).toHaveBeenCalledWith(locale);
     });
     it('throws on invalid parameters', () => {
       // Arrange

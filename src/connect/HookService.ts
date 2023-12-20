@@ -130,6 +130,13 @@ export namespace Ready {
   export let snap: SNAP;
 
   /**
+   * Allowed Message Origin
+   * This value filters incoming postMessage events to only accept ones
+   *  originating from the CC inside preview.
+   */
+  export let allowedMessageOrigin: string;
+
+  /**
    * This function finds out if a specific feature is already initialized
    *  and if it can be supplied directly to the provided function inside addHook.
    * @param name Name to determine the dependency to check for.

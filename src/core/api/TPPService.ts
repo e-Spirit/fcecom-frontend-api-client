@@ -243,15 +243,10 @@ export class TPPService {
     });
 
     window.addEventListener('message', (message) => {
-      /*
-       check for origin here like
-       message.origin !== "origin"
-       not possible for local development stack since * is passed as origin
-      */
-      const { topic, payload } = message.data['fcecom'] || {};
-      if (topic === 'openStoreFrontUrl') {
-        HookService.getInstance().callHook(EcomHooks.OPEN_STOREFRONT_URL, payload);
-      }
+      if (!message.origin || !Ready.allowedMessageOrigin || message.origin !== Ready.allowedMessageOrigin) return;
+
+      const { topic, payload } = (message.data)['fcecom'] || {};
+      if (topic === 'openStoreFrontUrl') HookService.getInstance().callHook(EcomHooks.OPEN_STOREFRONT_URL, payload);
     });
   }
 

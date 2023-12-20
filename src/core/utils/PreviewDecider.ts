@@ -1,5 +1,6 @@
 import { ReferrerStore } from './ReferrerStore';
 import { getLogger } from './logging/Logger';
+import { Ready } from '../../connect/HookService';
 
 /**
  * Helper to decide whether the application runs in preview mode.
@@ -35,11 +36,12 @@ export class PreviewDecider {
     if (!this.isBrowserEnvironment()) return false;
 
     try {
-      const { isPreview } = await fetch(`${this.url}/ispreview`, {
+      const { isPreview, fsServerOrigin } = await fetch(`${this.url}/ispreview`, {
         headers: {
           'X-Referrer': this.getReferrer(),
         },
       }).then((response) => response.json());
+      Ready.allowedMessageOrigin = fsServerOrigin;
       return isPreview || false;
     } catch (err: unknown) {
       this.logger.info('preview disabled | init request failed', err);

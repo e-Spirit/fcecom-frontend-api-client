@@ -65,7 +65,7 @@ describe('Logger', () => {
         // @ts-ignore - Makes it easier for testing
         logger[test.method]('MY TEST LOG');
         // Assert
-        expect(consoleSpy).toBeCalled();
+        expect(consoleSpy).toHaveBeenCalled();
       });
       it(`does not log to the console if log level above ${test.method}`, () => {
         // Arrange

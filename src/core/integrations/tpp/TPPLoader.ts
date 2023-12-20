@@ -6,6 +6,7 @@
 import { SNAP } from './TPPWrapper.meta';
 import { getLogger } from '../../utils/logging/Logger';
 import { ReferrerStore } from '../../utils/ReferrerStore';
+import { Ready } from '../../../connect/HookService';
 
 export class TPPLoader {
   private readonly logger = getLogger('TPPLoader');
@@ -16,11 +17,13 @@ export class TPPLoader {
    */
   getSnap = async (): Promise<SNAP | null> =>
     new Promise((resolve, reject) => {
-      const messageListener = ({ origin, data }: any) => {
-        if (typeof data === 'object' && data?.tpp?._response?.version) {
+      const messageListener = (message: MessageEvent) => {
+        if (!message.origin || !Ready.allowedMessageOrigin || message.origin !== Ready.allowedMessageOrigin) return;
+
+        if (typeof message.data === 'object' && message.data?.tpp?._response?.version) {
           window.removeEventListener('message', messageListener);
 
-          const version = data.tpp._response.version;
+          const version = message.data.tpp._response.version;
           this.logger.debug('load TPP_SNAP version %o', version);
 
           const fsHost = ReferrerStore.getReferrer();
@@ -45,6 +48,6 @@ export class TPPLoader {
       };
 
       window.addEventListener('message', messageListener);
-      window.top?.postMessage({ tpp: { ping: 1 } }, '*');
+      window.top?.postMessage({ tpp: { ping: 1 } }, Ready.allowedMessageOrigin);
     });
 }

@@ -12,6 +12,7 @@ import { HookService, Ready } from '../../connect/HookService';
 import { EcomHooks } from '../../connect/HookService.meta';
 import { SNAPButton, SNAPButtonScope } from '../../connect/TPPBroker.meta';
 import { TPPBroker } from '../../connect/TPPBroker';
+import { fireEvent } from '@testing-library/react';
 
 const tppLoader = new TPPLoader();
 const snap = mock<SNAP>();
@@ -55,6 +56,8 @@ class TestableTPPService extends TPPService {
 
 const API_URL = 'https://api_url:3000';
 let tppWrapper: TPPWrapper;
+
+Ready.allowedMessageOrigin = 'http://example.com';
 
 jest.mock('./RemoteService');
 const mockRemoteService = new RemoteService(API_URL);
@@ -110,7 +113,7 @@ describe('TPPService', () => {
       // Act
       await service.setElement(page);
       // Assert
-      expect(setPreviewElementSpy).toBeCalledWith(previewId);
+      expect(setPreviewElementSpy).toHaveBeenCalledWith(previewId);
     });
 
     it('calls SNAP setPreviewElement with null', async () => {
@@ -125,7 +128,7 @@ describe('TPPService', () => {
       await service.setElement(null);
       // Assert
       expect(findPageSpy).not.toHaveBeenCalled();
-      expect(setPreviewElementSpy).toBeCalledWith(null);
+      expect(setPreviewElementSpy).toHaveBeenCalledWith(null);
     });
 
     it('calls SNAP setPreviewElement with null when no fs page is present', async () => {
@@ -139,7 +142,7 @@ describe('TPPService', () => {
       // Act
       await service.setElement(null);
       // Assert
-      expect(setPreviewElementSpy).toBeCalledWith(null);
+      expect(setPreviewElementSpy).toHaveBeenCalledWith(null);
     });
   });
 
@@ -211,7 +214,7 @@ describe('TPPService', () => {
         expect(err).toBeInstanceOf(EcomClientError);
         expect((err as EcomClientError).code).toEqual(ERROR_CODES.CREATE_PAGE_FAILED);
         expect((err as EcomClientError).message).toEqual('Cannot create page');
-        expect(mockLogger.error).toBeCalledWith('Failed to execute executable', expect.anything());
+        expect(mockLogger.error).toHaveBeenCalledWith('Failed to execute executable', expect.anything());
       }
     });
     it('it should throw an error (invalid module response)', async () => {
@@ -248,7 +251,7 @@ describe('TPPService', () => {
         expect(err).toBeInstanceOf(EcomClientError);
         expect((err as EcomClientError).code).toEqual(ERROR_CODES.CREATE_PAGE_FAILED);
         expect((err as EcomClientError).message).toEqual('Cannot create page');
-        expect(mockLogger.error).toBeCalledWith('Invalid module response', 'Not valid response');
+        expect(mockLogger.error).toHaveBeenCalledWith('Invalid module response', 'Not valid response');
       }
     });
     it('it should throw an error (invalid JSON as module response)', async () => {
@@ -285,7 +288,7 @@ describe('TPPService', () => {
         expect(err).toBeInstanceOf(EcomClientError);
         expect((err as EcomClientError).code).toEqual(ERROR_CODES.CREATE_PAGE_FAILED);
         expect((err as EcomClientError).message).toEqual('Cannot create page');
-        expect(mockLogger.error).toBeCalledWith('Cannot parse module response', 'Not valid JSON');
+        expect(mockLogger.error).toHaveBeenCalledWith('Cannot parse module response', 'Not valid JSON');
       }
     });
     it('it should throw an error (error in module response)', async () => {
@@ -326,7 +329,7 @@ describe('TPPService', () => {
         expect(err).toBeInstanceOf(EcomModuleError);
         expect((err as EcomClientError).code).toEqual(response.error?.code.toString());
         expect((err as EcomClientError).message).toEqual('Cannot create page');
-        expect(mockLogger.error).toBeCalledWith('Error in module during page creation', response);
+        expect(mockLogger.error).toHaveBeenCalledWith('Error in module during page creation', response);
       }
     });
   });
@@ -377,7 +380,7 @@ describe('TPPService', () => {
         expect(err).toBeInstanceOf(EcomClientError);
         expect((err as EcomClientError).code).toEqual(ERROR_CODES.CREATE_SECTION_FAILED);
         expect((err as EcomClientError).message).toEqual('Cannot create section');
-        expect(mockLogger.error).toBeCalledWith('Failed to create section', tppError);
+        expect(mockLogger.error).toHaveBeenCalledWith('Failed to create section', tppError);
       }
     });
   });
@@ -436,7 +439,7 @@ describe('TPPService', () => {
         title: 'Something went wrong',
         ok: false,
       });
-      expect(mockLogger.error).toBeCalledWith('An error occured', error);
+      expect(mockLogger.error).toHaveBeenCalledWith('An error occured', error);
     });
     it('display dialog for client side errors', async () => {
       // Arrange
@@ -456,7 +459,7 @@ describe('TPPService', () => {
         title: 'Failed to add content',
         ok: false,
       });
-      expect(mockLogger.error).toBeCalledWith('An error occured', error);
+      expect(mockLogger.error).toHaveBeenCalledWith('An error occured', error);
     });
     it('differently logs module errors', async () => {
       // Arrange
@@ -476,7 +479,7 @@ describe('TPPService', () => {
         title: 'Failed to add content',
         ok: false,
       });
-      expect(mockLogger.error).toBeCalledWith('Error in FirstSpirit Module - see server logs for more details', error);
+      expect(mockLogger.error).toHaveBeenCalledWith('Error in FirstSpirit Module - see server logs for more details', error);
     });
   });
 
@@ -522,7 +525,7 @@ describe('TPPService', () => {
 
       // assert
       expect(spy).toHaveBeenCalled();
-      expect(mockHookService.callHook).toBeCalledWith(
+      expect(mockHookService.callHook).toHaveBeenCalledWith(
         EcomHooks.CONTENT_CHANGED,
         expect.objectContaining({
           node,
@@ -530,7 +533,7 @@ describe('TPPService', () => {
           content,
         })
       );
-      expect(mockHookService.callHook).toBeCalledWith(EcomHooks.PREVIEW_INITIALIZED, expect.objectContaining({ TPP_BROKER: TPPBroker.getInstance() }));
+      expect(mockHookService.callHook).toHaveBeenCalledWith(EcomHooks.PREVIEW_INITIALIZED, expect.objectContaining({ TPP_BROKER: TPPBroker.getInstance() }));
       expect(Ready.snap).toBe(snap);
     });
 
@@ -555,7 +558,7 @@ describe('TPPService', () => {
 
       // assert
       expect(spy).toHaveBeenCalled();
-      expect(loggerSpy).toBeCalledWith(expectedLog);
+      expect(loggerSpy).toHaveBeenCalledWith(expectedLog);
       expect(Ready.snap).toBe(snap);
     });
 
@@ -578,13 +581,13 @@ describe('TPPService', () => {
 
       // assert
       expect(spy).toHaveBeenCalled();
-      expect(mockHookService.callHook).toBeCalledWith(
+      expect(mockHookService.callHook).toHaveBeenCalledWith(
         EcomHooks.REQUEST_PREVIEW_ELEMENT,
         expect.objectContaining({
           previewId,
         })
       );
-      expect(mockHookService.callHook).toBeCalledWith(EcomHooks.PREVIEW_INITIALIZED, expect.objectContaining({ TPP_BROKER: TPPBroker.getInstance() }));
+      expect(mockHookService.callHook).toHaveBeenCalledWith(EcomHooks.PREVIEW_INITIALIZED, expect.objectContaining({ TPP_BROKER: TPPBroker.getInstance() }));
       expect(Ready.snap).toBe(snap);
     });
     it('adds openStoreFrontUrl message handler and invokes OPEN_STOREFRONT_URL hook if topic matches', async () => {
@@ -594,6 +597,7 @@ describe('TPPService', () => {
       tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
       const spy = jest.spyOn(window, 'addEventListener');
       const payload = 'PAYLOAD';
+      Ready.allowedMessageOrigin = 'http://example.com';
       const message = {
         data: {
           fcecom: {
@@ -601,6 +605,7 @@ describe('TPPService', () => {
             payload,
           },
         },
+        origin: 'http://example.com',
       };
       spy.mockImplementation((type, cb) => {
         // Trigger callback
@@ -613,9 +618,9 @@ describe('TPPService', () => {
       await service.test_initPreviewHooks();
 
       // assert
-      expect(spy).toBeCalledWith('message', expect.anything());
-      expect(mockHookService.callHook).toBeCalledWith(EcomHooks.OPEN_STOREFRONT_URL, payload);
-      expect(mockHookService.callHook).toBeCalledWith(EcomHooks.PREVIEW_INITIALIZED, expect.objectContaining({ TPP_BROKER: TPPBroker.getInstance() }));
+      expect(spy).toHaveBeenCalledWith('message', expect.anything());
+      expect(mockHookService.callHook).toHaveBeenCalledWith(EcomHooks.OPEN_STOREFRONT_URL, payload);
+      expect(mockHookService.callHook).toHaveBeenCalledWith(EcomHooks.PREVIEW_INITIALIZED, expect.objectContaining({ TPP_BROKER: TPPBroker.getInstance() }));
       expect(Ready.snap).toBe(snap);
     });
     it('adds openStoreFrontUrl message handler and does nothing if topic doesnt match', async () => {
@@ -644,10 +649,83 @@ describe('TPPService', () => {
       await service.test_initPreviewHooks();
 
       // assert
-      expect(spy).toBeCalledWith('message', expect.anything());
+      expect(spy).toHaveBeenCalledWith('message', expect.anything());
       expect(mockHookService.callHook).not.toHaveBeenCalledWith(EcomHooks.OPEN_STOREFRONT_URL, expect.anything());
-      expect(mockHookService.callHook).toBeCalledWith(EcomHooks.PREVIEW_INITIALIZED, expect.objectContaining({ TPP_BROKER: TPPBroker.getInstance() }));
+      expect(mockHookService.callHook).toHaveBeenCalledWith(EcomHooks.PREVIEW_INITIALIZED, expect.objectContaining({ TPP_BROKER: TPPBroker.getInstance() }));
       expect(Ready.snap).toBe(snap);
+    });
+    describe('postMessage origin validation', () => {
+      it('it should not run events on wrong postMessage origin', async () => {
+        // Arrange
+        const mockHookService = mock<HookService>();
+        jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
+
+        const payload = {};
+        Ready.allowedMessageOrigin = 'http://example.com';
+        const snap = mock<SNAP>();
+
+        // @ts-ignore - TODO: Make properly test possible
+        tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
+
+        await service.test_initPreviewHooks();
+
+        // Act
+        const messageEvent = new MessageEvent('message', {
+          data: {
+            fcecom: {
+              topic: 'openStoreFrontUrl',
+              payload,
+            },
+          },
+          origin: 'http://whatever.com',
+        });
+
+        fireEvent(window, messageEvent);
+
+        // Assert
+        expect(mockHookService.callHook).toHaveBeenNthCalledWith(1, EcomHooks.PREVIEW_INITIALIZED, expect.objectContaining({ TPP_BROKER: {} }));
+        expect(mockHookService.callHook).not.toHaveBeenCalledWith(EcomHooks.OPEN_STOREFRONT_URL);
+      });
+      it('it should run events on correct postMessage origin', async () => {
+        // Arrange
+        const mockHookService = mock<HookService>();
+        jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
+
+        const payload = {};
+        Ready.allowedMessageOrigin = 'http://example.com';
+        const snap = mock<SNAP>();
+
+        // @ts-ignore - TODO: Make properly test possible
+        tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
+
+        const service = new TestableTPPService();
+
+        jest.spyOn(service, 'getTppInstance').mockReturnValue(Promise.resolve(tppWrapper));
+        await service.test_initPreviewHooks();
+
+        // Act
+        const messageEvent = new MessageEvent('message', {
+          data: {
+            fcecom: {
+              topic: 'openStoreFrontUrl',
+              payload,
+            },
+          },
+          origin: 'http://example.com',
+        });
+
+        fireEvent(window, messageEvent);
+
+        // Assert
+        expect(mockHookService.callHook).toHaveBeenNthCalledWith(
+          1,
+          EcomHooks.PREVIEW_INITIALIZED,
+          expect.objectContaining({
+            TPP_BROKER: {},
+          })
+        );
+        expect(mockHookService.callHook).toHaveBeenLastCalledWith(EcomHooks.OPEN_STOREFRONT_URL, expect.objectContaining({}));
+      });
     });
   });
   describe('TranslationStudio Integration', () => {
@@ -819,7 +897,7 @@ describe('TPPService', () => {
           const mockHookService = mock<HookService>();
           jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
           const serviceSpy = jest.spyOn(service, 'createSection').mockResolvedValue(sectionData);
-          parentElement.setAttribute('data-fcecom-slot-name', expectedHookPayload.slotName)
+          parentElement.setAttribute('data-fcecom-slot-name', expectedHookPayload.slotName);
           service.setCurrentPageRefPreviewId(expectedHookPayload.pageId);
 
           // Act
@@ -827,7 +905,7 @@ describe('TPPService', () => {
           // Assert
           expect(serviceSpy.mock.calls[0][0]).toEqual(expectedCreateSectionPayload);
           expect(serviceSpy.mock.calls[0][1]).toEqual(1);
-          expect(mockHookService.callHook).toBeCalledWith(EcomHooks.SECTION_CREATED, expectedHookPayload);
+          expect(mockHookService.callHook).toHaveBeenCalledWith(EcomHooks.SECTION_CREATED, expectedHookPayload);
         });
 
         it('when section is wrapped in another div in slot', async () => {
@@ -844,7 +922,7 @@ describe('TPPService', () => {
           const mockHookService = mock<HookService>();
           jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
           const serviceSpy = jest.spyOn(service, 'createSection').mockResolvedValue(sectionData);
-          parentElement.setAttribute('data-fcecom-slot-name', expectedHookPayload.slotName)
+          parentElement.setAttribute('data-fcecom-slot-name', expectedHookPayload.slotName);
           service.setCurrentPageRefPreviewId(expectedHookPayload.pageId);
 
           // Act
@@ -852,9 +930,9 @@ describe('TPPService', () => {
           // Assert
           expect(serviceSpy.mock.calls[0][0]).toEqual(expectedCreateSectionPayload);
           expect(serviceSpy.mock.calls[0][1]).toEqual(1);
-          expect(mockHookService.callHook).toBeCalledWith(EcomHooks.SECTION_CREATED, expectedHookPayload);
+          expect(mockHookService.callHook).toHaveBeenCalledWith(EcomHooks.SECTION_CREATED, expectedHookPayload);
         });
-      })
+      });
 
       it('does not call section created hook if slotName is undefined', async () => {
         // Arrange

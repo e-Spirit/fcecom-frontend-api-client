@@ -20,7 +20,7 @@ describe('ReferrerStore', () => {
         // Act
         ReferrerStore.init();
         // Assert
-        expect(sessionStorageMock.setItem).toBeCalledWith('fcecom-referrer', TEST_REFERRER);
+        expect(sessionStorageMock.setItem).toHaveBeenCalledWith('fcecom-referrer', TEST_REFERRER);
       });
       it('does not set the current referrer to the SessionStorage if one is set already', async () => {
         // Arrange
@@ -31,8 +31,8 @@ describe('ReferrerStore', () => {
         // Act
         ReferrerStore.init();
         // Assert
-        expect(sessionStorageMock.setItem).not.toBeCalled();
-        expect(mockLogger.debug).toBeCalledWith("Referrer already set to 'SOME_REFERRER'");
+        expect(sessionStorageMock.setItem).not.toHaveBeenCalled();
+        expect(mockLogger.debug).toHaveBeenCalledWith("Referrer already set to 'SOME_REFERRER'");
       });
     });
     describe('not in browser', () => {
@@ -47,7 +47,7 @@ describe('ReferrerStore', () => {
         // Act
         ReferrerStore.init();
         // Assert
-        expect(sessionStorageMock.setItem).not.toBeCalled();
+        expect(sessionStorageMock.setItem).not.toHaveBeenCalled();
       });
     });
   });
@@ -66,7 +66,7 @@ describe('ReferrerStore', () => {
         const result = ReferrerStore.getReferrer();
         // Assert
         expect(result).toEqual('');
-        expect(mockLogger.debug).toBeCalledWith('Not initialized');
+        expect(mockLogger.debug).toHaveBeenCalledWith('Not initialized');
       });
       it('returns previously set referrer', async () => {
         // Arrange
@@ -96,7 +96,7 @@ describe('ReferrerStore', () => {
         const result = ReferrerStore.getReferrer();
         // Assert
         expect(result).toEqual('');
-        expect(sessionStorageMock.setItem).not.toBeCalled();
+        expect(sessionStorageMock.setItem).not.toHaveBeenCalled();
       });
     });
   });

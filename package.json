@@ -1,6 +1,6 @@
 {
   "name": "fcecom-frontend-api-client",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "FirstSpirit Connect for Commerce - Frontend API Client",
   "main": "dist/bundle.js",
   "module": "dist/bundle.js",
@@ -40,11 +40,13 @@
   "devDependencies": {
     "@babel/core": "^7.20.12",
     "@babel/preset-env": "^7.20.2",
+    "@testing-library/react": "^14.1.2",
     "@types/jest": "^29.2.4",
     "babel-loader": "^9.1.2",
     "css-loader": "^6.7.3",
     "eslint": "^8.30.0",
     "jest": "^29.3.1",
+    "jest-environment-jsdom": "^29.7.0",
     "jest-fetch-mock": "^3.0.3",
     "jest-junit": "^15.0.0",
     "jest-mock-extended": "^3.0.1",
