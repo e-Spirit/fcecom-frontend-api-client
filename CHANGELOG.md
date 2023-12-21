@@ -1,3 +1,9 @@
+## [0.20.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v0.19.0...v0.20.0) (2023-12-21)
+
+### Changes
+
+* The origin of received postMessage events is now checked
+
 ## [0.19.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v0.18.0...v0.19.0) (2023-12-20)
 
 ### Changes

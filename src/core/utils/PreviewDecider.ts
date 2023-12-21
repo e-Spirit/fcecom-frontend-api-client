@@ -36,12 +36,12 @@ export class PreviewDecider {
     if (!this.isBrowserEnvironment()) return false;
 
     try {
-      const { isPreview, fsServerOrigin } = await fetch(`${this.url}/ispreview`, {
+      const { isPreview } = await fetch(`${this.url}/ispreview`, {
         headers: {
           'X-Referrer': this.getReferrer(),
         },
       }).then((response) => response.json());
-      Ready.allowedMessageOrigin = fsServerOrigin;
+      if (isPreview) Ready.allowedMessageOrigin = this.getReferrer();
       return isPreview || false;
     } catch (err: unknown) {
       this.logger.info('preview disabled | init request failed', err);
