@@ -17,37 +17,25 @@ export class TPPLoader {
    */
   getSnap = async (): Promise<SNAP | null> =>
     new Promise((resolve, reject) => {
-      const messageListener = (message: MessageEvent) => {
-        if (!message.origin || !Ready.allowedMessageOrigin || message.origin !== Ready.allowedMessageOrigin) return;
+      this.logger.debug('load nOCM');
 
-        if (typeof message.data === 'object' && message.data?.tpp?._response?.version) {
-          window.removeEventListener('message', messageListener);
+      const fsHost = ReferrerStore.getReferrer();
+      const url = `${fsHost}/fs5webedit/live/live.js`;
+      const scriptTag = document.body.appendChild(document.createElement('script'));
 
-          const version = message.data.tpp._response.version;
-          this.logger.debug('load TPP_SNAP version %o', version);
-
-          const fsHost = ReferrerStore.getReferrer();
-          const url = `${fsHost}/fs5webedit/snap.js`;
-          const scriptTag = document.body.appendChild(document.createElement('script'));
-
-          scriptTag.onerror = scriptTag.onload = async () => {
-            if (!('TPP_SNAP' in window)) {
-              reject(new Error(`Unable to load TPP_SNAP via '${url}'.`));
-            }
-
-            if (!(await (window as any).TPP_SNAP.isConnected)) {
-              reject(new Error(`Unable to set up TPP_SNAP via '${url}'.`));
-            }
-
-            this.logger.debug('loaded TPP_SNAP via %o', url);
-            this.logger.info('Preview successfully initialized.');
-            resolve((window as any).TPP_SNAP);
-          };
-          scriptTag.src = url;
+      scriptTag.onerror = scriptTag.onload = async () => {
+        if (!('TPP_SNAP' in window)) {
+          reject(new Error(`Unable to load TPP_SNAP via '${url}'.`));
         }
-      };
 
-      window.addEventListener('message', messageListener);
-      window.top?.postMessage({ tpp: { ping: 1 } }, Ready.allowedMessageOrigin);
+        if (!(await (window as any).TPP_SNAP.isConnected)) {
+          reject(new Error(`Unable to set up TPP_SNAP via '${url}'.`));
+        }
+
+        this.logger.debug('loaded TPP_SNAP via %o', url);
+        this.logger.info('Preview successfully initialized.');
+        resolve((window as any).TPP_SNAP);
+      };
+      scriptTag.src = url;
     });
 }

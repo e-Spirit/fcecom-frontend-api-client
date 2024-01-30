@@ -28,7 +28,7 @@ describe('SlotParser', () => {
     document.body.innerHTML = '';
   });
   describe('CONTENT_CHANGED hook', () => {
-    it('sets up buttons again if hook was triggered and content was set before', async () => {
+    it('payload.content = null: sets up buttons again if hook was triggered and content was set before', async () => {
       // Arrange
       let addContentCb: (params: any) => void;
       jest.spyOn(HookService.getInstance(), 'addHook').mockImplementation((name, cb) => {
@@ -56,6 +56,33 @@ describe('SlotParser', () => {
       expect(mockRemoteService.findPage.mock.calls[0][0].id).toEqual(id);
       expect(mockRemoteService.findPage.mock.calls[0][0].type).toEqual(type);
       // TODO: Add assertion for buttons
+    });
+    it('payload.content = "": logs warning', async () => {
+      // Arrange
+      let addContentCb: (params: any) => void;
+      jest.spyOn(HookService.getInstance(), 'addHook').mockImplementation((name, cb) => {
+        if (name === EcomHooks.CONTENT_CHANGED) {
+          addContentCb = cb;
+        }
+      });
+      const page = {
+        previewId: 'testPreviewId',
+        children: [],
+      } as FindPageItem;
+      const params = {
+        fsPageTemplate: 'FSTEMPLATE',
+        id: 'ID',
+        type: 'content',
+      } as ShopDrivenPageTarget;
+      // Act
+      parser = new SlotParser(mockRemoteService, mockTppService);
+      await parser.parseSlots(params, page);
+      const spy = (parser['logger'].warn = jest.fn());
+      // @ts-ignore - Will be set during constructor callback
+      addContentCb({ content: '' });
+      // Assert
+      expect(mockRemoteService.findPage.mock.calls.length).toEqual(0);
+      expect(spy.mock.calls[0][0]).toBe('Retrieved empty content in CONTENT_CHANGED hook');
     });
   });
   describe('parseSlots', () => {

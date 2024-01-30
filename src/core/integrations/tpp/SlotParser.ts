@@ -38,7 +38,7 @@ export class SlotParser {
     this.tppService = tppService;
 
     HookService.getInstance().addHook(EcomHooks.CONTENT_CHANGED, async (payload: ContentChangedHookPayload) => {
-      if (!payload.content) {
+      if (payload.content === null) {
         // Section was removed
         if (this.pageTarget) {
           // Trigger new adding of buttons
@@ -50,6 +50,8 @@ export class SlotParser {
           // Parse Slots
           await this.parseSlots(this.pageTarget, page);
         }
+      } else if (payload.content === '') {
+        this.logger.warn('Retrieved empty content in CONTENT_CHANGED hook');
       }
     });
   }

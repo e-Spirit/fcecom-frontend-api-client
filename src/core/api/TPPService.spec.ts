@@ -37,8 +37,8 @@ class TestableTPPService extends TPPService {
     await this.addTranslationstudioButton();
   }
 
-  public async test_overrideAddSiblingSectionButton() {
-    await this.overrideAddSiblingSectionButton();
+  public async test_addAddSiblingSectionButton() {
+    await this.addAddSiblingSectionButton();
   }
 
   public async test_addSiblingSection(node: HTMLElement, previewId: string) {
@@ -826,35 +826,43 @@ describe('TPPService', () => {
         // Arrange
         // @ts-ignore - TODO: Make properly test possible
         tppWrapper['TPP_SNAP'] = Promise.resolve(null);
-        const spy = jest.spyOn(snap, 'overrideDefaultButton');
+        const spy = jest.spyOn(snap, 'registerButton');
 
         // Act
-        await service.test_overrideAddSiblingSectionButton();
+        await service.test_addAddSiblingSectionButton();
 
         // Assert
         expect(spy).not.toHaveBeenCalled();
       });
     });
-    it('overrides the create section button', async () => {
+    it.only('overrides the create section button', async () => {
       // Arrange
       const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
       tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
-      const overrideDefaultButtonSpy = jest.spyOn(snap, 'overrideDefaultButton');
+      const registerButtonSpy = jest.spyOn(snap, 'registerButton');
 
-      const buttonToOverride = 'add-sibling-section';
       const button: SNAPButton = {
         label: 'Add Section',
-        execute: async ({ $node, previewId }: SNAPButtonScope) => await service.test_addSiblingSection($node, previewId),
+        css: 'tpp-icon-add-section',
+        isEnabled: (scope: SNAPButtonScope) => {
+          return Promise.resolve(true);
+        },
+        isVisible: (scope: SNAPButtonScope) => {
+          return Promise.resolve(true);
+        },
+        execute: async ({ $node, previewId }: SNAPButtonScope) => {
+          return await service.test_addSiblingSection($node, previewId);
+        },
       };
 
       // Act
-      await service.test_overrideAddSiblingSectionButton();
+      await service.test_addAddSiblingSectionButton();
 
       // Assert
       // JSON stringify for deep equality check
-      expect(JSON.stringify(overrideDefaultButtonSpy.mock.calls[0][0])).toMatch(buttonToOverride);
-      expect(JSON.stringify(overrideDefaultButtonSpy.mock.calls[0][1])).toEqual(JSON.stringify(button));
+      expect(JSON.stringify(registerButtonSpy.mock.calls[0][0])).toEqual(JSON.stringify(button));
+      expect(registerButtonSpy.mock.calls[0][1]).toEqual(1);
     });
 
     describe('addSiblingSection', () => {

@@ -238,7 +238,5 @@ export interface SNAPConnect {
 
   startWorkflow(previewId: string, workflow: string): Promise<unknown>; // TODO: find correct return value
 
-  overrideDefaultButton(defaultButtonName: string, buttonOverrides: SNAPButton | null): void;
-
-  triggerChange(previewId: string, content: (string | object)): void
+  triggerChange(previewId: string, content: string | object): void;
 }

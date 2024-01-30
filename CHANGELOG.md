@@ -1,3 +1,9 @@
+## [0.23.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v0.22.0...v0.23.0) (2024-01-30)
+
+### Changes
+* Switch to version 3.0 release candidate of the OCM API.
+* Updated getting started of API documentation.
+
 ## [0.22.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v0.20.0...v0.22.0) (2024-01-22)
 
 ### Changes

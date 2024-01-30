@@ -96,16 +96,6 @@ export class TPPBroker implements SNAPConnect {
   }
 
   /**
-   * Override a default button on the element decoration.
-   *
-   * @param defaultButtonName Available button names: edit , metadata , add-sibling-section , add-child-section , add-child-section-body , workflows , delete , crop , translate , move , and bookmark.
-   * @param buttonOverrides Overrides given methods, null removes the default button.
-   */
-  overrideDefaultButton(defaultButtonName: string, buttonOverrides: SNAPButton | null): void {
-    return Ready.snap?.overrideDefaultButton(defaultButtonName, buttonOverrides);
-  }
-
-  /**
    * Renders the given PreviewId.
    *
    * @since snap 1.2.0

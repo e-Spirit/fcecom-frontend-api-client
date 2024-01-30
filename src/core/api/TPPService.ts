@@ -125,7 +125,7 @@ export class TPPService {
         this.initPreviewHooks();
         this.initMessagesToServer();
         this.addTranslationstudioButton();
-        this.overrideAddSiblingSectionButton();
+        this.addAddSiblingSectionButton();
         return Promise.resolve(true);
       })
       .catch((err: unknown) => {
@@ -245,7 +245,7 @@ export class TPPService {
     window.addEventListener('message', (message) => {
       if (!message.origin || !Ready.allowedMessageOrigin || message.origin !== Ready.allowedMessageOrigin) return;
 
-      const { topic, payload } = (message.data)['fcecom'] || {};
+      const { topic, payload } = message.data['fcecom'] || {};
       if (topic === 'openStoreFrontUrl') HookService.getInstance().callHook(EcomHooks.OPEN_STOREFRONT_URL, payload);
     });
   }
@@ -280,7 +280,7 @@ export class TPPService {
       const status = await snap.getElementStatus(previewId);
       if (status.storeType === 'SITESTORE' && status.id) {
         const topic = 'requestedPreviewElement';
-        const pageRefId = status.id;
+        const pageRefId = `${status.id}`;
         const language = status.language;
         const payload = { pageRefId, language };
         snap.execute(
@@ -371,14 +371,29 @@ export class TPPService {
    * Overrides the default "Create Section" button in the tpp frame.
    * @protected
    */
-  protected async overrideAddSiblingSectionButton(): Promise<void> {
+  protected async addAddSiblingSectionButton(): Promise<void> {
     const snap = await this.checkForTPP();
     if (!snap) return;
 
-    snap.overrideDefaultButton('add-sibling-section', {
-      label: 'Add Section',
-      execute: async ({ $node, previewId }: SNAPButtonScope) => await this.addSiblingSection($node, previewId),
-    });
+    snap.registerButton(
+      {
+        label: 'Add Section',
+        css: 'tpp-icon-add-section',
+        isEnabled: (scope: SNAPButtonScope) => {
+          console.log('isEnabled', scope);
+          return Promise.resolve(true);
+        },
+        isVisible: (scope: SNAPButtonScope) => {
+          console.log('isVisible', scope);
+          return Promise.resolve(true);
+        },
+        execute: async ({ $node, previewId }: SNAPButtonScope) => {
+          console.log('execute', $node, previewId);
+          return await this.addSiblingSection($node, previewId);
+        },
+      },
+      1
+    );
   }
 
   /**
