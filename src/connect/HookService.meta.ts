@@ -60,6 +60,12 @@ export enum EcomHooks {
   PREVIEW_INITIALIZED = 'previewInitialized',
 }
 
+/**
+ * !!! note
+ * The `content` retrieved by this hook differs from the one retrieved by `findPage` and `findElement`, as references won't be resolved.
+ * Therefore, the references to e.g. images and datasets must be resolved manually.
+ * The best option is to use `findPage` and `findElement` to fetch the updated data after the hook is fired, as in that case references will already be resolved on the server.
+ */
 export type ContentChangedHookPayload = {
   /**
    * HTML element of the element that changed or null.
@@ -90,6 +96,12 @@ export type OpenStoreFrontUrlHookPayload = {
   url: string;
 };
 
+/**
+ * !!! note
+ * The `sectionData` retrieved by the hook differs from the one retrieved by `findPage` and `findElement`, as references won't be resolved.
+ * Therefore, the references to e.g. images and datasets must be resolved manually.
+ * The best option is to use `findPage` and `findElement` to fetch the updated data after the hook is fired, as in that case references will already be resolved on the server.
+ */
 export type CreateSectionHookPayload = {
   /**
    * Preview ID of page in FirstSpirit.

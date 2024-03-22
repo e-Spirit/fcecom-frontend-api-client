@@ -1,3 +1,8 @@
+## [0.25.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v0.24.0...v0.25.0) (2024-03-22)
+
+### Changes
+* Updated documentation on the hooks CONTENT_CHANGED and SECTION_CREATED payloads.
+
 ## [0.24.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v0.23.0...v0.24.0) (2024-02-12)
 
 ### Changes
