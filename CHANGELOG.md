@@ -1,3 +1,16 @@
+## [1.0.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v0.25.0...v1.0.0) (2024-05-17)
+
+### Changes
+* Frontend API is now generally available.
+
+### UPDATE NOTICE
+Version 1.0.0 of the Frontend API uses the new 3.0 release candidate of the OCM API which is integrated in the ContentCreator.
+
+This *requires* the following changes to your project if they have not already been made when updating to version 0.23.0:
+
+1. Adding the [PreviewRenderingPlugin](https://docs.e-spirit.com/module/caas-connect/CaaS_Connect_Releasenotes_EN.html#version-3-41-0-17-11-2023)
+2. Disable `Preview: Create Section` in the `CXT ContentCreator: Feature Configuration Project App`.
+
 ## [0.25.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v0.24.0...v0.25.0) (2024-03-22)
 
 ### Changes
@@ -13,6 +26,14 @@
 ### Changes
 * Switch to version 3.0 release candidate of the OCM API.
 * Updated getting started of API documentation.
+
+### UPDATE NOTICE
+Instead of using the OCM API provided by the _FirstSpirit ThirdPartyPreview Module_ we now use the new 3.0 release candidate of the OCM API which is integrated in the ContentCreator.
+
+This *requires* the following changes to your project:
+
+1. Adding the [PreviewRenderingPlugin](https://docs.e-spirit.com/module/caas-connect/CaaS_Connect_Releasenotes_EN.html#version-3-41-0-17-11-2023)
+2. Disable `Preview: Create Section` in the `CXT ContentCreator: Feature Configuration Project App`.
 
 ## [0.22.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v0.20.0...v0.22.0) (2024-01-22)
 
