@@ -197,6 +197,79 @@ describe('RemoteService', () => {
     });
   });
 
+  describe('fetchProjectProperties()', () => {
+    it('it fetches the project properties', async () => {
+      // Arrange
+      fetchResponse = {};
+
+      // Act
+      const result = await service.fetchProjectProperties({
+        locale: 'de_DE',
+      });
+
+      // Assert
+      expect(result).toEqual(fetchResponse);
+      expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/fetchProjectProperties?locale=de_DE`, expect.anything());
+    });
+    it('it uses default values for parameters when fetching the project properties', async () => {
+      // Arrange
+      fetchResponse = {};
+      service.setDefaultLocale('en_GB');
+
+      // Act
+      const result = await service.fetchProjectProperties({});
+
+      // Assert
+      expect(result).toEqual(fetchResponse);
+      expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/fetchProjectProperties?locale=${service.defaultLocale}`, expect.anything());
+    });
+    it('throws error if fetch was not ok and status is 401', async () => {
+      expect.assertions(2);
+      // Arrange
+      fetchResponse = {};
+      fetchOk = false;
+      fetchStatus = 401;
+
+      // Act
+      try {
+        await service.fetchProjectProperties({});
+      } catch (err: any) {
+        expect((err as HttpError).status).toEqual(401);
+        expect((err as HttpError).message).toEqual('Unauthorized');
+      }
+    });
+    it('throws error if fetch was not ok and status is 400', async () => {
+      expect.assertions(2);
+      // Arrange
+      fetchResponse = {};
+      fetchOk = false;
+      fetchStatus = 400;
+
+      // Act
+      try {
+        await service.fetchProjectProperties({});
+      } catch (err: any) {
+        expect((err as HttpError).status).toEqual(400);
+        expect((err as HttpError).message).toEqual('Failed to fetch');
+      }
+    });
+    it('throws error if fetch was not ok (fallback)', async () => {
+      expect.assertions(2);
+      // Arrange
+      fetchResponse = {};
+      fetchOk = false;
+      fetchStatus = 500;
+
+      // Act
+      try {
+        await service.fetchProjectProperties({});
+      } catch (err: any) {
+        expect((err as HttpError).status).toEqual(500);
+        expect((err as HttpError).message).toEqual('Failed to fetch');
+      }
+    });
+  });
+
   describe('findElement()', () => {
     it('it finds an element', async () => {
       // Arrange

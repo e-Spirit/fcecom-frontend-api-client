@@ -835,7 +835,7 @@ describe('TPPService', () => {
         expect(spy).not.toHaveBeenCalled();
       });
     });
-    it.only('overrides the create section button', async () => {
+    it('overrides the create section button', async () => {
       // Arrange
       const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible

@@ -3,11 +3,13 @@ import {
   CreateSectionPayload,
   FetchNavigationParams,
   FetchNavigationResponse,
+  FetchProjectPropertiesParams,
   FindElementParams,
   FindPageItem,
   FindPageParams,
   PageSection,
   PageTarget,
+  ProjectPropertiesResponse,
   ShopDrivenPageTarget,
 } from './EcomApi.meta';
 import { TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
@@ -171,6 +173,19 @@ export class EcomApi {
     isNonNullable(params, 'Invalid params passed');
 
     return this.remoteService.findElement(params);
+  }
+
+  /**
+   * This method fetches the project properties from the configured CaaS.
+   * It uses fsxa-api/fetchByFilter to get them.
+   *
+   * @param params Parameters to use to fetch the project properties.
+   * @returns the resolved project properties
+   */
+  async fetchProjectProperties(params: FetchProjectPropertiesParams): Promise<ProjectPropertiesResponse> {
+    isNonNullable(params, 'Invalid params passed');
+
+    return this.remoteService.fetchProjectProperties(params);
   }
 
   /**

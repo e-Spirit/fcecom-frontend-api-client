@@ -7,7 +7,16 @@ import { EcomClientError, EcomError, EcomInvalidParameterError, ERROR_CODES, Htt
 import { removeNullishObjectProperties } from '../utils/helper';
 import { ParamObject } from '../utils/meta';
 import { PreviewDecider } from '../utils/PreviewDecider';
-import { FetchNavigationParams, FetchNavigationResponse, FindElementParams, FindPageItem, FindPageParams, FindPageResponse } from './EcomApi.meta';
+import {
+  FetchNavigationParams,
+  FetchNavigationResponse,
+  FetchProjectPropertiesParams,
+  FindElementParams,
+  FindPageItem,
+  FindPageParams,
+  FindPageResponse,
+  ProjectPropertiesResponse,
+} from './EcomApi.meta';
 import { getLogger } from '../utils/logging/Logger';
 
 /**
@@ -48,7 +57,7 @@ export class RemoteService {
   async findPage(params: FindPageParams): Promise<FindPageItem | null> {
     const { id, locale = this.defaultLocale, type } = params;
     try {
-      return (await this.performGetRequest<FindPageParams, FindPageResponse>('findPage', { id, locale, type }));
+      return await this.performGetRequest<FindPageParams, FindPageResponse>('findPage', { id, locale, type });
     } catch (err: unknown) {
       let ecomError: EcomError;
       if (err instanceof HttpError && err.status === 401) {
@@ -105,6 +114,23 @@ export class RemoteService {
     return this.performGetRequest<FindElementParams, FindPageItem>('findElement', {
       fsPageId,
       locale,
+    });
+  }
+
+  /**
+   * Fetches the Project Properties
+   *
+   * @param params Parameters to use to fetch the project properties.
+   * @return {*} Details of the Project Properties.
+   */
+  async fetchProjectProperties(params: FetchProjectPropertiesParams): Promise<ProjectPropertiesResponse> {
+    if (!params) {
+      this.logger.warn('Invalid params passed');
+      throw new EcomInvalidParameterError('Invalid params passed');
+    }
+    const locale = params.locale ?? this.defaultLocale;
+    return this.performGetRequest<FetchProjectPropertiesParams, ProjectPropertiesResponse>('fetchProjectProperties', {
+      locale
     });
   }
 

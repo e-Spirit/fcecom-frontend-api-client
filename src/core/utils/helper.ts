@@ -12,7 +12,7 @@ import { FindPageItem, PageSection } from '../api/Remoteservice.meta';
  * @param obj Object to remove empty properties from.
  * @return {*} Same object instance without empty properties.
  */
-export const removeNullishObjectProperties = (obj: ParamObject) => {
+export const removeNullishObjectProperties = (obj: ParamObject): any => {
   Object.keys(obj).forEach((key) => (obj[key] === undefined || obj[key] === null ? delete obj[key] : undefined));
   return obj;
 };

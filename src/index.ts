@@ -24,6 +24,12 @@ export {
   PageSection,
   PageSlot,
   CreatePageResponse,
+  FetchProjectPropertiesParams,
+  ProjectPropertiesResponse,
+  ProjectProperties,
+  DataEntries,
+  MasterLocale,
+  DataEntry
 } from './core/api/EcomApi.meta';
 export { addContentButton } from './core/integrations/dom/addContentElement/addContentElement';
 export { AddContentButtonParams } from './core/integrations/dom/addContentElement/addContentElement.meta';
