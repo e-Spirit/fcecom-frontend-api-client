@@ -10,11 +10,9 @@ import { FsDrivenPageTarget, ShopDrivenPageTarget } from '../../api/TPPService.m
 const mockRemoteService = mock<RemoteService>();
 const mockTppService = mock<TPPService>();
 
-jest.mock('../dom/addContentElement/addContentElement', () => {
-  return {
-    addContentButton: () => document.createElement('button'),
-  };
-});
+jest.mock('../dom/addContentElement/addContentElement', () => ({
+  addContentButton: () => document.createElement('button'),
+}));
 let parser: SlotParser;
 describe('SlotParser', () => {
   beforeEach(() => {
@@ -27,6 +25,37 @@ describe('SlotParser', () => {
   afterEach(() => {
     document.body.innerHTML = '';
   });
+  describe('RERENDER_VIEW hook', () => {
+    it('sets up buttons again if hook was triggered and content was set before', async () => {
+      // Arrange
+      let addContentCb: (params: any) => void;
+      jest.spyOn(HookService.getInstance(), 'addHook').mockImplementation((name, cb) => {
+        if (name === EcomHooks.RERENDER_VIEW) {
+          addContentCb = cb;
+        }
+      });
+      const page = {
+        previewId: 'testPreviewId',
+        children: [],
+      } as FindPageItem;
+      mockRemoteService.findPage.mockResolvedValue(page);
+      const params = {
+        fsPageTemplate: 'FSTEMPLATE',
+        id: 'ID',
+        type: 'content',
+      } as ShopDrivenPageTarget;
+      // Act
+      parser = new SlotParser(mockRemoteService, mockTppService);
+      await parser.parseSlots(params, page);
+      // @ts-ignore - Will be set during constructor callback
+      addContentCb({ content: null });
+      // Assert
+      const { id, type } = params;
+      expect(mockRemoteService.findPage.mock.calls[0][0].id).toEqual(id);
+      expect(mockRemoteService.findPage.mock.calls[0][0].type).toEqual(type);
+      // TODO: Add assertion for buttons
+    });
+  })
   describe('CONTENT_CHANGED hook', () => {
     it('payload.content = null: sets up buttons again if hook was triggered and content was set before', async () => {
       // Arrange

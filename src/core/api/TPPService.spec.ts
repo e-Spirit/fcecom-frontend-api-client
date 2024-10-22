@@ -537,28 +537,37 @@ describe('TPPService', () => {
       expect(Ready.snap).toBe(snap);
     });
 
-    it('adds onRerenderView handler and logs if fired', async () => {
+    it('adds onRerenderView handler', async () => {
       // Arrange
       const snap = mock<SNAP>();
       // @ts-ignore - TODO: Make properly test possible
       tppWrapper['TPP_SNAP'] = Promise.resolve(snap);
-      const spy = jest.spyOn(snap, 'onRerenderView');
-      const previewId = 'PREVIEWID.en_GB';
-      const expectedLog = 'Could not handle change event for page with id: PREVIEWID.';
-      spy.mockImplementation((cb) => {
+
+      const rerenderSpy = jest.spyOn(snap, 'onRerenderView');
+      const previewId = 'PREVIEWID';
+      rerenderSpy.mockImplementation((cb) => {
         // Trigger callback
         cb();
       });
 
-      jest.spyOn(snap, 'getPreviewElement').mockResolvedValue(previewId);
-      const loggerSpy = jest.spyOn(mockLogger, 'warn');
+      const previewElementSpy = jest.spyOn(snap, 'getPreviewElement');
+      previewElementSpy.mockReturnValue(Promise.resolve(previewId));
+
+      const mockHookService = mock<HookService>();
+      jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
 
       // act
       await service.test_initPreviewHooks();
 
       // assert
-      expect(spy).toHaveBeenCalled();
-      expect(loggerSpy).toHaveBeenCalledWith(expectedLog);
+      expect(rerenderSpy).toHaveBeenCalled();
+      expect(mockHookService.callHook).toHaveBeenCalledWith(
+        EcomHooks.RERENDER_VIEW,
+        expect.objectContaining({
+          previewElement: previewId,
+        })
+      );
+      expect(mockHookService.callHook).toHaveBeenCalledWith(EcomHooks.PREVIEW_INITIALIZED, expect.objectContaining({ TPP_BROKER: TPPBroker.getInstance() }));
       expect(Ready.snap).toBe(snap);
     });
 

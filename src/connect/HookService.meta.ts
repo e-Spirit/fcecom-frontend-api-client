@@ -1,4 +1,4 @@
-import { SectionCreatingCancelledPayload, PageCreationFailedPayload, PageTarget } from '../core/api/TPPService.meta';
+import { PageCreationFailedPayload, PageTarget, SectionCreatingCancelledPayload } from '../core/api/TPPService.meta';
 import { FindPageItem } from '../core/api/Remoteservice.meta';
 import { TPPBroker } from './TPPBroker';
 
@@ -22,6 +22,12 @@ export enum EcomHooks {
    * This is a proxy for [TPP.onRequestPreviewElement](https://docs.e-spirit.com/tpp/snap/index.html#onrequestpreviewelementhandler){target=_blank}.
    */
   REQUEST_PREVIEW_ELEMENT = 'requestPreviewElement',
+
+  /**
+   * A hook that is fired when some elements are changed inside the preview, which causes
+   * SNAP to fire an event to reload the page. In an SPA, this can be handled with updating the current page object.
+   */
+  RERENDER_VIEW = 'rerenderView',
 
   /**
    * A hook that is fired when a new section is created via the 'Add Content' button in the Content Creator.
@@ -132,6 +138,13 @@ export type RequestPreviewElementHookPayload = {
   previewId: string;
 };
 
+export type RerenderViewHookPayload = {
+  /**
+   * Provides the current preview element.
+   */
+  previewElement: string;
+};
+
 export type PageCreatedHookPayload = {
   /**
    * Preview ID of the created element.
@@ -150,6 +163,7 @@ export interface HookPayloadTypes {
   [EcomHooks.CONTENT_CHANGED]: ContentChangedHookPayload;
   [EcomHooks.OPEN_STOREFRONT_URL]: OpenStoreFrontUrlHookPayload;
   [EcomHooks.REQUEST_PREVIEW_ELEMENT]: RequestPreviewElementHookPayload;
+  [EcomHooks.RERENDER_VIEW]: RerenderViewHookPayload;
   [EcomHooks.SECTION_CREATED]: CreateSectionHookPayload;
   [EcomHooks.PAGE_CREATING]: PageTarget;
   [EcomHooks.SECTION_CREATION_CANCELLED]: SectionCreatingCancelledPayload;

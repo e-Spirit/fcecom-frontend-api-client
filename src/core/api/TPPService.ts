@@ -7,7 +7,13 @@ import { HookService, Ready } from '../../connect/HookService';
 import { EcomHooks } from '../../connect/HookService.meta';
 import { SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
 import { EcomClientError, EcomError, EcomModuleError, ERROR_CODES } from './errors';
-import { CreatePagePayload, CreatePageResponse, CreateSectionPayload, CreateSectionResponse, FindPageItem } from './EcomApi.meta';
+import {
+  CreatePagePayload,
+  CreatePageResponse,
+  CreateSectionPayload,
+  CreateSectionResponse,
+  FindPageItem,
+} from './EcomApi.meta';
 import { getLogger } from '../utils/logging/Logger';
 
 import { SNAPButtonScope } from '../../connect/TPPBroker.meta';
@@ -214,20 +220,10 @@ export class TPPService {
       });
     });
 
-    /**
-     * This is needed to disable the render fallback which would be a page reload (not logical for SPAs).
-     * See https://docs.e-spirit.com/tpp/snap/index.html#tpp_snaponrerenderview for more info.
-     * To make things easier, we trigger the same hook as in onContentChange
-     **/
     snap.onRerenderView(async () => {
-      // TODO: find a better solution
-      /*
-       When onRerenderView is fired, we assume this is a case we can not handle.
-       This is a TPP fallback when onContentChange is not triggered.
-       For now, we just log a warning message till we find a better solution.
-      */
-      const previewElement = await snap.getPreviewElement();
-      this.logger.warn(`Could not handle change event for page with id: ${previewElement.split('.')[0]}.`);
+      HookService.getInstance().callHook(EcomHooks.RERENDER_VIEW, {
+        previewElement: await snap.getPreviewElement(),
+      });
     });
 
     snap.onRequestPreviewElement((previewId) => {
@@ -379,14 +375,8 @@ export class TPPService {
       {
         label: 'Add Section',
         css: 'tpp-icon-add-section',
-        isEnabled: (scope: SNAPButtonScope) => {
-          console.log('isEnabled', scope);
-          return Promise.resolve(true);
-        },
-        isVisible: (scope: SNAPButtonScope) => {
-          console.log('isVisible', scope);
-          return Promise.resolve(true);
-        },
+        isEnabled: (scope: SNAPButtonScope) => Promise.resolve(true),
+        isVisible: (scope: SNAPButtonScope) => Promise.resolve(true),
         execute: async ({ $node, previewId }: SNAPButtonScope) => {
           console.log('execute', $node, previewId);
           return await this.addSiblingSection($node, previewId);

@@ -99,6 +99,7 @@ export class HookService {
     delete this.hooks[EcomHooks.CONTENT_CHANGED];
     delete this.hooks[EcomHooks.OPEN_STOREFRONT_URL];
     delete this.hooks[EcomHooks.REQUEST_PREVIEW_ELEMENT];
+    delete this.hooks[EcomHooks.RERENDER_VIEW];
     delete this.hooks[EcomHooks.SECTION_CREATED];
     delete this.hooks[EcomHooks.PAGE_CREATING];
     delete this.hooks[EcomHooks.SECTION_CREATION_CANCELLED];
@@ -113,6 +114,7 @@ interface HookMap {
   [EcomHooks.CONTENT_CHANGED]?: ((payload: HookPayloadTypes[EcomHooks.CONTENT_CHANGED]) => void)[];
   [EcomHooks.OPEN_STOREFRONT_URL]?: ((payload: HookPayloadTypes[EcomHooks.OPEN_STOREFRONT_URL]) => void)[];
   [EcomHooks.REQUEST_PREVIEW_ELEMENT]?: ((payload: HookPayloadTypes[EcomHooks.REQUEST_PREVIEW_ELEMENT]) => void)[];
+  [EcomHooks.RERENDER_VIEW]?: ((payload: HookPayloadTypes[EcomHooks.RERENDER_VIEW]) => void)[];
   [EcomHooks.SECTION_CREATED]?: ((payload: HookPayloadTypes[EcomHooks.SECTION_CREATED]) => void)[];
   [EcomHooks.PAGE_CREATING]?: ((payload: HookPayloadTypes[EcomHooks.PAGE_CREATING]) => void)[];
   [EcomHooks.SECTION_CREATION_CANCELLED]?: ((payload: HookPayloadTypes[EcomHooks.SECTION_CREATION_CANCELLED]) => void)[];
@@ -141,7 +143,7 @@ export namespace Ready {
    *  and if it can be supplied directly to the provided function inside addHook.
    * @param name Name to determine the dependency to check for.
    * @param func Provided function to call with the according payload.
-   * @return boolean True if the function si handled here.
+   * @return boolean True if the function is handled here.
    */
   export const handleReady = <Name extends EcomHooks, Payload extends HookPayloadTypes[Name]>(name: Name, func: (payload: Payload) => void): boolean => {
     switch (name) {

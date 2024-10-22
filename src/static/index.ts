@@ -24,6 +24,15 @@ const handlePage = async (id: string, type: 'content' | 'product' | 'category', 
   return api.setPage({ isFsDriven: false, id, locale, type, fsPageTemplate, displayNames, ensureExistence });
 };
 
+const reloadPage = () => {
+  // Add overlay so user does not interact with page until refresh
+  document.body.appendChild(document.createElement('div')).style.cssText =
+    'position:absolute;left:0;right:0;top:0;bottom:0;background:rgba(0,0,0,0.5);z-index:99999;cursor:wait;';
+  setTimeout(() => {
+    window.location.reload();
+  }, 5000);
+};
+
 const apiInitPromise = api.init().then(async () => {
   // Adapted from legacy
   const id = document.body.dataset.fsPageId;
@@ -33,39 +42,31 @@ const apiInitPromise = api.init().then(async () => {
   const isFsDriven = String(document.body.dataset.isFsDriven).toLowerCase() == 'true' || false;
   const locale = document.body.dataset.fsLang;
 
-  if (id && type && ['content', 'product', 'category'].includes(type) && fsPageTemplate) {
-    console.debug('[FCECOM]', 'Setting element', { previewId, id, type, fsPageTemplate, locale });
+  if (!id || !type || !['content', 'product', 'category'].includes(type) || !fsPageTemplate) {
+    return console.debug('[FCECOM]', 'Not all values set', { id, type, fsPageTemplate });
+  }
 
-    await handlePage(id, type, isFsDriven, fsPageTemplate, locale);
+  console.debug('[FCECOM]', 'Setting element', { previewId, id, type, fsPageTemplate, locale });
 
-    if (!addedHooks.includes(EcomHooks.OPEN_STOREFRONT_URL)) {
-      // If no callback is defined, use default behavior.
-      // Default behavior is using URL received from the bridge
-      api.addHook(EcomHooks.OPEN_STOREFRONT_URL, (payload) => {
-        console.debug('[FCECOM]', 'FirstSpiritOpenStoreFrontUrl', payload);
-        const targetUrl = window.location.origin + payload.url;
-        if (payload.url && !window.location.href.includes(targetUrl)) {
-          window.location.href = targetUrl;
-        }
-      });
-    }
+  await handlePage(id, type, isFsDriven, fsPageTemplate, locale);
 
-    const reloadPage = () => {
-      // Add overlay so user does not interact with page until refresh
-      document.body.appendChild(document.createElement('div')).style.cssText =
-        'position:absolute;left:0;right:0;top:0;bottom:0;background:rgba(0,0,0,0.5);z-index:99999;cursor:wait;';
-      setTimeout(() => {
-        window.location.reload();
-      }, 5000);
-    };
-    if (!addedHooks.includes(EcomHooks.CONTENT_CHANGED)) {
-      api.addHook(EcomHooks.CONTENT_CHANGED, reloadPage);
-    }
-    if (!addedHooks.includes(EcomHooks.SECTION_CREATED)) {
-      api.addHook(EcomHooks.SECTION_CREATED, reloadPage);
-    }
-  } else {
-    console.debug('[FCECOM]', 'Not all values set', { id, type, fsPageTemplate });
+  if (!addedHooks.includes(EcomHooks.OPEN_STOREFRONT_URL)) {
+    // If no callback is defined, use default behavior.
+    // Default behavior is using URL received from the bridge
+    api.addHook(EcomHooks.OPEN_STOREFRONT_URL, (payload) => {
+      console.debug('[FCECOM]', 'FirstSpiritOpenStoreFrontUrl', payload);
+      const targetUrl = window.location.origin + payload.url;
+      if (payload.url && !window.location.href.includes(targetUrl)) {
+        window.location.href = targetUrl;
+      }
+    });
+  }
+
+  if (!addedHooks.includes(EcomHooks.CONTENT_CHANGED)) {
+    api.addHook(EcomHooks.CONTENT_CHANGED, reloadPage);
+  }
+  if (!addedHooks.includes(EcomHooks.SECTION_CREATED)) {
+    api.addHook(EcomHooks.SECTION_CREATED, reloadPage);
   }
 });
 

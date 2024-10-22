@@ -6,6 +6,7 @@ export {
   PageCreatedHookPayload,
   OpenStoreFrontUrlHookPayload,
   RequestPreviewElementHookPayload,
+  RerenderViewHookPayload,
   CreateSectionHookPayload,
   PreviewInitializedHookPayload,
 } from './connect/HookService.meta';

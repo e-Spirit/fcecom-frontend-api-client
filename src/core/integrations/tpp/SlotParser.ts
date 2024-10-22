@@ -3,7 +3,14 @@
  * @module SlotParser
  */
 
-import { FindElementParams, FindPageItem, FindPageParams, PageSlot, PageTarget, ShopDrivenPageTarget } from '../../api/EcomApi.meta';
+import {
+  FindElementParams,
+  FindPageItem,
+  FindPageParams,
+  PageSlot,
+  PageTarget,
+  ShopDrivenPageTarget,
+} from '../../api/EcomApi.meta';
 import { EcomError, ERROR_CODES } from '../../api/errors';
 import { RemoteService } from '../../api/RemoteService';
 import { TPPService } from '../../api/TPPService';
@@ -37,23 +44,29 @@ export class SlotParser {
     this.remoteService = remoteService;
     this.tppService = tppService;
 
-    HookService.getInstance().addHook(EcomHooks.CONTENT_CHANGED, async (payload: ContentChangedHookPayload) => {
-      if (payload.content === null) {
-        // Section was removed
-        if (this.pageTarget) {
-          // Trigger new adding of buttons
-          // Get Page
-          let page: FindPageItem | null;
-          if (this.pageTarget.isFsDriven) page = await this.remoteService.findElement(this.pageTarget);
-          else page = await this.remoteService.findPage(this.pageTarget);
+    const updateSlots = async () => {
+      if (this.pageTarget) {
+        // Get Page
+        let page: FindPageItem | null;
+        if (this.pageTarget.isFsDriven) page = await this.remoteService.findElement(this.pageTarget);
+        else page = await this.remoteService.findPage(this.pageTarget);
 
-          // Parse Slots
-          await this.parseSlots(this.pageTarget, page);
-        }
+        // Parse Slots
+        await this.parseSlots(this.pageTarget, page);
+      }
+    };
+
+    const updateContent = async (payload: ContentChangedHookPayload) => {
+      // Section was removed
+      if (payload.content === null) {
+        await updateSlots();
       } else if (payload.content === '') {
         this.logger.warn('Retrieved empty content in CONTENT_CHANGED hook');
       }
-    });
+    };
+
+    HookService.getInstance().addHook(EcomHooks.RERENDER_VIEW, updateSlots);
+    HookService.getInstance().addHook(EcomHooks.CONTENT_CHANGED, updateContent);
   }
 
   /**
