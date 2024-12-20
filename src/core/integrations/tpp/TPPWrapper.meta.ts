@@ -66,12 +66,6 @@ export interface CreateSectionResponse {
 }
 
 /**
- * TODO: Implement Wrapper and document all published functions.
- *  FCECOM-748
- *  Provide safe TPP instance
- */
-
-/**
  * @ignore
  */
 export interface SNAP extends SNAPConnect {

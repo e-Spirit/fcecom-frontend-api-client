@@ -53,7 +53,6 @@ describe('SlotParser', () => {
       const { id, type } = params;
       expect(mockRemoteService.findPage.mock.calls[0][0].id).toEqual(id);
       expect(mockRemoteService.findPage.mock.calls[0][0].type).toEqual(type);
-      // TODO: Add assertion for buttons
     });
   })
   describe('CONTENT_CHANGED hook', () => {
@@ -84,7 +83,6 @@ describe('SlotParser', () => {
       const { id, type } = params;
       expect(mockRemoteService.findPage.mock.calls[0][0].id).toEqual(id);
       expect(mockRemoteService.findPage.mock.calls[0][0].type).toEqual(type);
-      // TODO: Add assertion for buttons
     });
     it('payload.content = "": logs warning', async () => {
       // Arrange
@@ -125,7 +123,6 @@ describe('SlotParser', () => {
       // Act
       await parser.parseSlots(params, null);
       // Assert
-      // TODO: Add assertion for buttons
       expect(document.querySelector('fcecom-add-content-button-wrapper')).toBeDefined();
     });
     it('sets preview ids for each section if shop driven page already exists', async () => {
@@ -155,7 +152,6 @@ describe('SlotParser', () => {
       // Assert
       expect(document.querySelector(`[data-fcecom-slot-name="${page.children[0].name}"][data-preview-id="${page.children[0].previewId}"]`)).toBeDefined();
       expect(document.querySelector(`[data-fcecom-slot-name="${page.children[1].name}"][data-preview-id="${page.children[1].previewId}"]`)).toBeDefined();
-      // TODO: Add assertion for buttons
     });
   });
   it('sets preview ids for each section if fs driven page already exists', async () => {
@@ -185,7 +181,6 @@ describe('SlotParser', () => {
     // Assert
     expect(document.querySelector(`[data-fcecom-slot-name="${page.children[0].name}"][data-preview-id="${page.children[0].previewId}"]`)).toBeDefined();
     expect(document.querySelector(`[data-fcecom-slot-name="${page.children[1].name}"][data-preview-id="${page.children[1].previewId}"]`)).toBeDefined();
-    // TODO: Add assertion for buttons
   });
   describe('clear', () => {
     it('clears the DOM', async () => {
@@ -213,7 +208,6 @@ describe('SlotParser', () => {
       // Act
       parser.clear();
       // Assert
-      // TODO: Add assertion for buttons
     });
   });
 });

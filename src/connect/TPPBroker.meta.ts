@@ -236,7 +236,7 @@ export interface SNAPConnect {
 
   showQuestion(message: string, title?: string): Promise<boolean>;
 
-  startWorkflow(previewId: string, workflow: string): Promise<unknown>; // TODO: find correct return value
+  startWorkflow(previewId: string, workflow: string): Promise<unknown>;
 
   triggerChange(previewId: string, content: string | object): void;
 }
