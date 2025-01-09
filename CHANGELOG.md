@@ -1,3 +1,8 @@
+## [1.3.2](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v1.3.1...v1.3.2) (2025-01-09)
+
+### Changes
+* Fixed an issue where the merge strategy for adding new sections between two existing sections did not work correctly, causing the new section to be inserted one index too low.
+
 ## [1.3.1](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v1.3.0...v1.3.1) (2024-12-20)
 
 ### Changes

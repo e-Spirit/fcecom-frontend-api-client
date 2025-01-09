@@ -401,7 +401,7 @@ export class TPPService {
     const slotName = node.closest('[data-fcecom-slot-name]')?.getAttribute('data-fcecom-slot-name');
 
     if (this.currentPageRefPreviewId && slotName) {
-      const position = this.getNodeIndex(node) < 0 ? 0 : this.getNodeIndex(node) + 1;
+      const position = Math.max(0, this.getNodeIndex(node));
       const createSectionResult = await this.createSection(
         {
           pageId: this.currentPageRefPreviewId,

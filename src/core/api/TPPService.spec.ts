@@ -393,7 +393,7 @@ describe('TPPService', () => {
       jest.mock('../integrations/tpp/TPPWrapper', () => {
         return () => Promise.reject(new Error('Failed to load TPPWrapper'));
       });
- 
+
       // Act
       const result = await service.init();
 
@@ -901,8 +901,8 @@ describe('TPPService', () => {
           // Act
           await service.test_addSiblingSection(node, siblingPreviewId);
           // Assert
-          expect(serviceSpy.mock.calls[0][0]).toEqual(expectedCreateSectionPayload);
-          expect(serviceSpy.mock.calls[0][1]).toEqual(1);
+          expect(serviceSpy.mock.calls[0][0]).toEqual(expectedCreateSectionPayload); // payload
+          expect(serviceSpy.mock.calls[0][1]).toEqual(0); // index
           expect(mockHookService.callHook).toHaveBeenCalledWith(EcomHooks.SECTION_CREATED, expectedHookPayload);
         });
 
@@ -926,9 +926,144 @@ describe('TPPService', () => {
           // Act
           await service.test_addSiblingSection(node, siblingPreviewId);
           // Assert
-          expect(serviceSpy.mock.calls[0][0]).toEqual(expectedCreateSectionPayload);
-          expect(serviceSpy.mock.calls[0][1]).toEqual(1);
+          expect(serviceSpy.mock.calls[0][0]).toEqual(expectedCreateSectionPayload); // payload;
+          expect(serviceSpy.mock.calls[0][1]).toEqual(0); // index;
           expect(mockHookService.callHook).toHaveBeenCalledWith(EcomHooks.SECTION_CREATED, expectedHookPayload);
+        });
+
+        describe('creates sibling right next to existing ones', () => {
+          it('2nd element: should be 2 of 2', async () => {
+            // Arrange
+            const parentElement = document.createElement('div');
+
+            const node = document.createElement('div');
+            node.setAttribute('data-preview-id', 'previewId-0');
+            parentElement.appendChild(node);
+
+            const mockHookService = mock<HookService>();
+            jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
+            const serviceSpy = jest.spyOn(service, 'createSection').mockResolvedValue(sectionData);
+            parentElement.setAttribute('data-fcecom-slot-name', expectedHookPayload.slotName);
+            service.setCurrentPageRefPreviewId(expectedHookPayload.pageId);
+
+            // Act
+            await service.test_addSiblingSection(node, siblingPreviewId);
+            // Assert
+            expect(serviceSpy.mock.calls[0][0]).toEqual(expectedCreateSectionPayload); // payload
+            expect(serviceSpy.mock.calls[0][1]).toEqual(0); // index
+          });
+
+          it('3 elements · append to first node: should be 2 of 3', async () => {
+            // Arrange
+            const parentElement = document.createElement('div');
+
+            const firstNode = document.createElement('div');
+            firstNode.setAttribute('data-preview-id', 'previewId-0');
+            parentElement.appendChild(firstNode);
+
+            const secondNode = document.createElement('div');
+            secondNode.setAttribute('data-preview-id', 'previewId-1');
+            parentElement.appendChild(secondNode);
+
+            const mockHookService = mock<HookService>();
+            jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
+            const serviceSpy = jest.spyOn(service, 'createSection').mockResolvedValue(sectionData);
+            parentElement.setAttribute('data-fcecom-slot-name', expectedHookPayload.slotName);
+            service.setCurrentPageRefPreviewId(expectedHookPayload.pageId);
+
+            // Act
+            await service.test_addSiblingSection(firstNode, siblingPreviewId);
+            // Assert
+            expect(serviceSpy.mock.calls[0][0]).toEqual(expectedCreateSectionPayload); // payload
+            expect(serviceSpy.mock.calls[0][1]).toEqual(0); // index
+          });
+
+          it('4 elements · append to first node: should be 2 of 4', async () => {
+            // Arrange
+            const parentElement = document.createElement('div');
+
+            const firstNode = document.createElement('div');
+            firstNode.setAttribute('data-preview-id', 'previewId-0');
+            parentElement.appendChild(firstNode);
+
+            const secondNode = document.createElement('div');
+            secondNode.setAttribute('data-preview-id', 'previewId-1');
+            parentElement.appendChild(secondNode);
+
+            const thirdNode = document.createElement('div');
+            thirdNode.setAttribute('data-preview-id', 'previewId-2');
+            parentElement.appendChild(thirdNode);
+
+            const mockHookService = mock<HookService>();
+            jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
+            const serviceSpy = jest.spyOn(service, 'createSection').mockResolvedValue(sectionData);
+            parentElement.setAttribute('data-fcecom-slot-name', expectedHookPayload.slotName);
+            service.setCurrentPageRefPreviewId(expectedHookPayload.pageId);
+
+            // Act
+            await service.test_addSiblingSection(firstNode, siblingPreviewId);
+            // Assert
+            expect(serviceSpy.mock.calls[0][0]).toEqual(expectedCreateSectionPayload); // payload
+            expect(serviceSpy.mock.calls[0][1]).toEqual(0); // index
+          });
+
+          it('4 elements · append to second node: should be 3 of 4', async () => {
+            // Arrange
+            const parentElement = document.createElement('div');
+
+            const firstNode = document.createElement('div');
+            firstNode.setAttribute('data-preview-id', 'previewId-0');
+            parentElement.appendChild(firstNode);
+
+            const secondNode = document.createElement('div');
+            secondNode.setAttribute('data-preview-id', 'previewId-1');
+            parentElement.appendChild(secondNode);
+
+            const thirdNode = document.createElement('div');
+            thirdNode.setAttribute('data-preview-id', 'previewId-2');
+            parentElement.appendChild(thirdNode);
+
+            const mockHookService = mock<HookService>();
+            jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
+            const serviceSpy = jest.spyOn(service, 'createSection').mockResolvedValue(sectionData);
+            parentElement.setAttribute('data-fcecom-slot-name', expectedHookPayload.slotName);
+            service.setCurrentPageRefPreviewId(expectedHookPayload.pageId);
+
+            // Act
+            await service.test_addSiblingSection(secondNode, siblingPreviewId);
+            // Assert
+            expect(serviceSpy.mock.calls[0][0]).toEqual(expectedCreateSectionPayload); // payload
+            expect(serviceSpy.mock.calls[0][1]).toEqual(1); // index
+          });
+
+          it('4 elements · append to third node: should be 4 of 4', async () => {
+            // Arrange
+            const parentElement = document.createElement('div');
+
+            const firstNode = document.createElement('div');
+            firstNode.setAttribute('data-preview-id', 'previewId-0');
+            parentElement.appendChild(firstNode);
+
+            const secondNode = document.createElement('div');
+            secondNode.setAttribute('data-preview-id', 'previewId-1');
+            parentElement.appendChild(secondNode);
+
+            const thirdNode = document.createElement('div');
+            thirdNode.setAttribute('data-preview-id', 'previewId-2');
+            parentElement.appendChild(thirdNode);
+
+            const mockHookService = mock<HookService>();
+            jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
+            const serviceSpy = jest.spyOn(service, 'createSection').mockResolvedValue(sectionData);
+            parentElement.setAttribute('data-fcecom-slot-name', expectedHookPayload.slotName);
+            service.setCurrentPageRefPreviewId(expectedHookPayload.pageId);
+
+            // Act
+            await service.test_addSiblingSection(thirdNode, siblingPreviewId);
+            // Assert
+            expect(serviceSpy.mock.calls[0][0]).toEqual(expectedCreateSectionPayload); // payload
+            expect(serviceSpy.mock.calls[0][1]).toEqual(2); // index
+          });
         });
       });
 
