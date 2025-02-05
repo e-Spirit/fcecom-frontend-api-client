@@ -177,4 +177,16 @@ describe('TPPBroker', () => {
       expect(spy).toHaveBeenCalledWith('previewId', 'workflow');
     });
   });
+  describe('triggerChange()', () => {
+    it('calls real snap function', () => {
+      // Arrange
+      Ready.snap = snap;
+      const spy = jest.spyOn(snap, 'triggerChange');
+      const tppBroker = TPPBroker.getInstance();
+      // Act
+      tppBroker.triggerChange('previewId', 'content');
+      // Assert
+      expect(spy).toHaveBeenCalledWith('previewId', 'content');
+    });
+  });
 });

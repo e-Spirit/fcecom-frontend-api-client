@@ -6,7 +6,6 @@
 import { SNAP } from './TPPWrapper.meta';
 import { getLogger } from '../../utils/logging/Logger';
 import { ReferrerStore } from '../../utils/ReferrerStore';
-import { Ready } from '../../../connect/HookService';
 
 export class TPPLoader {
   private readonly logger = getLogger('TPPLoader');

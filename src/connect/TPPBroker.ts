@@ -5,7 +5,8 @@ export class TPPBroker implements SNAPConnect {
   private static instance: TPPBroker;
 
   public static getInstance(): TPPBroker {
-    return (this.instance = TPPBroker.instance ?? new TPPBroker());
+    if (!TPPBroker.instance) TPPBroker.instance = new TPPBroker();
+    return TPPBroker.instance;
   }
 
   /**

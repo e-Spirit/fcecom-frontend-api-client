@@ -7,10 +7,11 @@ import { RemoteService } from './RemoteService';
 import { TPPService } from './TPPService';
 import { SlotParser } from '../integrations/tpp/SlotParser';
 import { EcomHooks } from '../../connect/HookService.meta';
-import { TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
+import { SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
 import { Logger, Logging, LogLevel } from '../utils/logging/Logger';
-import { HookService } from '../../connect/HookService';
+import { HookService, Ready } from '../../connect/HookService';
 import { HttpError } from './errors';
+import { ShareViewParameters } from './EcomApi.meta';
 
 jest.spyOn(PreviewDecider, 'isPreview').mockResolvedValue(true);
 
@@ -40,28 +41,28 @@ describe('EcomApi', () => {
     });
     it('sets custom logLevel', () => {
       // Arrange & Act
-      new EcomApi(API_URL, LogLevel.WARNING);
+      EcomApi.build(API_URL, LogLevel.WARNING);
       // Assert
       expect(Logging.logLevel).toBe(LogLevel.WARNING);
     });
     it('throws an error if given URL is invalid', () => {
       expect(() => {
         // Act
-        new EcomApi('-');
+        EcomApi.build('-');
         // Assert
       }).toThrow('Provided baseUrl is invalid.');
     });
     it('throws an error if no URL is given', () => {
       expect(() => {
         // Act
-        new EcomApi(' ');
+        EcomApi.build(' ');
         // Assert
       }).toThrow('You do need to specify a baseUrl.');
     });
     it('throws an error if no URL is given', () => {
       expect(() => {
         // Act
-        new EcomApi(undefined as any);
+        EcomApi.build(undefined as any);
         // Assert
       }).toThrow('Invalid baseUrl passed');
     });
@@ -217,6 +218,56 @@ describe('EcomApi', () => {
       const result = await api.getTppInstance();
       // Assert
       expect(result).toBeNull();
+    });
+  });
+
+  let loggerMock: Logger;
+
+  jest.mock('../utils/logging/Logger', () => {
+    const getLogger = (name: string) => {
+      loggerMock = new Logger(name);
+      loggerMock.error = jest.fn();
+      return loggerMock;
+    };
+    return { getLogger };
+  });
+
+  describe('getShareViewLink()', () => {
+    it("Generates URL with token if Executable does return ok.", async () => {
+      // Arrange
+      const snap = mock<SNAP>();
+      Ready.snap = snap;
+
+      snap.execute.mockReturnValue(Promise.resolve({ ok: true, token: 'i-am-a-token' }));
+      window.location.assign('https://pwa.example.com/');
+
+      const params = {} as ShareViewParameters;
+
+      // Act & Assert
+      await expect(api.getShareViewLink(params)).resolves.toBe('https://pwa.example.com/?ecomShareToken=i-am-a-token');
+
+      // Assert
+      expect(Ready.snap).toBe(snap);
+      expect(snap.execute).toHaveBeenCalledWith('class:FirstSpirit Connect for Commerce - Generate ShareView Token', params, true);
+      expect(mockLogger.error).not.toHaveBeenCalled();
+    });
+    it("Logs and rejects if the Executable doesn't return ok.", async () => {
+      // Arrange
+      const snap = mock<SNAP>();
+      Ready.snap = snap;
+
+      snap.execute.mockReturnValue(Promise.resolve({ ok: false, error: 'mind your own business...' }));
+      window.location.assign('https://pwa.example.com/');
+
+      const params = {} as ShareViewParameters;
+
+      // Act & Assert
+      await expect(api.getShareViewLink(params)).rejects.toBe("Link creation didn't work.");
+
+      // Assert
+      expect(Ready.snap).toBe(snap);
+      expect(snap.execute).toHaveBeenCalledWith('class:FirstSpirit Connect for Commerce - Generate ShareView Token', params, true);
+      expect(mockLogger.error).toHaveBeenCalledWith("Link creation didn't work. Error: mind your own business...");
     });
   });
 
@@ -386,12 +437,12 @@ describe('EcomApi', () => {
         // Arrange
         api['tppService'] = mockTppService;
 
-        const clearSpy = jest.spyOn(api, 'clear')
-        clearSpy.mockReturnValue()
+        const clearSpy = jest.spyOn(api, 'clear');
+        clearSpy.mockReturnValue();
 
         // Act & Assert
-        expect(await api.setPage(null)).toBeNull()
-        expect(mockTppService.setElement.mock.calls[0][0]).toBeNull()
+        expect(await api.setPage(null)).toBeNull();
+        expect(mockTppService.setElement.mock.calls[0][0]).toBeNull();
       });
     });
 
@@ -403,7 +454,7 @@ describe('EcomApi', () => {
         const findElementSpy = jest.spyOn(api, 'findElement');
 
         const findPageSpy = jest.spyOn(api, 'findPage');
-        findPageSpy.mockReturnValueOnce(Promise.resolve(null))
+        findPageSpy.mockReturnValueOnce(Promise.resolve(null));
 
         const createPageSpy = jest.spyOn(api, 'createPage');
         const newPage = {
@@ -428,7 +479,7 @@ describe('EcomApi', () => {
             de: 'Display Name DE',
           },
           isFsDriven: false,
-          ensureExistence: true
+          ensureExistence: true,
         } as ShopDrivenPageTarget;
         // Act
         const foundPage = await api.setPage(payload);
@@ -442,10 +493,10 @@ describe('EcomApi', () => {
         api['tppService'] = mockTppService;
 
         const findPageSpy = jest.spyOn(api, 'findPage');
-        findPageSpy.mockReturnValueOnce(Promise.resolve(null))
+        findPageSpy.mockReturnValueOnce(Promise.resolve(null));
 
         const createPageSpy = jest.spyOn(api, 'createPage');
-        createPageSpy.mockReturnValue(Promise.resolve(true))
+        createPageSpy.mockReturnValue(Promise.resolve(true));
 
         const payload = {
           fsPageTemplate: 'product',
@@ -483,7 +534,7 @@ describe('EcomApi', () => {
             de: 'Display Name DE',
           },
           isFsDriven: false,
-          ensureExistence: false
+          ensureExistence: false,
         } as ShopDrivenPageTarget;
         // Act
         await expect(async () => await api.setPage(payload)).rejects.toThrow(new HttpError(401, 'Unauthorized'));

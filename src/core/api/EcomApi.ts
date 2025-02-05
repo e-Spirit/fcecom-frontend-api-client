@@ -9,7 +9,7 @@ import {
   FindPageParams,
   PageSection,
   PageTarget,
-  ProjectPropertiesResponse,
+  ProjectPropertiesResponse, ShareViewParameters,
   ShopDrivenPageTarget,
 } from './EcomApi.meta';
 import { TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
@@ -23,6 +23,7 @@ import { extractSlotSections, isNonNullable } from '../utils/helper';
 import { ReferrerStore } from '../utils/ReferrerStore';
 import { Verbosity } from '../utils/debugging/verbosity';
 import { HookService } from '../../connect/HookService';
+import { ShareViewBanner } from '../integrations/dom/shareViewBanner/shareViewBanner';
 
 /**
  * Frontend API for Connect for Commerce.
@@ -118,6 +119,7 @@ export class EcomApi {
     if (await PreviewDecider.isPreview()) {
       this.logger.info('Initializing preview...');
       Verbosity.enablePreview();
+      ShareViewBanner.disable();
 
       // Import dependencies dynamically
       const tppServicePromise = import('./TPPService');
@@ -338,6 +340,29 @@ export class EcomApi {
   }
 
   /**
+   * Calls an Executable to generate a link for the ShareView feature.
+   *
+   * @param parameters configures the features that the returned JWT token should allow.
+   */
+  async getShareViewLink(parameters: ShareViewParameters): Promise<string | null> {
+    return new Promise((resolve, reject) => {
+      this.addHook(EcomHooks.PREVIEW_INITIALIZED, async ({ TPP_BROKER }) => {
+        // Show the FirstSpirit edit dialog for the current set element
+        const result = await TPP_BROKER.execute('class:FirstSpirit Connect for Commerce - Generate ShareView Token', parameters, true);
+
+        if (result?.ok) {
+          const url = new URL(window.location.href);
+          url.searchParams.set('ecomShareToken', result.token);
+          resolve(url.href);
+        } else {
+          this.logger.error(`Link creation didn't work. Error: ${result?.error}`);
+          reject(`Link creation didn't work.`);
+        }
+      });
+    });
+  }
+
+  /**
    * Clears the DOM.
    *
    */
@@ -406,6 +431,17 @@ export class EcomApi {
     isNonNullable(func, 'Invalid func passed');
 
     return HookService.getInstance().removeHook(name, func);
+  }
+
+  /**
+   * Function to instantiate EcomApi without constructor.
+   * Needed for some tests.
+   * @param baseUrl URL of the backend service.
+   * @param logLevel <b>0</b>: DEBUG<br><b>1</b>: INFO<br><b>2</b>: WARNING<br><b>3</b>: ERROR<br><b>4</b>: NONE<br>
+   * @internal
+   */
+  static build(baseUrl: string, logLevel = LogLevel.INFO) {
+    return new EcomApi(baseUrl, logLevel);
   }
 }
 

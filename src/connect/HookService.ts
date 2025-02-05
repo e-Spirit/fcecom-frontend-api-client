@@ -16,7 +16,8 @@ export class HookService {
    * Static method to get an instance of the service. This is needed to ensure that this service is a Singleton.
    */
   public static getInstance(): HookService {
-    return (this.instance = HookService.instance ?? new HookService());
+    if (!HookService.instance) HookService.instance = new HookService();
+    return HookService.instance;
   }
 
   /**
@@ -107,6 +108,8 @@ export class HookService {
     delete this.hooks[EcomHooks.ENSURED_PAGE_EXISTS];
     delete this.hooks[EcomHooks.PAGE_CREATED];
     delete this.hooks[EcomHooks.PREVIEW_INITIALIZED];
+    delete this.hooks[EcomHooks.END_SHARED_PREVIEW];
+    delete this.hooks[EcomHooks.START_SHARED_PREVIEW];
   }
 }
 
@@ -122,6 +125,8 @@ interface HookMap {
   [EcomHooks.ENSURED_PAGE_EXISTS]?: ((payload: HookPayloadTypes[EcomHooks.ENSURED_PAGE_EXISTS]) => void)[];
   [EcomHooks.PAGE_CREATED]?: ((payload: HookPayloadTypes[EcomHooks.PAGE_CREATED]) => void)[];
   [EcomHooks.PREVIEW_INITIALIZED]?: ((payload: HookPayloadTypes[EcomHooks.PREVIEW_INITIALIZED]) => void)[];
+  [EcomHooks.END_SHARED_PREVIEW]?: ((payload: HookPayloadTypes[EcomHooks.END_SHARED_PREVIEW]) => void)[];
+  [EcomHooks.START_SHARED_PREVIEW]?: ((payload: HookPayloadTypes[EcomHooks.START_SHARED_PREVIEW]) => void)[];
 }
 
 /**
@@ -146,16 +151,15 @@ export namespace Ready {
    * @return boolean True if the function is handled here.
    */
   export const handleReady = <Name extends EcomHooks, Payload extends HookPayloadTypes[Name]>(name: Name, func: (payload: Payload) => void): boolean => {
-    switch (name) {
-      case EcomHooks.PREVIEW_INITIALIZED:
-        if (!snap) return false;
-        const hookPayload: HookPayloadTypes[EcomHooks.PREVIEW_INITIALIZED] = {
-          TPP_BROKER: new TPPBroker(),
-        };
-        HookService.getInstance().callExtraHook(name, hookPayload as Payload, func);
-        return true;
-      default:
-        return false;
+    if (name === EcomHooks.PREVIEW_INITIALIZED) {
+      if (!snap) return false;
+      const hookPayload: HookPayloadTypes[EcomHooks.PREVIEW_INITIALIZED] = {
+        TPP_BROKER: new TPPBroker(),
+      };
+      HookService.getInstance().callExtraHook(name, hookPayload as Payload, func);
+      return true;
     }
+
+    return false;
   };
 }

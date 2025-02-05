@@ -1,6 +1,7 @@
 import { PreviewDecider } from '../utils/PreviewDecider';
 import { EcomError, ERROR_CODES, HttpError } from './errors';
 import { RemoteService } from './RemoteService';
+import { any } from 'jest-mock-extended';
 
 const API_URL = 'https://api_url:3000';
 let fetchResponse: any;
@@ -49,7 +50,12 @@ describe('RemoteService', () => {
 
       // Assert
       expect(result).toEqual(expectedResult);
-      expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/findPage?id=plumber0PIERRE*porch&locale=de&type=product`, expect.anything());
+      expect(fetch).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          url: `${API_URL}/findPage?id=plumber0PIERRE*porch&locale=de&type=product`,
+        })
+      );
     });
     it('it uses default values for parameters when finding a page', async () => {
       // Arrange
@@ -65,7 +71,12 @@ describe('RemoteService', () => {
 
       // Assert
       expect(result).toEqual(expectedResult);
-      expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/findPage?id=plumber0PIERRE*porch&locale=${service.defaultLocale}&type=product`, expect.anything());
+      expect(fetch).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          url: `${API_URL}/findPage?id=plumber0PIERRE*porch&locale=${service.defaultLocale}&type=product`,
+        })
+      );
     });
     it('throws error if fetch was not ok and status is 401', async () => {
       expect.assertions(2);
@@ -136,7 +147,12 @@ describe('RemoteService', () => {
 
       // Assert
       expect(result).toEqual(fetchResponse);
-      expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/fetchNavigation?locale=de_DE&initialPath=path`, expect.anything());
+      expect(fetch).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          url: `${API_URL}/fetchNavigation?locale=de_DE&initialPath=path`,
+        })
+      );
     });
     it('it uses default values for parameters when fetching the navigation', async () => {
       // Arrange
@@ -148,7 +164,12 @@ describe('RemoteService', () => {
 
       // Assert
       expect(result).toEqual(fetchResponse);
-      expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/fetchNavigation?locale=${service.defaultLocale}`, expect.anything());
+      expect(fetch).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          url: `${API_URL}/fetchNavigation?locale=${service.defaultLocale}`,
+        })
+      );
     });
     it('throws error if fetch was not ok and status is 401', async () => {
       expect.assertions(2);
@@ -209,7 +230,12 @@ describe('RemoteService', () => {
 
       // Assert
       expect(result).toEqual(fetchResponse);
-      expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/fetchProjectProperties?locale=de_DE`, expect.anything());
+      expect(fetch).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          url: `${API_URL}/fetchProjectProperties?locale=de_DE`,
+        })
+      );
     });
     it('it uses default values for parameters when fetching the project properties', async () => {
       // Arrange
@@ -221,7 +247,12 @@ describe('RemoteService', () => {
 
       // Assert
       expect(result).toEqual(fetchResponse);
-      expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/fetchProjectProperties?locale=${service.defaultLocale}`, expect.anything());
+      expect(fetch).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          url: `${API_URL}/fetchProjectProperties?locale=${service.defaultLocale}`,
+        })
+      );
     });
     it('throws error if fetch was not ok and status is 401', async () => {
       expect.assertions(2);
@@ -268,6 +299,17 @@ describe('RemoteService', () => {
         expect((err as HttpError).message).toEqual('Failed to fetch');
       }
     });
+    it('it logs and throws an error when params is not set', async () => {
+      // Arrange
+      const warningSpy = jest.spyOn(service.logger, 'warn');
+
+      // Act
+      await expect(async () => await service.fetchProjectProperties(undefined as any))
+        // Assert
+        .rejects.toThrow('Invalid params passed');
+
+      expect(warningSpy.mock.calls[0][0]).toContain('Invalid params passed');
+    });
   });
 
   describe('findElement()', () => {
@@ -283,7 +325,12 @@ describe('RemoteService', () => {
 
       // Assert
       expect(result).toEqual(fetchResponse);
-      expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/findElement?fsPageId=plumber0PIERRE*porch&locale=de`, expect.anything());
+      expect(fetch).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          url: `${API_URL}/findElement?fsPageId=plumber0PIERRE*porch&locale=de`,
+        })
+      );
     });
     it('it uses default values for parameters when finding a page', async () => {
       // Arrange
@@ -297,7 +344,94 @@ describe('RemoteService', () => {
 
       // Assert
       expect(result).toEqual(fetchResponse);
-      expect(fetch).toHaveBeenNthCalledWith(1, `${API_URL}/findElement?fsPageId=plumber0PIERRE*porch&locale=${service.defaultLocale}`, expect.anything());
+      expect(fetch).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          url: `${API_URL}/findElement?fsPageId=plumber0PIERRE*porch&locale=${service.defaultLocale}`,
+        })
+      );
+    });
+    it('it logs and throws an error when params is not set', async () => {
+      // Arrange
+      const warningSpy = jest.spyOn(service.logger, 'warn');
+
+      // Act
+      await expect(async () => await service.findElement(undefined as any))
+        // Assert
+        .rejects.toThrow('Invalid params passed');
+
+      expect(warningSpy.mock.calls[0][0]).toContain('Invalid params passed');
+    });
+  });
+
+  describe('enrichRequest()', () => {
+    it('it enriches a request with new token from URL Parameters', async () => {
+      // Arrange
+      const initialToken = 'i-am-a-token';
+      const request: Request = new Request(new URL(`https://api.example.com/findElement`));
+
+      jest.spyOn(request.headers, 'append');
+      jest.spyOn(history, 'pushState').mockImplementation(() => {});
+      jest.spyOn(Storage.prototype, 'getItem').mockReturnValue(initialToken);
+
+      const setItem = jest.spyOn(Storage.prototype, 'setItem');
+
+      window.location.assign(`https://pwa.example.com/homepage?ecomShareToken=${initialToken}`);
+
+      // Act
+      RemoteService.enrichRequest(request);
+
+      // Assert
+      expect(setItem).toHaveBeenCalledWith('ecom:share:token', initialToken);
+      expect(request.headers.append).toHaveBeenCalledWith('ecom-share-token', initialToken);
+      expect(history.pushState).toHaveBeenCalledWith(
+        any(),
+        expect.stringMatching(''),
+        expect.objectContaining({
+          href: 'https://pwa.example.com/homepage',
+        })
+      );
+    });
+    it('it enriches a request with existing token from LocalStorage', async () => {
+      // Arrange
+      const initialToken = 'i-am-a-token';
+      const request: Request = new Request(new URL(`https://backend.example.com/findElement`));
+
+      jest.spyOn(request.headers, 'append');
+      jest.spyOn(history, 'pushState').mockImplementation(() => {});
+      jest.spyOn(Storage.prototype, 'getItem').mockReturnValue(initialToken);
+
+      const setItem = jest.spyOn(Storage.prototype, 'setItem');
+
+      window.location.assign(`https://pwa.example.com/homepage`);
+
+      // Act
+      RemoteService.enrichRequest(request);
+
+      // Assert
+      expect(setItem).not.toHaveBeenCalled();
+      expect(request.headers.append).toHaveBeenCalledWith('ecom-share-token', initialToken);
+      expect(history.pushState).not.toHaveBeenCalled();
+    });
+    it("it doesn't enrich a request with missing token in LocalStorage and URL", async () => {
+      // Arrange
+      const request: Request = new Request(new URL(`https://backend.example.com/findElement`));
+
+      jest.spyOn(request.headers, 'append');
+      jest.spyOn(history, 'pushState').mockImplementation(() => {});
+      jest.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
+
+      const setItem = jest.spyOn(Storage.prototype, 'setItem');
+
+      window.location.assign(`https://pwa.example.com/homepage`);
+
+      // Act
+      RemoteService.enrichRequest(request);
+
+      // Assert
+      expect(setItem).not.toHaveBeenCalled();
+      expect(request.headers.append).not.toHaveBeenCalled();
+      expect(history.pushState).not.toHaveBeenCalled();
     });
   });
 

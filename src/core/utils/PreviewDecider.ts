@@ -1,6 +1,7 @@
 import { ReferrerStore } from './ReferrerStore';
 import { getLogger } from './logging/Logger';
 import { Ready } from '../../connect/HookService';
+import { RemoteService } from '../api/RemoteService';
 
 /**
  * Helper to decide whether the application runs in preview mode.
@@ -36,11 +37,13 @@ export class PreviewDecider {
     if (!this.isBrowserEnvironment()) return false;
 
     try {
-      const { isPreview } = await fetch(`${this.url}/ispreview`, {
+      const request = new Request(`${this.url}/ispreview`, {
         headers: {
-          'X-Referrer': this.getReferrer(),
+          'x-referrer': this.getReferrer(),
         },
-      }).then((response) => response.json());
+      });
+      const { isPreview } = await fetch(RemoteService.enrichRequest(request) ?? request)
+        .then((response) => response.json());
       if (isPreview) Ready.allowedMessageOrigin = this.getReferrer();
       return isPreview || false;
     } catch (err: unknown) {

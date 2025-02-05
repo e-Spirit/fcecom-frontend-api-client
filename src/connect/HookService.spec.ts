@@ -41,7 +41,7 @@ describe('HookService.getInstance()', () => {
       const logger = mock(Logger as any);
       const errorSpy = jest.spyOn(logger, 'error');
 
-      jest.spyOn(LoggingModule, 'getLogger').mockReturnValue(logger as any);
+      jest.spyOn(LoggingModule, 'getLogger').mockReturnValue(logger);
 
       const errorThrowingFunction = jest.fn().mockImplementation(() => {
         throw new Error('Test Error');

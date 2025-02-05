@@ -129,7 +129,7 @@ export interface SNAPButton {
    * @optional
    * @param scope
    */
-  getItems?(scope: SNAPButtonScope): Array<any>;
+  getItems?(scope: SNAPButtonScope): Promise<Array<any>>;
 
   /**
    * Will be called before {@link execute}.

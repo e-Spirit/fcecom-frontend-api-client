@@ -17,9 +17,8 @@ module.exports = ({ mode }) => {
     // Running Client in Watch mode without compiling the tests
     case 'watch':
       return require(`./webpack.config.watch.js`);
-
-    default:
-      console.error(`This WebPack script does not exist: "./webpack.config.${mode}.js". Cancelling...`);
-      process.exit(1);
   }
+
+  console.error(`This WebPack script does not exist: "./webpack.config.${mode}.js". Cancelling...`);
+  return process.exit(1);
 };

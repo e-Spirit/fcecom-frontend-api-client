@@ -190,7 +190,7 @@ export class SlotParser {
     // Create page if it does not exist
     let page: FindPageItem;
     if (this.pageTarget.isFsDriven) page = await this.remoteService.findElement(this.pageTarget as FindElementParams);
-    else page = await this.ensurePageExists(this.pageTarget as ShopDrivenPageTarget);
+    else page = await this.ensurePageExists(this.pageTarget);
 
     this.hookService.callHook(EcomHooks.ENSURED_PAGE_EXISTS, page);
 

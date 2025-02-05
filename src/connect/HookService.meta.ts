@@ -64,6 +64,16 @@ export enum EcomHooks {
    * It provides an interface to access internal APIs.
    */
   PREVIEW_INITIALIZED = 'previewInitialized',
+
+  /**
+   * A hook that is fired when the shared preview is initialized or reactivated.
+   */
+  START_SHARED_PREVIEW = "startSharedPreview",
+
+  /**
+   * A hook that is fired when the user disables Shared Preview.
+   */
+  END_SHARED_PREVIEW = 'endSharedPreview',
 }
 
 /**
@@ -171,4 +181,6 @@ export interface HookPayloadTypes {
   [EcomHooks.PAGE_CREATION_FAILED]: PageCreationFailedPayload;
   [EcomHooks.PAGE_CREATED]: PageCreatedHookPayload;
   [EcomHooks.PREVIEW_INITIALIZED]: PreviewInitializedHookPayload;
+  [EcomHooks.END_SHARED_PREVIEW]: any;
+  [EcomHooks.START_SHARED_PREVIEW]: any;
 }

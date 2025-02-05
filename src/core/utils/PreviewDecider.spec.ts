@@ -38,10 +38,12 @@ describe('PreviewDecider', () => {
         // Assert
         expect(fetch).toHaveBeenNthCalledWith(
           1,
-          `${API_URL}/ispreview`,
           expect.objectContaining({
+            url: `${API_URL}/ispreview`,
             headers: {
-              'X-Referrer': TEST_REFERRER,
+              map: {
+                'x-referrer': TEST_REFERRER,
+              }
             },
           })
         );
@@ -57,10 +59,12 @@ describe('PreviewDecider', () => {
         // Assert
         expect(fetch).toHaveBeenNthCalledWith(
           1,
-          `${API_URL}/ispreview`,
           expect.objectContaining({
+            url: `${API_URL}/ispreview`,
             headers: {
-              'X-Referrer': TEST_REFERRER,
+              map: {
+                'x-referrer': TEST_REFERRER,
+              }
             },
           })
         );

@@ -1135,7 +1135,6 @@ describe('TPPService', () => {
 
       it('does not call section created hook if createSectionResult is undefined', async () => {
         // Arrange
-        const siblingPreviewId = 'previewId';
         const parentElement = document.createElement('div');
         const node = document.createElement('div');
         parentElement.appendChild(node);

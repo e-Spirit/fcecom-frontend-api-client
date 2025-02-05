@@ -18,17 +18,17 @@ import {
   ProjectPropertiesResponse,
 } from './EcomApi.meta';
 import { getLogger } from '../utils/logging/Logger';
+import { ShareViewBanner } from '../integrations/dom/shareViewBanner/shareViewBanner';
 
 /**
  * Service to handle calls against the Frontend API server.
  *
- * @export
  * @class RemoteService
  */
 export class RemoteService {
   defaultLocale?: string;
   private readonly baseUrl: string;
-  private readonly logger = getLogger('RemoteService');
+  readonly logger = getLogger('RemoteService');
 
   /**
    * Creates an instance of RemoteService.
@@ -130,12 +130,57 @@ export class RemoteService {
     }
     const locale = params.locale ?? this.defaultLocale;
     return this.performGetRequest<FetchProjectPropertiesParams, ProjectPropertiesResponse>('fetchProjectProperties', {
-      locale
+      locale,
     });
   }
 
   /**
-   * Performs a HTTP GET request against the backend service.
+   * Adds a preview token to every request,
+   *  so that the Frontend API Server can decide to turn ShareView on or off.
+   *
+   * @param request fetch request to add token header to.
+   */
+  static enrichRequest(request: Request): Request {
+    const initialToken = new URLSearchParams(location.search).get('ecomShareToken');
+
+    if (initialToken) {
+      localStorage.setItem('ecom:share:token', initialToken);
+    }
+
+    const savedToken = localStorage.getItem('ecom:share:token');
+
+    if (savedToken) {
+      request.headers?.append('ecom-share-token', savedToken);
+    }
+
+    // Remove token from URL
+    if (initialToken) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('ecomShareToken');
+      window.history.pushState({}, '', url);
+    }
+
+    return request;
+  }
+
+  /**
+   * Processes the response and decides to add or remove the ShareView banner,
+   *  based on the `shared-preview` header sent from the Frontend API Server.
+   * @param rawResponse Fetch response containing e.g. necessary headers.
+   * @private
+   */
+  private extractShareView = async (rawResponse: Response) => {
+    const json = await rawResponse.json();
+
+    const sharedPreview = rawResponse.headers?.get('shared-preview');
+    if (sharedPreview == 'true') ShareViewBanner.spawnBanner();
+    else if (sharedPreview == 'false') ShareViewBanner.removeShareViewBanner();
+
+    return json;
+  };
+
+  /**
+   * Performs an HTTP GET request against the backend service.
    *
    * @private
    * @template T Type of the parameter to send to the server.
@@ -148,20 +193,28 @@ export class RemoteService {
     const url = new URL(`${this.baseUrl}/${endpoint}`);
     url.search = new URLSearchParams(removeNullishObjectProperties(params)).toString();
 
-    return fetch(url.toString(), {
+    let request = new Request(url, {
       method: 'GET',
       headers: {
         'x-referrer': PreviewDecider.getReferrer(),
         'Content-Type': 'application/json',
       },
-    }).then((response) => {
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new HttpError(response.status, 'Unauthorized');
-        }
-        throw new HttpError(response.status, 'Failed to fetch');
-      }
-      return response.json();
     });
+
+    const rawResponse = this.ensureSuccess(await fetch(RemoteService.enrichRequest(request) ?? request));
+
+    if (endpoint === 'fetchNavigation') return await rawResponse.json();
+    else return this.extractShareView(rawResponse);
+  }
+
+  private ensureSuccess(res: Response): Response {
+    const { ok, status, statusText } = res;
+
+    if (!ok) {
+      if (status === 401) throw new HttpError(status, 'Unauthorized');
+      throw new HttpError(status, 'Failed to fetch' + (statusText ? `: ${statusText}` : ''));
+    }
+
+    return res;
   }
 }
