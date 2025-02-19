@@ -68,6 +68,9 @@ const apiInitPromise = api.init().then(async () => {
   if (!addedHooks.includes(EcomHooks.SECTION_CREATED)) {
     api.addHook(EcomHooks.SECTION_CREATED, reloadPage);
   }
+  if (!addedHooks.includes(EcomHooks.RERENDER_VIEW)) {
+    api.addHook(EcomHooks.RERENDER_VIEW, reloadPage);
+  }
 });
 
 // Make facade for HookService available
