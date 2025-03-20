@@ -284,7 +284,7 @@ export class SlotParser {
             })
             .catch((err) => {
               if (tries >= MAX_TRIES) {
-                this.logger.error('Page %s does not exist after %d tries', payload, tries);
+                this.logger.error(`Page '${payload.id}' does not exist after ${tries} tries`, payload);
                 rootReject(err);
               } else {
                 setTimeout(() => {

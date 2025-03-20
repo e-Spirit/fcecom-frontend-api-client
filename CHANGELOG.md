@@ -1,4 +1,10 @@
-## [1.4.3](https://github.com/e-Spirit/fcecom-frontend-api-server/compare/v1.4.0...v1.4.3) (2025-02-19)
+## [1.5.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v1.4.3...v1.5.0) (2025-03-20)
+
+### Changes
+
+* Updated version number to be consistent with server package.
+
+## [1.4.3](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v1.4.0...v1.4.3) (2025-02-19)
 
 ### Changes
 * Added RERENDER_VIEW hook to static.js file.
