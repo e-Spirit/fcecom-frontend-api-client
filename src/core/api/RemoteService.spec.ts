@@ -92,7 +92,7 @@ describe('RemoteService', () => {
           type: 'product',
         });
       } catch (err: any) {
-        expect((err as EcomError).code).toEqual(ERROR_CODES.FIND_PAGE_UNAUTHORIZED);
+        expect((err as EcomError).code).toEqual(ERROR_CODES.CAAS_UNAUTHORIZED);
         expect((err as EcomError).message).toEqual('Failed to fetch page');
       }
     });
@@ -197,7 +197,7 @@ describe('RemoteService', () => {
       try {
         await service.fetchNavigation({});
       } catch (err: any) {
-        expect((err as EcomError).code).toEqual(ERROR_CODES.FETCH_NAVIGATION_INVALID_REQUEST);
+        expect((err as EcomError).code).toEqual(ERROR_CODES.NAVIGATION_INVALID_REQUEST);
         expect((err as EcomError).message).toEqual('Failed to fetch navigation');
       }
     });
@@ -309,6 +309,55 @@ describe('RemoteService', () => {
         .rejects.toThrow('Invalid params passed');
 
       expect(warningSpy.mock.calls[0][0]).toContain('Invalid params passed');
+    });
+  });
+
+  describe('getAvailableLocales()', () => {
+    it('it gets available locales', async () => {
+      // Arrange
+      fetchResponse = ['de_DE', 'en_GB'];
+      const expectedResult = ['de_DE', 'en_GB'];
+      // Act
+      const result = await service.getAvailableLocales();
+
+      // Assert
+      expect(result).toEqual(expectedResult);
+      expect(fetch).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          url: `${API_URL}/getAvailableLocales`,
+        })
+      );
+    });
+    it('throws error if fetch was not ok and status is 401', async () => {
+      expect.assertions(2);
+      // Arrange
+      fetchResponse = {};
+      fetchOk = false;
+      fetchStatus = 401;
+
+      // Act
+      try {
+        await service.getAvailableLocales();
+      } catch (err: any) {
+        expect((err as EcomError).code).toEqual(ERROR_CODES.CAAS_UNAUTHORIZED);
+        expect((err as EcomError).message).toEqual('Failed to get available locales');
+      }
+    });
+    it('throws error if fetch was not ok (fallback)', async () => {
+      expect.assertions(2);
+      // Arrange
+      fetchResponse = {};
+      fetchOk = false;
+      fetchStatus = 500;
+
+      // Act
+      try {
+        await service.getAvailableLocales();
+      } catch (err: any) {
+        expect((err as EcomError).code).toEqual(ERROR_CODES.NO_CAAS_CONNECTION);
+        expect((err as EcomError).message).toEqual('Failed to get available locales');
+      }
     });
   });
 

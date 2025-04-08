@@ -1,5 +1,5 @@
 import { Ready } from './HookService';
-import { SNAPButton, SNAPMoveSectionOptions, SNAPConnect, SNAPStatus } from './TPPBroker.meta';
+import { SNAPButton, SNAPConnect, SNAPMoveSectionOptions, SNAPStatus } from './TPPBroker.meta';
 
 export class TPPBroker implements SNAPConnect {
   private static instance: TPPBroker;

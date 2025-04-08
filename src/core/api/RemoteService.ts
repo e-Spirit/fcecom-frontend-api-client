@@ -15,6 +15,7 @@ import {
   FindPageItem,
   FindPageParams,
   FindPageResponse,
+  GetAvailableLocalesResponse,
   ProjectPropertiesResponse,
 } from './EcomApi.meta';
 import { getLogger } from '../utils/logging/Logger';
@@ -61,7 +62,7 @@ export class RemoteService {
     } catch (err: unknown) {
       let ecomError: EcomError;
       if (err instanceof HttpError && err.status === 401) {
-        ecomError = new EcomClientError(ERROR_CODES.FIND_PAGE_UNAUTHORIZED, 'Failed to fetch page');
+        ecomError = new EcomClientError(ERROR_CODES.CAAS_UNAUTHORIZED, 'Failed to fetch page');
       } else if (err instanceof HttpError && err.status === 400) {
         ecomError = new EcomClientError(ERROR_CODES.FIND_PAGE_INVALID_REQUEST, 'Failed to fetch page');
       } else {
@@ -90,11 +91,31 @@ export class RemoteService {
       if (err instanceof HttpError && err.status === 401) {
         ecomError = new EcomClientError(ERROR_CODES.FETCH_NAVIGATION_UNAUTHORIZED, 'Failed to fetch navigation');
       } else if (err instanceof HttpError && err.status === 400) {
-        ecomError = new EcomClientError(ERROR_CODES.FETCH_NAVIGATION_INVALID_REQUEST, 'Failed to fetch navigation');
+        ecomError = new EcomClientError(ERROR_CODES.NAVIGATION_INVALID_REQUEST, 'Failed to fetch navigation');
       } else {
         ecomError = new EcomClientError(ERROR_CODES.NO_NAVIGATION_SERVICE_CONNECTION, 'Failed to fetch navigation');
       }
       this.logger.error('Failed to fetch navigation', ecomError);
+      throw ecomError;
+    }
+  }
+
+  /**
+   * Gets available locales.
+   *
+   * @return {*} Available locales.
+   */
+  public async getAvailableLocales(): Promise<GetAvailableLocalesResponse> {
+    try {
+      return await this.performParameterlessGetRequest<GetAvailableLocalesResponse>('getAvailableLocales');
+    } catch (err: unknown) {
+      let ecomError: EcomError;
+      if (err instanceof HttpError && err.status === 401) {
+        ecomError = new EcomClientError(ERROR_CODES.CAAS_UNAUTHORIZED, 'Failed to get available locales');
+      } else {
+        ecomError = new EcomClientError(ERROR_CODES.NO_CAAS_CONNECTION, 'Failed to get available locales');
+      }
+      this.logger.error('Failed to get available locales', ecomError);
       throw ecomError;
     }
   }
@@ -192,6 +213,31 @@ export class RemoteService {
   private async performGetRequest<T extends ParamObject, U>(endpoint: string, params: T): Promise<U> {
     const url = new URL(`${this.baseUrl}/${endpoint}`);
     url.search = new URLSearchParams(removeNullishObjectProperties(params)).toString();
+
+    let request = new Request(url, {
+      method: 'GET',
+      headers: {
+        'x-referrer': PreviewDecider.getReferrer(),
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const rawResponse = this.ensureSuccess(await fetch(RemoteService.enrichRequest(request) ?? request));
+
+    if (endpoint === 'fetchNavigation') return await rawResponse.json();
+    else return this.extractShareView(rawResponse);
+  }
+
+  /**
+   * Performs a parameterless HTTP GET request against the backend service.
+   *
+   * @private
+   * @template U Type of the response to receive.
+   * @param endpoint URL segment for the endpoint to query.
+   * @return {*} The response received by the server.
+   */
+  private async performParameterlessGetRequest<U>(endpoint: string): Promise<U> {
+    const url = new URL(`${this.baseUrl}/${endpoint}`);
 
     let request = new Request(url, {
       method: 'GET',

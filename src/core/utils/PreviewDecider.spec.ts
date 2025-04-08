@@ -43,7 +43,7 @@ describe('PreviewDecider', () => {
             headers: {
               map: {
                 'x-referrer': TEST_REFERRER,
-              }
+              },
             },
           })
         );
@@ -64,7 +64,7 @@ describe('PreviewDecider', () => {
             headers: {
               map: {
                 'x-referrer': TEST_REFERRER,
-              }
+              },
             },
           })
         );

@@ -68,7 +68,7 @@ export enum EcomHooks {
   /**
    * A hook that is fired when the shared preview is initialized or reactivated.
    */
-  START_SHARED_PREVIEW = "startSharedPreview",
+  START_SHARED_PREVIEW = 'startSharedPreview',
 
   /**
    * A hook that is fired when the user disables Shared Preview.

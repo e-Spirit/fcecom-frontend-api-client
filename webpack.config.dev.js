@@ -11,11 +11,11 @@ module.exports = merge(baseConfig, {
   watch: true,
 
   optimization: {
-    minimize: false
+    minimize: false,
   },
 
   output: {
-    clean: false
+    clean: false,
   },
 
   module: {

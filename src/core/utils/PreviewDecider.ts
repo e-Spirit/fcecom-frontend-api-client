@@ -42,8 +42,7 @@ export class PreviewDecider {
           'x-referrer': this.getReferrer(),
         },
       });
-      const { isPreview } = await fetch(RemoteService.enrichRequest(request) ?? request)
-        .then((response) => response.json());
+      const { isPreview } = await fetch(RemoteService.enrichRequest(request) ?? request).then((response) => response.json());
       if (isPreview) Ready.allowedMessageOrigin = this.getReferrer();
       return isPreview || false;
     } catch (err: unknown) {

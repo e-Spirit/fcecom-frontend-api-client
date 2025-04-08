@@ -32,7 +32,7 @@ export {
   MasterLocale,
   DataEntry,
   ShareViewParameters,
-  PageShareViewParameters
+  PageShareViewParameters,
 } from './core/api/EcomApi.meta';
 export { addContentButton } from './core/integrations/dom/addContentElement/addContentElement';
 export { AddContentButtonParams } from './core/integrations/dom/addContentElement/addContentElement.meta';

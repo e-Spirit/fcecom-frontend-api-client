@@ -233,7 +233,7 @@ describe('EcomApi', () => {
   });
 
   describe('getShareViewLink()', () => {
-    it("Generates URL with token if Executable does return ok.", async () => {
+    it('Generates URL with token if Executable does return ok.', async () => {
       // Arrange
       const snap = mock<SNAP>();
       Ready.snap = snap;
@@ -290,6 +290,15 @@ describe('EcomApi', () => {
 
       // Act & Assert
       await expect(async () => await api.findPage(undefined as any)).rejects.toThrow('Invalid params passed');
+    });
+  });
+
+  describe('getAvailableLocales()', () => {
+    it('it calls RemoteService.getAvailableLocales', async () => {
+      // Act
+      await api.getAvailableLocales();
+      // Assert
+      expect(mockRemoteService.getAvailableLocales).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -9,7 +9,8 @@ import {
   FindPageParams,
   PageSection,
   PageTarget,
-  ProjectPropertiesResponse, ShareViewParameters,
+  ProjectPropertiesResponse,
+  ShareViewParameters,
   ShopDrivenPageTarget,
 } from './EcomApi.meta';
 import { TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
@@ -188,6 +189,15 @@ export class EcomApi {
     isNonNullable(params, 'Invalid params passed');
 
     return this.remoteService.fetchProjectProperties(params);
+  }
+
+  /**
+   * Gets available locales.
+   *
+   * @return {*} Available locales.
+   */
+  async getAvailableLocales(): Promise<Array<string>> {
+    return this.remoteService.getAvailableLocales();
   }
 
   /**

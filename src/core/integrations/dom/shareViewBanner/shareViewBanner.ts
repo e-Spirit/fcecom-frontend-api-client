@@ -32,7 +32,7 @@ export namespace ShareViewBanner {
    * Show banner.
    */
   export const spawnBanner = () => {
-    removeShareViewBanner()
+    removeShareViewBanner();
 
     if (isInPreview) return;
 

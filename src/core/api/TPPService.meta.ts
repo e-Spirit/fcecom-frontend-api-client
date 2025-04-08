@@ -23,7 +23,7 @@ export type ShopDrivenPageTarget = CreatePagePayload & {
   /**
    * If no page matching the pageTarget does exist, it can be automatically created.
    */
-  ensureExistence?: boolean
+  ensureExistence?: boolean;
 };
 
 export type FsDrivenPageTarget = {

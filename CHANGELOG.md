@@ -1,3 +1,9 @@
+## [1.6.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v1.5.0...v1.6.0) (2025-04-08)
+
+### Changes
+
+* Added the ability to get the available locales in a FirstSpirit project and additionally fixed formatting issues.
+
 ## [1.5.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v1.4.3...v1.5.0) (2025-03-20)
 
 ### Changes

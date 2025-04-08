@@ -1,4 +1,4 @@
-import { Logger, Logging, LogLevel, formatOutput } from './Logger';
+import { formatOutput, Logger, Logging, LogLevel } from './Logger';
 
 describe('Logger', () => {
   describe('constructor()', () => {

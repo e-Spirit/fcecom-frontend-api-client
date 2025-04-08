@@ -15,6 +15,8 @@ export type FindPageParams = {
 
 export type FindPageResponse = FindPageItem;
 
+export type GetAvailableLocalesResponse = Array<string>;
+
 export type PageSection = {
   id: string;
   previewId: string;
@@ -95,38 +97,38 @@ export type FindElementParams = {
 export type DataEntry = any;
 
 export interface DataEntries {
-  [key: string]: DataEntry
+  [key: string]: DataEntry;
 }
 
 /**
  * Locale split into 3 different parts to include language and country.
  */
 export interface MasterLocale {
-  country: string
-  language: string
-  identifier: string
+  country: string;
+  language: string;
+  identifier: string;
 }
 
 /**
  * ProjectProperties returned by fsxa-api.
  */
 export type ProjectProperties = {
-  type: 'ProjectProperties'
-  id: string
-  previewId: string
-  name: string
-  layout: string
-  data: DataEntries
-  meta: DataEntries
-  remoteProjectId?: string
-  masterLocale?: MasterLocale
-}
+  type: 'ProjectProperties';
+  id: string;
+  previewId: string;
+  name: string;
+  layout: string;
+  data: DataEntries;
+  meta: DataEntries;
+  remoteProjectId?: string;
+  masterLocale?: MasterLocale;
+};
 
 export type FetchProjectPropertiesParams = {
   /**
    * Value must be ISO conform, both 'en' and 'en_US' are valid.
    */
   locale?: string;
-}
+};
 
 export type ProjectPropertiesResponse = ProjectProperties | unknown | null;

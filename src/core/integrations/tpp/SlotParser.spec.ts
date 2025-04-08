@@ -54,7 +54,7 @@ describe('SlotParser', () => {
       expect(mockRemoteService.findPage.mock.calls[0][0].id).toEqual(id);
       expect(mockRemoteService.findPage.mock.calls[0][0].type).toEqual(type);
     });
-  })
+  });
   describe('CONTENT_CHANGED hook', () => {
     it('payload.content = null: sets up buttons again if hook was triggered and content was set before', async () => {
       // Arrange
