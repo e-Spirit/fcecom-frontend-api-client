@@ -1,9 +1,11 @@
 import {
   CreatePagePayload,
   CreateSectionPayload,
+  FetchByFilterParams,
   FetchNavigationParams,
   FetchNavigationResponse,
   FetchProjectPropertiesParams,
+  FetchResponse,
   FindElementParams,
   FindPageItem,
   FindPageParams,
@@ -198,6 +200,47 @@ export class EcomApi {
    */
   async getAvailableLocales(): Promise<Array<string>> {
     return this.remoteService.getAvailableLocales();
+  }
+
+  /**
+   * Performs a CaaS query with flexible filter criteria.
+   *
+   * @example
+   * ```javascript
+   * import { EcomApi, LogLevel, ComparisonQueryOperatorEnum, LogicalQueryOperatorEnum } from 'fcecom-frontend-api-client';
+   *
+   * // Example for searching content pages of type "homepage"
+   * const result = await api.fetchByFilter({
+   *   filters: [
+   *     {
+   *       operator: LogicalQueryOperatorEnum.AND,
+   *       filters: [
+   *         {
+   *           field: 'page.formData.type.value',
+   *           operator: ComparisonQueryOperatorEnum.EQUALS,
+   *           value: 'content',
+   *         },
+   *         {
+   *           field: 'page.formData.id.value',
+   *           operator: ComparisonQueryOperatorEnum.EQUALS,
+   *           value: 'homepage',
+   *         },
+   *       ],
+   *     },
+   *   ],
+   *   locale: 'de_DE',
+   *   page: 1,
+   *   pagesize: 10,
+   *   normalized: true
+   * });
+   * ```
+   *
+   * @param filter Parameters for defining filter criteria, pagination, and sorting.
+   * @returns A response with the found items, either normalized or denormalized.
+   */
+  async fetchByFilter(filter: FetchByFilterParams): Promise<FetchResponse> {
+    isNonNullable(filter, 'Invalid params passed');
+    return this.remoteService.fetchByFilter(filter);
   }
 
   /**

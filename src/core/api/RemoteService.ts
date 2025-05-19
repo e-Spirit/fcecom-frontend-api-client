@@ -8,9 +8,11 @@ import { removeNullishObjectProperties } from '../utils/helper';
 import { ParamObject } from '../utils/meta';
 import { PreviewDecider } from '../utils/PreviewDecider';
 import {
+  FetchByFilterParams,
   FetchNavigationParams,
   FetchNavigationResponse,
   FetchProjectPropertiesParams,
+  FetchResponse,
   FindElementParams,
   FindPageItem,
   FindPageParams,
@@ -156,6 +158,24 @@ export class RemoteService {
   }
 
   /**
+   * Performs an HTTP POST request to the fetchByFilter endpoint of the backend service.
+   * This method enables complex content queries with filtering, sorting, and pagination.
+   *
+   * @param filter Object with filter criteria, pagination, and sorting parameters.
+   * @returns A Promise containing the query result (normalized or denormalized).
+   * @throws {EcomInvalidParameterError} When invalid parameters are provided.
+   * @throws {EcomClientError} For network or server errors.
+   */
+  async fetchByFilter(filter: FetchByFilterParams): Promise<FetchResponse> {
+    if (!filter) {
+      this.logger.warn('Invalid params passed');
+      throw new EcomInvalidParameterError('Invalid params passed');
+    }
+    filter.locale = filter.locale ?? this.defaultLocale;
+    return this.performPostRequest<FetchByFilterParams, FetchResponse>('fetchByFilter', filter);
+  }
+
+  /**
    * Adds a preview token to every request,
    *  so that the Frontend API Server can decide to turn ShareView on or off.
    *
@@ -220,6 +240,34 @@ export class RemoteService {
         'x-referrer': PreviewDecider.getReferrer(),
         'Content-Type': 'application/json',
       },
+    });
+
+    const rawResponse = this.ensureSuccess(await fetch(RemoteService.enrichRequest(request) ?? request));
+
+    if (endpoint === 'fetchNavigation') return await rawResponse.json();
+    else return this.extractShareView(rawResponse);
+  }
+
+  /**
+   * Performs an HTTP POST request against the backend service.
+   *
+   * @private
+   * @template T Type of the body to send to the server.
+   * @template U Type of the response to receive.
+   * @param endpoint URL segment for the endpoint to query.
+   * @param body Body to send with the request.
+   * @return {*} The response received by the server.
+   */
+  private async performPostRequest<T, U>(endpoint: string, body: T): Promise<U> {
+    const url = new URL(`${this.baseUrl}/${endpoint}`);
+
+    let request = new Request(url, {
+      method: 'POST',
+      headers: {
+        'x-referrer': PreviewDecider.getReferrer(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
     });
 
     const rawResponse = this.ensureSuccess(await fetch(RemoteService.enrichRequest(request) ?? request));

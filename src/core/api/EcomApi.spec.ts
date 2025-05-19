@@ -11,7 +11,7 @@ import { SNAP, TPPWrapperInterface } from '../integrations/tpp/TPPWrapper.meta';
 import { Logger, Logging, LogLevel } from '../utils/logging/Logger';
 import { HookService, Ready } from '../../connect/HookService';
 import { HttpError } from './errors';
-import { ShareViewParameters } from './EcomApi.meta';
+import { ComparisonQueryOperatorEnum, FetchByFilterParams, LogicalQueryOperatorEnum, NormalizedFetchResponse, ShareViewParameters } from './EcomApi.meta';
 
 jest.spyOn(PreviewDecider, 'isPreview').mockResolvedValue(true);
 
@@ -676,6 +676,72 @@ describe('EcomApi', () => {
         api.addHook(EcomHooks.CONTENT_CHANGED, mockHook);
         // Assert
       }).not.toThrow();
+    });
+  });
+
+  describe('fetchByFilter()', () => {
+    it('it calls RemoteService.fetchByFilter', async () => {
+      // Arrange
+      const filter: FetchByFilterParams = {
+        filters: [
+          {
+            operator: LogicalQueryOperatorEnum.AND,
+            filters: [
+              {
+                field: 'page.formData.type.value',
+                operator: ComparisonQueryOperatorEnum.EQUALS,
+                value: 'content',
+              },
+            ],
+          },
+        ],
+        locale: 'de_DE',
+        page: 1,
+        pagesize: 10
+      };
+
+      // Act
+      await api.fetchByFilter(filter);
+
+      // Assert
+      expect(mockRemoteService.fetchByFilter).toHaveBeenCalledTimes(1);
+      expect(mockRemoteService.fetchByFilter.mock.calls[0][0]).toEqual(filter);
+    });
+
+    it('throws on invalid parameters', async () => {
+      // Act & Assert
+      await expect(async () => await api.fetchByFilter(undefined as any))
+        .rejects.toThrow('Invalid params passed');
+    });
+
+    it('properly forwards the response from RemoteService', async () => {
+      // Arrange
+      const expectedResponse: NormalizedFetchResponse = {
+        items: [{ id: '123', type: 'product' }],
+        page: 1,
+        pagesize: 10,
+        size: 1,
+        totalPages: 1
+      };
+
+      mockRemoteService.fetchByFilter.mockResolvedValueOnce(expectedResponse);
+
+      const filter: FetchByFilterParams = {
+        filters: [
+          {
+            field: 'page.formData.type.value',
+            operator: ComparisonQueryOperatorEnum.EQUALS,
+            value: 'content',
+          }
+        ],
+        locale: 'en_GB'
+      };
+
+      // Act
+      const result = await api.fetchByFilter(filter);
+
+      // Assert
+      expect(result).toEqual(expectedResponse);
     });
   });
 });

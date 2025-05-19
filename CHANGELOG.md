@@ -1,3 +1,9 @@
+## [1.7.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v1.6.0...v1.7.0) (2025-05-19)
+
+### Changes
+
+* Added `fetchByFilter` feature for flexible content querying.
+
 ## [1.6.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v1.5.0...v1.6.0) (2025-04-08)
 
 ### Changes

@@ -2,6 +2,7 @@ import { PreviewDecider } from '../utils/PreviewDecider';
 import { EcomError, ERROR_CODES, HttpError } from './errors';
 import { RemoteService } from './RemoteService';
 import { any } from 'jest-mock-extended';
+import { ComparisonQueryOperatorEnum, FetchByFilterParams, LogicalQueryOperatorEnum } from './EcomApi.meta';
 
 const API_URL = 'https://api_url:3000';
 let fetchResponse: any;
@@ -494,6 +495,150 @@ describe('RemoteService', () => {
 
       // Assert
       expect(service.defaultLocale).toBe(locale);
+    });
+  });
+
+  describe('fetchByFilter()', () => {
+    it('performs a POST request with filter criteria', async () => {
+      // Arrange
+      fetchResponse = {
+        items: [{ id: 'item1', type: 'product' }],
+        page: 1,
+        pagesize: 10,
+        size: 1,
+        totalPages: 1
+      };
+
+      const filter: FetchByFilterParams = {
+        filters: [
+          {
+            operator: LogicalQueryOperatorEnum.AND,
+            filters: [
+              {
+                field: 'page.formData.type.value',
+                operator: ComparisonQueryOperatorEnum.EQUALS,
+                value: 'content',
+              },
+            ],
+          },
+        ],
+        locale: 'de_DE',
+        page: 1,
+        pagesize: 10,
+        normalized: true
+      };
+
+      const fetchSpy = jest.spyOn(global, 'fetch');
+
+      // Act
+      const result = await service.fetchByFilter(filter);
+
+      // Assert
+      expect(result).toEqual(fetchResponse);
+      expect(fetch).toHaveBeenCalledTimes(1);
+
+      const request = fetchSpy.mock.calls[0][0] as Request;
+
+      // @ts-ignore
+      expect(JSON.parse(request['_bodyInit'])).toMatchObject(filter);
+      expect(request.method).toBe('POST');
+    });
+
+    it('applies default locale when not specified', async () => {
+      // Arrange
+      fetchResponse = {
+        items: [],
+        page: 1,
+        pagesize: 10,
+        size: 0,
+        totalPages: 0
+      };
+      service.setDefaultLocale('en_GB');
+
+      const fetchSpy = jest.spyOn(global, 'fetch');
+
+      const filter: FetchByFilterParams = {
+        filters: [
+          {
+            field: 'page.formData.type.value',
+            operator: ComparisonQueryOperatorEnum.EQUALS,
+            value: 'content',
+          }
+        ],
+        page: 1,
+        pagesize: 10
+      };
+
+      // Act
+      const result = await service.fetchByFilter(filter);
+      const request = fetchSpy.mock.calls[0][0] as Request;
+
+      // Assert
+      expect(result).toEqual(fetchResponse);
+
+      // @ts-ignore
+      expect((JSON.parse(request['_bodyInit']) as FetchByFilterParams).locale).toBe('en_GB');
+      expect(request.method).toBe('POST');
+    });
+
+    it('logs and throws an error when filter is not provided', async () => {
+      // Arrange
+      const warningSpy = jest.spyOn(service.logger, 'warn');
+
+      // Act & Assert
+      await expect(async () => await service.fetchByFilter(undefined as any))
+        .rejects.toThrow('Invalid params passed');
+
+      expect(warningSpy).toHaveBeenCalled();
+      expect(warningSpy.mock.calls[0][0]).toContain('Invalid params passed');
+    });
+
+    it('throws appropriate error when status is 401', async () => {
+      expect.assertions(1);
+      // Arrange
+      fetchResponse = {};
+      fetchOk = false;
+      fetchStatus = 401;
+
+      // Act
+      try {
+        await service.fetchByFilter({});
+      } catch (err: any) {
+        // Assert
+        expect((err as EcomError).message).toEqual('Unauthorized');
+      }
+    });
+
+    it('throws appropriate error when status is 400', async () => {
+      expect.assertions(1);
+      // Arrange
+      fetchResponse = {};
+      fetchOk = false;
+      fetchStatus = 400;
+
+      // Act
+      try {
+        await service.fetchByFilter({});
+      } catch (err: any) {
+        // Assert
+        expect((err as EcomError).message).toEqual('Failed to fetch');
+      }
+    });
+
+    it('throws fallback error for other error statuses', async () => {
+      expect.assertions(1);
+      // Arrange
+      fetchResponse = {};
+      fetchOk = false;
+      fetchStatus = 500;
+
+      // Act
+      try {
+        await service.fetchByFilter({});
+      } catch (err: any) {
+        // Assert
+        expect((err as EcomError).message).toEqual('Failed to fetch');
+      }
     });
   });
 });

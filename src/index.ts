@@ -33,6 +33,25 @@ export {
   DataEntry,
   ShareViewParameters,
   PageShareViewParameters,
+  // Filter-related exports
+  ComparisonQueryOperatorEnum,
+  LogicalQueryOperatorEnum,
+  ArrayQueryOperatorEnum,
+  EvaluationQueryOperatorEnum,
+  ComparisonFilterValue,
+  ComparisonFilter,
+  ArrayFilter,
+  EvaluationFilter,
+  LogicalFilter,
+  QueryBuilderQuery,
+  SortParams,
+  FetchByFilterParams,
+  FetchResponse,
+  DenormalizedFetchResponse,
+  NormalizedFetchResponse,
+  BaseItem,
+  ReferencedItemsInfo,
+  ResolvedReferencesInfo,
 } from './core/api/EcomApi.meta';
 export { addContentButton } from './core/integrations/dom/addContentElement/addContentElement';
 export { AddContentButtonParams } from './core/integrations/dom/addContentElement/addContentElement.meta';
