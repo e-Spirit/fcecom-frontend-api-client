@@ -72,3 +72,18 @@ export function extractSlotSections(page: FindPageItem, slotName: string): Array
 
   return page.children?.find((child: any) => child.name === slotName)?.children ?? [];
 }
+
+/**
+ * Generates a string based on the current timestamp and random characters.
+ *
+ * Uses base-36 timestamp and adds 8 random characters.
+ *
+ * @export
+ * @internal
+ * @return {string} Random string of 17 characters in the format "baseTimestamp-randomChars" (e.g. "lzl0tv5r-4g0wcq9t")
+ */
+export function quickId(): string {
+  const ts = Date.now().toString(36);
+  const rand = Math.random().toString(36).substring(2, 10);
+  return `${ts}-${rand}`;
+}

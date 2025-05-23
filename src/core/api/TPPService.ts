@@ -266,7 +266,7 @@ export class TPPService {
    *
    * @private
    */
-  private async initMessagesToServer() {
+  protected async initMessagesToServer() {
     const snap = await this.checkForTPP();
     if (!snap) return;
 
@@ -310,7 +310,7 @@ export class TPPService {
    * @param response Response string.
    * @return {*} The parsed response.
    */
-  private parseModuleResponse(response: string): CreatePageResponse {
+  protected parseModuleResponse(response: string): CreatePageResponse {
     if (typeof response === 'string' && response.startsWith('Json')) {
       const jsonString = response.replace(/^Json\s+/, '');
       try {

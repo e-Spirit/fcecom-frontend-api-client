@@ -1,6 +1,6 @@
 {
   "name": "fcecom-frontend-api-client",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "FirstSpirit Connect for Commerce - Frontend API Client",
   "main": "dist/bundle.js",
   "module": "dist/bundle.js",

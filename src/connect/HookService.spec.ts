@@ -5,7 +5,7 @@ import { SNAP } from '../core/integrations/tpp/TPPWrapper.meta';
 import * as LoggingModule from '../core/utils/logging/Logger';
 import { TPPBroker } from './TPPBroker';
 
-const { Logger, Logging, LogLevel } = LoggingModule;
+const { Logger } = LoggingModule;
 
 describe('HookService.getInstance()', () => {
   describe('callHook()', () => {
@@ -15,7 +15,7 @@ describe('HookService.getInstance()', () => {
       const payload = {
         content: 'CONTENT',
         node: mock<HTMLElement>(),
-        previewId: 'PREVIEWID',
+        previewId: 'PreviewId',
       };
       HookService.getInstance().addHook(EcomHooks.CONTENT_CHANGED, testMethod);
       // Act
@@ -28,7 +28,7 @@ describe('HookService.getInstance()', () => {
       const payload = {
         content: 'CONTENT',
         node: mock<HTMLElement>(),
-        previewId: 'PREVIEWID',
+        previewId: 'PreviewId',
       };
       expect(() => {
         // Act
@@ -52,7 +52,7 @@ describe('HookService.getInstance()', () => {
       const payload = {
         content: 'CONTENT',
         node: mock<HTMLElement>(),
-        previewId: 'PREVIEWID',
+        previewId: 'PreviewId',
       };
 
       // Act

@@ -10,15 +10,9 @@ import * as logger from '../utils/logging/Logger';
 import { CreatePageResponse, CreateSectionPayload } from './TPPService.meta';
 import { HookService, Ready } from '../../connect/HookService';
 import { EcomHooks } from '../../connect/HookService.meta';
-import { SNAPButton, SNAPButtonScope } from '../../connect/TPPBroker.meta';
+import { SNAPButton, SNAPButtonScope, SNAPStatus } from '../../connect/TPPBroker.meta';
 import { TPPBroker } from '../../connect/TPPBroker';
 import { fireEvent } from '@testing-library/react';
-
-const tppLoader = new TPPLoader();
-const snap = mock<SNAP>();
-
-jest.spyOn(tppLoader, 'getSnap').mockResolvedValue(snap);
-jest.spyOn(TPPWrapper, 'createTPPLoader').mockReturnValue(tppLoader);
 
 class TestableTPPService extends TPPService {
   public test_setTPPWrapper(tppWrapper: TPPWrapperInterface): void {
@@ -52,6 +46,14 @@ class TestableTPPService extends TPPService {
   public setCurrentPageRefPreviewId(pageRefPreviewId: string | null) {
     this.currentPageRefPreviewId = pageRefPreviewId;
   }
+
+  public test_parseModuleResponse(response: string): CreatePageResponse {
+    return this.parseModuleResponse(response);
+  }
+
+  public async test_initMessagesToServer() {
+    await this.initMessagesToServer();
+  }
 }
 
 const API_URL = 'https://api_url:3000';
@@ -64,12 +66,66 @@ const mockRemoteService = new RemoteService(API_URL);
 const mockLogger = mock<logger.Logger>();
 
 let service: TestableTPPService;
+let snap: SNAP;
+
+// Extend Window interface for TPP_SNAP
+declare global {
+  interface Window {
+    TPP_SNAP?: SNAP;
+  }
+}
+
+// Types for MessagePort and MessageChannel mocks
+interface MockMessagePort {
+  postMessage: jest.Mock;
+  onmessage: ((event: MessageEvent) => void) | null;
+  close: jest.Mock;
+  start: jest.Mock;
+}
+
 describe('TPPService', () => {
+  // MessageChannel-related variables
+  let mockPort1: MockMessagePort;
+  let mockPort2: MockMessagePort;
+  let originalMessageChannel: typeof MessageChannel;
+
   beforeEach(() => {
+    // ===== MessageChannel Mocks =====
+    // Mock MessageChannel
+    mockPort1 = {
+      postMessage: jest.fn(),
+      onmessage: null,
+      close: jest.fn(),
+      start: jest.fn(),
+    };
+    mockPort2 = {
+      postMessage: jest.fn(),
+      onmessage: null,
+      close: jest.fn(),
+      start: jest.fn(),
+    };
+
+    originalMessageChannel = global.MessageChannel;
+
+    global.MessageChannel = jest.fn(() => ({
+      port1: mockPort1,
+      port2: mockPort2,
+    })) as unknown as typeof MessageChannel;
+
+    const tppLoader = new TPPLoader();
+    snap = mock<SNAP>();
+
+    jest.spyOn(tppLoader, 'getSnap').mockResolvedValue(snap);
+    jest.spyOn(TPPWrapper, 'createTPPLoader').mockReturnValue(tppLoader);
+
     tppWrapper = new TPPWrapper();
     service = new TestableTPPService();
     service.test_setTPPWrapper(tppWrapper);
     service['logger'] = mockLogger;
+  });
+
+  afterEach(() => {
+    global.MessageChannel = originalMessageChannel;
   });
 
   describe('constructor()', () => {
@@ -90,19 +146,19 @@ describe('TPPService', () => {
       (tppWrapper as { TPP_SNAP: Promise<SNAP | null> }).TPP_SNAP = Promise.resolve(snap);
 
       const page = {
-        previewId: 'PREVIEWID',
+        previewId: 'PreviewId',
         children: [
           {
-            name: 'SLOTNAME',
-            previewId: 'PREVIEWID',
+            name: 'SlotName',
+            previewId: 'PreviewId',
           },
           {
-            name: 'SLOTNAME2',
-            previewId: 'PREVIEWID2',
+            name: 'SlotName2',
+            previewId: 'PreviewId2',
           },
         ],
       } as FindPageItem;
-      const previewId = 'PREVIEWID';
+      const previewId = 'PreviewId';
       const mockFindPageResponse = {
         previewId: 'testPreviewId',
         children: [],
@@ -504,7 +560,7 @@ describe('TPPService', () => {
       const snap = mock<SNAP>();
       (tppWrapper as { TPP_SNAP: Promise<SNAP | null> }).TPP_SNAP = Promise.resolve(snap);
       const spy = jest.spyOn(snap, 'onContentChange');
-      const previewId = 'PREVIEWID';
+      const previewId = 'PreviewId';
       const node = mock<HTMLElement>();
       const content = 'CONTENT';
       spy.mockImplementation((cb) => {
@@ -537,7 +593,7 @@ describe('TPPService', () => {
       (tppWrapper as { TPP_SNAP: Promise<SNAP | null> }).TPP_SNAP = Promise.resolve(snap);
 
       const rerenderSpy = jest.spyOn(snap, 'onRerenderView');
-      const previewId = 'PREVIEWID';
+      const previewId = 'PreviewId';
       rerenderSpy.mockImplementation((cb) => {
         // Trigger callback
         cb();
@@ -569,7 +625,7 @@ describe('TPPService', () => {
       const snap = mock<SNAP>();
       (tppWrapper as { TPP_SNAP: Promise<SNAP | null> }).TPP_SNAP = Promise.resolve(snap);
       const spy = jest.spyOn(snap, 'onRequestPreviewElement');
-      const previewId = 'PREVIEWID';
+      const previewId = 'PreviewId';
       spy.mockImplementation((cb) => {
         // Trigger callback
         cb(previewId);
@@ -1135,6 +1191,7 @@ describe('TPPService', () => {
 
       it('does not call section created hook if createSectionResult is undefined', async () => {
         // Arrange
+        const siblingPreviewId = 'previewId';
         const parentElement = document.createElement('div');
         const node = document.createElement('div');
         parentElement.appendChild(node);
@@ -1199,6 +1256,213 @@ describe('TPPService', () => {
         // Assert
         expect(result).toEqual(-1);
       });
+    });
+  });
+  describe('isPreviewInitialized()', () => {
+    it('returns true when TPP is initialized', async () => {
+      // Arrange
+      const snap = mock<SNAP>();
+      (tppWrapper as { TPP_SNAP: Promise<SNAP | null> }).TPP_SNAP = Promise.resolve(snap);
+
+      // Act
+      const result = await service.isPreviewInitialized();
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it('returns false when TPP is not initialized', async () => {
+      // Arrange
+      (tppWrapper as { TPP_SNAP: Promise<SNAP | null> }).TPP_SNAP = Promise.resolve(null);
+
+      // Act
+      const result = await service.isPreviewInitialized();
+
+      // Assert
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('parseModuleResponse()', () => {
+    it('parses valid JSON response', () => {
+      // Arrange
+      const moduleResponse = { success: true };
+      const response = `Json ${JSON.stringify(moduleResponse)}`;
+
+      // Act
+      const result = service.test_parseModuleResponse(response);
+
+      // Assert
+      expect(result).toEqual(moduleResponse);
+    });
+
+    it('throws error for invalid response format', () => {
+      // Arrange
+      const response = 'Not a valid Json response';
+
+      // Act & Assert
+      expect(() => service.test_parseModuleResponse(response)).toThrow();
+      expect(mockLogger.error).toHaveBeenCalledWith('Invalid module response', response);
+    });
+
+    it('throws error when JSON parsing fails', () => {
+      // Arrange
+      const response = 'Json {invalid json}';
+
+      // Act & Assert
+      expect(() => service.test_parseModuleResponse(response)).toThrow();
+      expect(mockLogger.error).toHaveBeenCalledWith('Cannot parse module response', '{invalid json}');
+    });
+  });
+
+  describe('initMessagesToServer()', () => {
+    it('returns early if TPP is not available', async () => {
+      // Arrange
+      (tppWrapper as { TPP_SNAP: Promise<SNAP | null> }).TPP_SNAP = Promise.resolve(null);
+      const onRequestPreviewElementSpy = jest.spyOn(snap, 'onRequestPreviewElement');
+
+      // Act
+      await service.test_initMessagesToServer();
+
+      // Assert
+      expect(onRequestPreviewElementSpy).not.toHaveBeenCalled();
+    });
+
+    it('executes with SITESTORE element', async () => {
+      // Arrange
+      const snap = mock<SNAP>();
+      (tppWrapper as { TPP_SNAP: Promise<SNAP | null> }).TPP_SNAP = Promise.resolve(snap);
+      const previewId = 'NEW_PREVIEW_ID';
+      const spy = jest.spyOn(snap, 'onRequestPreviewElement');
+
+      spy.mockImplementation((callback) => {
+        callback(previewId);
+      });
+
+      const status = {
+        storeType: 'SITESTORE',
+        id: '123',
+        language: 'en',
+      } as SNAPStatus;
+
+      jest.spyOn(snap, 'getElementStatus').mockResolvedValue(status);
+      const executeSpy = jest.spyOn(snap, 'execute');
+      const setPreviewElementSpy = jest.spyOn(snap, 'setPreviewElement');
+
+      // Act
+      await service.test_initMessagesToServer();
+
+      // Assert
+      expect(executeSpy).toHaveBeenCalledWith(
+        'class:FirstSpirit Connect for Commerce - Preview Message Receiver',
+        {
+          topic: 'requestedPreviewElement',
+          pageRefId: status.id,
+          language: status.language,
+        },
+        false
+      );
+      expect(setPreviewElementSpy).toHaveBeenCalledWith(previewId);
+    });
+
+    it('does nothing when previewId has not changed', async () => {
+      // Arrange
+      const snap = mock<SNAP>();
+      (tppWrapper as { TPP_SNAP: Promise<SNAP | null> }).TPP_SNAP = Promise.resolve(snap);
+      const previewId = 'SAME_PREVIEW_ID';
+      const spy = jest.spyOn(snap, 'onRequestPreviewElement');
+
+      service['lastRequestedPreviewId'] = previewId;
+
+      spy.mockImplementation((callback) => {
+        callback(previewId);
+      });
+
+      const getElementStatusSpy = jest.spyOn(snap, 'getElementStatus');
+
+      // Act
+      await service.test_initMessagesToServer();
+
+      // Assert
+      expect(getElementStatusSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('initPreviewHooks() with navigation', () => {
+    it('registers onNavigationChange handler', async () => {
+      // Arrange
+      const snap = mock<SNAP>();
+      (tppWrapper as { TPP_SNAP: Promise<SNAP | null> }).TPP_SNAP = Promise.resolve(snap);
+      const onNavigationChangeSpy = jest.spyOn(snap, 'onNavigationChange');
+      const previewId = 'NAVIGATION_PREVIEW_ID';
+
+      onNavigationChangeSpy.mockImplementation((callback) => {
+        callback(previewId);
+      });
+
+      const mockHookService = mock<HookService>();
+      jest.spyOn(HookService, 'getInstance').mockReturnValue(mockHookService);
+
+      // Act
+      await service.test_initPreviewHooks();
+
+      // Assert
+      expect(onNavigationChangeSpy).toHaveBeenCalled();
+      expect(mockHookService.callHook).toHaveBeenCalledWith(
+        EcomHooks.PAGE_CREATED,
+        expect.objectContaining({
+          previewId,
+        })
+      );
+    });
+  });
+
+  describe('addTranslationstudioButton() execute', () => {
+    it('tests button execute function', async () => {
+      // Arrange
+      const snap = mock<SNAP>();
+      (tppWrapper as { TPP_SNAP: Promise<SNAP | null> }).TPP_SNAP = Promise.resolve(snap);
+      const executeSpy = jest.spyOn(snap, 'execute').mockResolvedValue(['TranslationStudio']);
+      const registerButtonSpy = jest.spyOn(snap, 'registerButton');
+
+      // Act
+      await service.test_addTranslationstudioButton();
+
+      // Assert
+      expect(registerButtonSpy).toHaveBeenCalled();
+      expect(executeSpy).toHaveBeenCalledWith('script:tpp_list_projectapps');
+
+      // Get the registered button from the spy call
+      const button = registerButtonSpy.mock.calls[0][0];
+
+      // Verify button properties
+      expect(button).toBeDefined();
+      expect(button._name).toBe('translation_studio');
+      expect(button.label).toBe('Translate');
+      expect(button.css).toBe('tpp-icon-translate');
+
+      // Verify button position
+      expect(registerButtonSpy.mock.calls[0][1]).toBe(2);
+
+      // Test button's isEnabled function
+      // @ts-ignore
+      const isEnabledResult = await button.isEnabled({} as SNAPButtonScope);
+      expect(isEnabledResult).toBe(true);
+
+      // Test execute function with a mock scope
+      const mockScope = {
+        status: { id: 'test-id' },
+        language: 'en',
+      };
+
+      // Verify execute functionality
+      // @ts-ignore
+      button.execute(mockScope);
+      expect(snap.execute).toHaveBeenCalledWith('script:translationstudio_ocm_translationhelper', {
+        language: 'en',
+        elementId: 'test-id',
+      });
+      expect(executeSpy).toHaveBeenCalledTimes(2); // Once for getProjectApps, once for the button execution
     });
   });
 });

@@ -18,8 +18,8 @@ describe('SlotParser', () => {
   beforeEach(() => {
     parser = new SlotParser(mockRemoteService, mockTppService);
     document.body.innerHTML = `
-      <div data-fcecom-slot-name="SLOTNAME"></div>
-      <div data-fcecom-slot-name="SLOTNAME2"></div>
+      <div data-fcecom-slot-name="SlotName"></div>
+      <div data-fcecom-slot-name="SlotName2"></div>
     `;
   });
   afterEach(() => {
@@ -36,7 +36,18 @@ describe('SlotParser', () => {
       });
       const page = {
         previewId: 'testPreviewId',
-        children: [],
+        children: [
+          {
+            name: 'SlotName',
+            previewId: 'PreviewId',
+            children: [],
+          },
+          {
+            name: 'SlotName2',
+            previewId: 'PreviewId2',
+            children: [],
+          },
+        ],
       } as FindPageItem;
       mockRemoteService.findPage.mockResolvedValue(page);
       const params = {
@@ -53,6 +64,9 @@ describe('SlotParser', () => {
       const { id, type } = params;
       expect(mockRemoteService.findPage.mock.calls[0][0].id).toEqual(id);
       expect(mockRemoteService.findPage.mock.calls[0][0].type).toEqual(type);
+      // Add assertion for buttons
+      const buttons = document.querySelectorAll('button');
+      expect(buttons.length).toBe(2);
     });
   });
   describe('CONTENT_CHANGED hook', () => {
@@ -66,7 +80,18 @@ describe('SlotParser', () => {
       });
       const page = {
         previewId: 'testPreviewId',
-        children: [],
+        children: [
+          {
+            name: 'SlotName',
+            previewId: 'PreviewId',
+            children: [],
+          },
+          {
+            name: 'SlotName2',
+            previewId: 'PreviewId2',
+            children: [],
+          },
+        ],
       } as FindPageItem;
       mockRemoteService.findPage.mockResolvedValue(page);
       const params = {
@@ -83,6 +108,9 @@ describe('SlotParser', () => {
       const { id, type } = params;
       expect(mockRemoteService.findPage.mock.calls[0][0].id).toEqual(id);
       expect(mockRemoteService.findPage.mock.calls[0][0].type).toEqual(type);
+      // Add assertion for buttons
+      const buttons = document.querySelectorAll('button');
+      expect(buttons.length).toBe(2);
     });
     it('payload.content = "": logs warning', async () => {
       // Arrange
@@ -124,19 +152,22 @@ describe('SlotParser', () => {
       await parser.parseSlots(params, null);
       // Assert
       expect(document.querySelector('fcecom-add-content-button-wrapper')).toBeDefined();
+      // Add more specific assertions for buttons
+      const button = document.querySelectorAll('button');
+      expect(button.length).toBe(2);
     });
     it('sets preview ids for each section if shop driven page already exists', async () => {
       // Arrange
       const page = {
-        previewId: 'PREVIEWID',
+        previewId: 'PreviewId',
         children: [
           {
-            name: 'SLOTNAME',
-            previewId: 'PREVIEWID',
+            name: 'SlotName',
+            previewId: 'PreviewId',
           },
           {
-            name: 'SLOTNAME2',
-            previewId: 'PREVIEWID2',
+            name: 'SlotName2',
+            previewId: 'PreviewId2',
           },
         ],
       } as FindPageItem;
@@ -157,15 +188,15 @@ describe('SlotParser', () => {
   it('sets preview ids for each section if fs driven page already exists', async () => {
     // Arrange
     const page = {
-      previewId: 'PREVIEWID',
+      previewId: 'PreviewId',
       children: [
         {
-          name: 'SLOTNAME',
-          previewId: 'PREVIEWID',
+          name: 'SlotName',
+          previewId: 'PreviewId',
         },
         {
-          name: 'SLOTNAME2',
-          previewId: 'PREVIEWID2',
+          name: 'SlotName2',
+          previewId: 'PreviewId2',
         },
       ],
     } as FindPageItem;
@@ -186,15 +217,15 @@ describe('SlotParser', () => {
     it('clears the DOM', async () => {
       // Arrange
       const page = {
-        previewId: 'PREVIEWID',
+        previewId: 'PreviewId',
         children: [
           {
-            name: 'SLOTNAME',
-            previewId: 'PREVIEWID',
+            name: 'SlotName',
+            previewId: 'PreviewId',
           },
           {
-            name: 'SLOTNAME2',
-            previewId: 'PREVIEWID2',
+            name: 'SlotName2',
+            previewId: 'PreviewId2',
           },
         ],
       } as FindPageItem;
@@ -208,6 +239,10 @@ describe('SlotParser', () => {
       // Act
       parser.clear();
       // Assert
+      // Add assertions to verify that elements are cleared
+      expect(document.querySelector('[data-preview-id]')).toBeNull();
+      expect(document.querySelectorAll('fcecom-add-content-button-wrapper').length).toBe(0);
+      expect(document.querySelectorAll('button').length).toBe(0);
     });
   });
 });
