@@ -1,3 +1,9 @@
+## [1.8.1](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v1.8.0...v1.8.1) (2025-08-11)
+
+### Changes
+
+* Fixed logging in SlotParser
+
 ## [1.8.0](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v1.7.0...v1.8.0) (2025-05-23)
 
 ### Changes

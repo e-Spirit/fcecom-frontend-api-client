@@ -275,7 +275,7 @@ export class SlotParser {
             .findPage(payload)
             .then((response) => {
               if (response) {
-                this.logger.info(`Page ${payload} found after ${tries} tries`);
+                this.logger.info(`Page ${JSON.stringify(payload)} found after ${tries} tries`);
                 rootResolve(response);
               } else {
                 // Not found, trigger catch
