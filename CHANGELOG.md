@@ -1,3 +1,9 @@
+## [1.8.2](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v1.8.1...v1.8.2) (2025-09-01)
+
+### Changes
+
+* Dynamically load SweetAlert2 CSS based on package version.
+
 ## [1.8.1](https://github.com/e-Spirit/fcecom-frontend-api-client/compare/v1.8.0...v1.8.1) (2025-08-11)
 
 ### Changes

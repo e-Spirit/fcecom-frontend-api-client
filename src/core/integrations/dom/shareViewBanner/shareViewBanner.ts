@@ -7,6 +7,9 @@ import Swal, { SweetAlertResult } from 'sweetalert2';
 import { HookService } from '../../../../connect/HookService';
 import { EcomHooks } from '../../../../connect/HookService.meta';
 import { onTop } from '../domUtils';
+import packageJson from '../../../../../package.json';
+
+const sweetAlertVersion = packageJson.dependencies['sweetalert2'] || 'latest';
 
 const shareViewTokenKey = 'ecom:share:token';
 
@@ -52,51 +55,51 @@ export namespace ShareViewBanner {
     // Styles for the banner
     // language=CSS
     const style = `
-        :host {
-            all: initial;
-            font-family: 'Arial', sans-serif;
-        }
+      :host {
+        all: initial;
+        font-family: 'Arial', sans-serif;
+      }
 
-        .banner {
-            position: relative;
-            top: 0;
-            left: 0;
-            background-color: #f4f4f9; /* dezentes, helles Grau */
-            border-bottom: 2px solid #0056b3; /* Blau, das zur Doku-Seite passt */
-            color: #333; /* Dunkles Grau für Text */
-            text-align: center;
-            padding: 15px 20px;
-            z-index: ${onTop(5)};
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
+      .banner {
+        position: relative;
+        top: 0;
+        left: 0;
+        background-color: #f4f4f9; /* dezentes, helles Grau */
+        border-bottom: 2px solid #0056b3; /* Blau, das zur Doku-Seite passt */
+        color: #333; /* Dunkles Grau für Text */
+        text-align: center;
+        padding: 15px 20px;
+        z-index: ${onTop(5)};
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
 
-        .banner-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+      .banner-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
 
-        .banner-text {
-            font-size: 1rem;
-            font-weight: 500;
-        }
+      .banner-text {
+        font-size: 1rem;
+        font-weight: 500;
+      }
 
-        .banner button {
-            background-color: #0056b3;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 10px 20px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
+      .banner button {
+        background-color: #0056b3;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 10px 20px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
 
-        .banner button:hover {
-            background-color: #004494;
-        }
+      .banner button:hover {
+        background-color: #004494;
+      }
     `;
 
     // HTML content for the banner
@@ -117,13 +120,18 @@ export namespace ShareViewBanner {
     wrapper.innerHTML = html;
 
     // Style for SweetAlert2
+    const swalStyleLink = document.createElement('link');
+    swalStyleLink.rel = 'stylesheet';
+    swalStyleLink.href = `https://cdn.jsdelivr.net/npm/sweetalert2@${sweetAlertVersion}/dist/sweetalert2.min.css`;
+    document.head.appendChild(swalStyleLink);
+
     const swalStyleElement = document.createElement('style');
     // language=CSS
     swalStyleElement.textContent = `
-        .fcecom-swal-container {
-            z-index: ${onTop(10)};
-            padding-top: 4em;
-        }
+      .fcecom-swal-container {
+        z-index: ${onTop(10)};
+        padding-top: 4em;
+      }
     `;
     document.head.appendChild(swalStyleElement);
 
